@@ -16,6 +16,7 @@ services:
       - key: JWT_EXPIRES_IN
         value: 7d
       - key: CORS_ORIGIN
-        value: https://*.vercel.app
+        value: https://aasthapolyclinic.com,https://www.aasthapolyclinic.com,https://frontend-zeta-dusky-94.vercel.app
       - key: DATABASE_URL
         sync: false
+

@@ -30,28 +30,16 @@ export const createApp = () => {
   const app = express();
 
   // Standard Middlewares
-  const allowedOrigins = [
-    env.CORS_ORIGIN,
-    'http://localhost:5173',
-    'http://127.0.0.1:5173'
-  ];
-  if (env.CORS_ORIGIN && env.CORS_ORIGIN.includes(',')) {
-    env.CORS_ORIGIN.split(',').forEach(o => allowedOrigins.push(o.trim()));
+  const allowedOrigins = env.CORS_ORIGIN.split(',').map(origin => origin.trim()).filter(Boolean);
+  if (env.NODE_ENV !== 'production') {
+    allowedOrigins.push('http://localhost:5173', 'http://127.0.0.1:5173');
   }
 
   app.use(cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps, curl, server-to-server)
       if (!origin) return callback(null, true);
-      // Allow exact match, localhost, or any vercel.app preview domain
-      if (
-        allowedOrigins.includes(origin) ||
-        origin.endsWith('.vercel.app') ||
-        origin.includes('localhost')
-      ) {
-        return callback(null, true);
-      }
-      return callback(null, true); // Fallback allow in cloud deployment
+      return callback(null, allowedOrigins.includes(origin));
     },
     credentials: true
   }));
