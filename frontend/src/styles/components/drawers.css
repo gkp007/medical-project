@@ -1,0 +1,51 @@
+/* Reusable Slide-over Drawer Component Styles */
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: var(--z-drawer);
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.drawer-panel {
+  background-color: var(--surface-card);
+  width: 100%;
+  max-width: var(--patient-drawer-width);
+  height: 100%;
+  box-shadow: var(--shadow-2xl);
+  display: flex;
+  flex-direction: column;
+  animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.drawer-header {
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.drawer-body {
+  padding: var(--space-6);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.drawer-footer {
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--border-subtle);
+  background-color: var(--surface-canvas);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}

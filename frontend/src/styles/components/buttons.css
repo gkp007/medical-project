@@ -1,0 +1,107 @@
+/* Reusable Button Component Styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 38px;
+  padding: 0 var(--space-4);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-primary-focus);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Primary Button (The classic Labsmart CTA) */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--text-white);
+  box-shadow: var(--shadow-xs);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:active:not(:disabled) {
+  background-color: var(--color-primary-active);
+}
+
+/* Secondary / Outline Button */
+.btn-secondary {
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-input);
+  color: var(--text-body);
+  box-shadow: var(--shadow-2xs);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--surface-muted);
+  border-color: var(--border-strong);
+}
+
+/* Setup Button (Distinct green pill in topbar) */
+.btn-setup {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+  border: 1px solid var(--color-success-border);
+  border-radius: var(--radius-md);
+  height: 36px;
+  padding: 0 var(--space-3);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+}
+
+.btn-setup:hover:not(:disabled) {
+  background-color: #c7f9d4;
+}
+
+/* Danger Button */
+.btn-danger {
+  background-color: var(--color-danger);
+  color: var(--text-white);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #991b1b;
+}
+
+/* Ghost / Icon Button */
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+}
+
+.btn-icon:hover:not(:disabled) {
+  background-color: var(--surface-muted);
+  color: var(--text-body);
+}
+
+/* Size Variants */
+.btn-sm {
+  height: 30px;
+  padding: 0 var(--space-2-5);
+  font-size: var(--font-size-xs);
+}
+
+.btn-lg {
+  height: 44px;
+  padding: 0 var(--space-6);
+  font-size: var(--font-size-base);
+}

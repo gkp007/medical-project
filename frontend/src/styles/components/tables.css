@@ -1,0 +1,61 @@
+/* Reusable Data Table Component Styles */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--font-size-sm);
+}
+
+.data-table thead {
+  background-color: var(--surface-table-head);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.data-table th {
+  padding: 10px var(--space-4);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wider);
+  color: var(--text-section);
+  white-space: nowrap;
+}
+
+.data-table tbody tr {
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background-color 0.1s ease;
+}
+
+.data-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+  background-color: var(--surface-table-hover);
+}
+
+.data-table td {
+  padding: 12px var(--space-4);
+  color: var(--text-body);
+  vertical-align: middle;
+}
+
+.table-cell-bold {
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-headings);
+}
+
+.table-cell-mono {
+  font-family: var(--font-family-mono);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary-link);
+}

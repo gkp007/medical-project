@@ -1,0 +1,565 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String       @id @default(uuid())
+  username          String       @unique
+  fullName          String
+  email             String       @unique
+  mobile            String?      @unique
+  passwordHash      String
+  role              String       @default("RECEPTIONIST") // SUPER_ADMIN, PATHOLOGIST, RADIOLOGIST, LAB_TECHNICIAN, RECEPTIONIST, PHLEBOTOMIST, ACCOUNTANT
+  isOwner           Boolean      @default(false)
+  isActive          Boolean      @default(true)
+  isBlocked         Boolean      @default(false)
+  
+  // Permissions Matrix
+  canBilling        Boolean      @default(true)
+  canResultsEntry   Boolean      @default(false)
+  canAuthorize      Boolean      @default(false)
+  canDoctorPayouts  Boolean      @default(false)
+  canAuditMaster    Boolean      @default(false)
+  canEditRates      Boolean      @default(false)
+  canDeleteBills    Boolean      @default(false)
+  canSignOffReports Boolean      @default(false)
+  canViewLedger     Boolean      @default(false)
+  canManageExpenses Boolean      @default(false)
+  canIssueRefunds   Boolean      @default(false)
+
+  // Auth & Security Extensions
+  isEmailVerified           Boolean      @default(false)
+  emailVerificationToken    String?
+  emailVerificationExpiresAt DateTime?
+  resetPasswordToken        String?
+  resetPasswordExpiresAt    DateTime?
+  terminalLockPin           String?      @default("1234")
+  isTerminalLocked          Boolean      @default(false)
+
+  allowedBranches   String       @default("[\"main\"]")
+  lastLoginAt       DateTime?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  auditLogs         AuditLog[]
+}
+
+model Patient {
+  id                    String      @id @default(uuid())
+  uhid                  String      @unique // e.g. UHID-2026-0001
+  prefix                String      @default("Mr.")
+  firstName             String?
+  lastName              String?
+  fullName              String
+  age                   Int         @default(0)
+  ageYears              Int         @default(0)
+  ageMonths             Int         @default(0)
+  ageDays               Int         @default(0)
+  ageUnit               String      @default("Years") // Years, Months, Days
+  gender                String      @default("Male") // Male, Female, Other
+  mobile                String
+  email                 String?
+  address               String?
+  aadhaar               String?
+  bloodGroup            String?
+  medicalHistory        String?
+  onlineReportRequested Boolean     @default(true)
+  totalVisits           Int         @default(1)
+  lastVisitDate         DateTime    @default(now())
+  isArchived            Boolean     @default(false)
+
+  cases                 Case[]
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+}
+
+model Doctor {
+  id                   String         @id @default(uuid())
+  name                 String
+  degree               String?
+  specialty            String
+  mobile               String
+  email                String?
+  address              String?
+  commissionPct        Float          @default(15.0)
+  defaultCommissionPct Float          @default(15.0)
+  pathologyCommission  Float          @default(20.0)
+  usgCommission        Float          @default(25.0)
+  xrayCommission       Float          @default(30.0)
+  ctCommission         Float          @default(15.0)
+  outsourceCommission  Float          @default(10.0)
+  isActive             Boolean        @default(true)
+  hasPortalAccess      Boolean        @default(false)
+  portalPasswordHash   String?
+
+  cases                Case[]
+  payouts              DoctorPayout[]
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+}
+
+model CollectionAgent {
+  id               String      @id @default(uuid())
+  name             String
+  phone            String
+  zone             String
+  vehicleNo        String?
+  feePerCollection Float       @default(100.0)
+  activeCasesCount Int         @default(0)
+  totalCollected   Float       @default(0.0)
+  isActive         Boolean     @default(true)
+
+  cases            Case[]
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+model TestCategory {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  code        String?  @unique
+  department  String
+  description String?
+  testCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+model TestPanel {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  code        String?  @unique
+  category    String?
+  department  String
+  testCount   Int      @default(0)
+  testIds     String   // JSON stringified array of test IDs
+  subheadings String?  // JSON stringified section groupings
+  panelPrice  Float    @default(0.0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+model HealthPackage {
+  id            String   @id @default(uuid())
+  code          String   @unique
+  name          String
+  category      String?
+  description   String?
+  testsIncluded String   // JSON stringified array of test codes/ids
+  retailPrice   Float
+  packagePrice  Float
+  discountPct   Float
+  fastingNotes  String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+}
+
+model Investigation {
+  id          String           @id @default(uuid())
+  code        String           @unique
+  name        String
+  department  String
+  testType    String           @default("Single parameter")
+  specimen    String
+  container   String
+  rate        Float
+  b2bRate     Float?
+  tatHours    Int              @default(4)
+  isDeleted   Boolean          @default(false)
+
+  parameters  TestParameter[]
+  caseItems   CaseItem[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model TestParameter {
+  id              String           @id @default(uuid())
+  investigationId String
+  investigation   Investigation    @relation(fields: [investigationId], references: [id], onDelete: Cascade)
+  code            String
+  name            String
+  unit            String
+  method          String?
+  formula         String?
+  isCalculated    Boolean          @default(false)
+  isOptional      Boolean          @default(false)
+  sortOrder       Int              @default(0)
+
+  ranges          ParameterRange[]
+}
+
+model ParameterRange {
+  id            String        @id @default(uuid())
+  parameterId   String
+  parameter     TestParameter @relation(fields: [parameterId], references: [id], onDelete: Cascade)
+  gender        String        @default("All")
+  minAge        Int           @default(0)
+  maxAge        Int           @default(120)
+  lowerBound    Float
+  upperBound    Float
+  panicLower    Float?
+  panicUpper    Float?
+  textualNormal String?
+}
+
+model Case {
+  id                 String               @id @default(uuid())
+  billNumber         String               @unique // BL-2026-0001
+  dailyCode          String?              // L1, U1, X1
+  uhid               String
+  patientId          String
+  patient            Patient              @relation(fields: [patientId], references: [id])
+  doctorId           String
+  doctor             Doctor               @relation(fields: [doctorId], references: [id])
+  agentId            String?
+  agent              CollectionAgent?     @relation(fields: [agentId], references: [id])
+  branchId           String               @default("main")
+  modality           String               // LAB, USG, XRAY, CT SCAN, ECG, OUTSOURCE
+  isUrgent           Boolean              @default(false)
+  reportStatus       String               @default("Registered") // Registered, Sample Collected, In Process, Results Entered, Signed Off, Cancelled
+  paymentStatus      String               @default("Paid") // Paid, Partial, Due, Refunded
+  sampleStatus       String               @default("Pending") // Pending, Collected, Rejected
+  grossAmount        Float
+  discountType       String               @default("fixed") // percentage, fixed
+  discountValue      Float                @default(0.0)
+  discountAmount     Float                @default(0.0)
+  discountReason     String?
+  netPayable         Float
+  paidAmount         Float
+  balanceDue         Float
+  allowDue           Boolean              @default(false)
+  paymentMode        String               @default("Cash") // Cash, UPI, Card, Cheque, Credit
+  collectedAt        DateTime?
+  receivedAt         DateTime?
+  reportedAt         DateTime?
+  signedOffBy        String?
+  notes              String?
+  cancellationReason String?
+
+  items              CaseItem[]
+  payments           PaymentTransaction[]
+  clinicalResult     ClinicalResult?
+  radiologyStudy     RadiologyReport?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+}
+
+model CaseItem {
+  id           String        @id @default(uuid())
+  caseId       String
+  case         Case          @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  testId       String
+  test         Investigation @relation(fields: [testId], references: [id])
+  testCode     String
+  testName     String
+  department   String
+  specimen     String
+  rate         Float
+  discount     Float         @default(0.0)
+  netAmount    Float
+  deliveryTime DateTime?
+}
+
+model PaymentTransaction {
+  id            String   @id @default(uuid())
+  caseId        String
+  case          Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  receiptNumber String   @unique // REC-2026-0001
+  amount        Float
+  mode          String   // Cash, UPI, Card, Cheque, Insurance
+  referenceNo   String?
+  receivedBy    String
+  counterDesk   String?
+  note          String?
+  isRefund      Boolean  @default(false)
+  refundReason  String?
+  createdAt     DateTime @default(now())
+}
+
+model ClinicalResult {
+  id               String    @id @default(uuid())
+  caseId           String    @unique
+  case             Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  parameterValues  String    // JSON stringified array of parameter values and evaluation flags
+  interpretation   String?
+  technologistNote String?
+  isAuthorized     Boolean   @default(false)
+  authorizedBy     String?
+  authorizedAt     DateTime?
+  pathologistNotes String?
+  pdfUrl           String?
+  qrVerificationId String?   @unique
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model RadiologyReport {
+  id              String    @id @default(uuid())
+  caseId          String    @unique
+  case            Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  modality        String    // USG, X-RAY, CT SCAN
+  measurements    String?   // JSON stringified biometric parameters
+  findings        String    // JSON stringified organ findings or radiography report
+  impression      String
+  clinicalHistory String?
+  technicalKvp    String?
+  technicalMas    String?
+  filmsConsumed   String?
+  pndtConfirmed   Boolean   @default(false)
+  pregnancyScreen Boolean   @default(false)
+  radiologistName String?
+  isAuthorized    Boolean   @default(false)
+  authorizedAt    DateTime?
+  pdfUrl          String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model ClinicalInterpretation {
+  id         String   @id @default(uuid())
+  title      String
+  testCode   String
+  department String
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+}
+
+model RadiologyTemplate {
+  id         String   @id @default(uuid())
+  title      String
+  modality   String   // USG, X-RAY, CT SCAN
+  organType  String?  // Whole Abdomen, Pelvis, Chest PA, etc.
+  content    String   // Structured clinical findings text
+  isNormal   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+}
+
+model DigitalSignature {
+  id             String   @id @default(uuid())
+  doctorName     String
+  designation    String
+  degree         String
+  registrationNo String
+  signatureUrl   String?
+  stampUrl       String?
+  isDefault      Boolean  @default(false)
+  modality       String   @default("PATHOLOGY") // PATHOLOGY, RADIOLOGY, USG
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+}
+
+model ExpenseVoucher {
+  id            String   @id @default(uuid())
+  voucherNumber String   @unique // EXP-2026-0001
+  date          DateTime @default(now())
+  name          String?  @default("Operational Expense")
+  category      String
+  vendor        String?
+  invoiceNo     String?
+  invoiceUrl    String?
+  description   String
+  amount        Float
+  paymentMode   String   // Cash, UPI, Card, Cheque
+  cashierName   String?  @default("Admin")
+  isVoid        Boolean  @default(false)
+  voidReason    String?
+  createdAt     DateTime @default(now())
+}
+
+model DoctorPayout {
+  id              String   @id @default(uuid())
+  payoutNumber    String   @unique // PAY-2026-0001
+  doctorId        String
+  doctor          Doctor   @relation(fields: [doctorId], references: [id])
+  periodStart     DateTime
+  periodEnd       DateTime
+  totalCommission Float
+  paidAmount      Float
+  paymentMode     String
+  transactionRef  String?
+  createdAt       DateTime @default(now())
+}
+
+model CashierShift {
+  id               String    @id @default(uuid())
+  cashierId        String
+  cashierName      String
+  counterDesk      String    @default("Counter 1")
+  startTime        DateTime  @default(now())
+  endTime          DateTime?
+  openingFloat     Float     @default(0.0)
+  closingCashCount Float?
+  variance         Float?
+  status           String    @default("OPEN") // OPEN, CLOSED
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model BrowserDevice {
+  id                String    @id @default(uuid())
+  deviceFingerprint String    @unique
+  deviceName        String    @default("Diagnostic Terminal")
+  browser           String
+  operatingSystem   String
+  lastIpAddress     String
+  isApproved        Boolean   @default(true)
+  isBlocked         Boolean   @default(false)
+  lastSeenAt        DateTime  @default(now())
+  createdAt         DateTime  @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  timestamp  DateTime @default(now())
+  action     String   // CASE_CREATED, RESULTS_AUTHORIZED, DUE_COLLECTED, CASE_CANCELLED
+  entityType String   // Case, Patient, Result, Payment, Doctor
+  entityId   String
+  actorId    String
+  actor      User     @relation(fields: [actorId], references: [id])
+  actorName  String
+  changes    String?  // JSON stringified diff
+  ipAddress  String?
+}
+
+model ClinicSetting {
+  id                  String   @id @default("clinic_default")
+  clinicName          String   @default("Apex Diagnostic Centre & Imaging Network")
+  tagline             String   @default("NABL & ISO 15189 Accredited Referral Laboratory")
+  registrationNo      String   @default("DL-GGM-LAB-98102")
+  nablAccreditationNo String   @default("MC-4921-ISO15189")
+  phone               String   @default("+91 98765 43210")
+  email               String   @default("reports@apexdiagnostics.com")
+  address             String   @default("42, Medical Enclave, Health City, New Delhi - 110029")
+  gstin               String?  @default("07AAAAA0000A1Z5")
+  headerMarginMm      Int      @default(30)
+  footerMarginMm      Int      @default(25)
+  leftMarginMm        Int      @default(15)
+  rightMarginMm       Int      @default(15)
+  watermarkEnabled    Boolean  @default(true)
+  qrCodeEnabled       Boolean  @default(true)
+  smsSenderId         String   @default("LABSMT")
+  dltPrincipalId      String   @default("1101489102830")
+  allowedIp           String   @default("182.74.22.105")
+  ipLockdownEnabled   Boolean  @default(false)
+  monthlyTarget       Float    @default(500000.0)
+  logoUrl             String?
+  stampUrl            String?
+  
+  // Email / SMTP Settings
+  smtpHost            String?  @default("smtp.gmail.com")
+  smtpPort            Int?     @default(587)
+  smtpUser            String?
+  smtpPassword        String?
+  smtpSenderName      String?  @default("Apex Diagnostic Centre")
+  smtpSenderEmail     String?  @default("reports@apexdiagnostics.com")
+
+  updatedAt           DateTime @updatedAt
+}
+
+model NotificationLog {
+  id          String   @id @default(uuid())
+  channel     String   // EMAIL, SMS, WHATSAPP
+  recipient   String
+  subject     String?
+  content     String
+  status      String   @default("SENT") // SENT, FAILED, SIMULATED
+  metadata    String?  // JSON stringified context
+  sentAt      DateTime @default(now())
+}
+
+model SupportTicket {
+  id          String   @id @default(uuid())
+  ticketNo    String   @unique
+  subject     String
+  category    String
+  description String
+  priority    String   @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
+  status      String   @default("OPEN")   // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  userId      String?
+  userEmail   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+model Subscription {
+  id                 String    @id @default(uuid())
+  clinicId           String    @default("clinic_default")
+  planTier           String    @default("TRIAL") // TRIAL, STARTER, PROFESSIONAL, ENTERPRISE
+  status             String    @default("TRIALING") // TRIALING, ACTIVE, PAST_DUE, EXPIRED, CANCELLED
+  billingCycle       String    @default("MONTHLY") // MONTHLY, ANNUAL
+  price              Float     @default(0.0)
+  trialEndsAt        DateTime?
+  currentPeriodStart DateTime  @default(now())
+  currentPeriodEnd   DateTime
+  cancelledAt        DateTime?
+  maxCasesPerMonth   Int       @default(999999)
+  maxBranches        Int       @default(1)
+  whatsappQuota      Int       @default(500)
+  features           String    @default("[\"ALL_MODALITIES\", \"NABL_COMPLIANCE\", \"FORMULA_ENGINE\", \"DELTA_CHECK\", \"WHATSAPP_ALERTS\"]")
+  paymentMethod      String?   @default("DIRECT_UPI") // CARD, UPI, NETBANKING, TRIAL
+  lastPaymentRef     String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model LabAnalyzer {
+  id                     String                 @id @default(uuid())
+  name                   String                 // e.g. "Mindray BC-5000 Hematology"
+  model                  String                 // e.g. "BC-5000", "Cobas c311", "Sysmex XN-500"
+  department             String                 @default("Hematology") // Hematology, Biochemistry, Urinalysis, Immunoassay
+  protocol               String                 @default("ASTM_E1381") // ASTM_E1381, HL7_V2, CUSTOM_SERIAL
+  connectionType         String                 @default("TCP_SERVER") // TCP_SERVER, TCP_CLIENT, SERIAL_COM
+  hostIp                 String?                @default("127.0.0.1")
+  port                   Int                    @default(5100)
+  baudRate               Int?                   @default(9600)
+  isBidirectional        Boolean                @default(true)
+  autoAuthorize          Boolean                @default(false)
+  isActive               Boolean                @default(true)
+  status                 String                 @default("ONLINE") // ONLINE, LISTENING, OFFLINE, ERROR
+  lastPacketAt           DateTime?
+  totalPacketsProcessed  Int                    @default(0)
+  mappings               AnalyzerMapping[]
+  transmissions          AnalyzerTransmission[]
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+}
+
+model AnalyzerMapping {
+  id                   String      @id @default(uuid())
+  analyzerId           String
+  analyzer             LabAnalyzer @relation(fields: [analyzerId], references: [id], onDelete: Cascade)
+  machineCode          String      // e.g. "HGB", "WBC", "PLT", "GLU", "CREAT"
+  testParameterId      String?     // references TestParameter id or code
+  parameterName        String      // e.g. "Hemoglobin", "Total Leukocyte Count (TLC)"
+  conversionMultiplier Float       @default(1.0)
+  unit                 String?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  @@unique([analyzerId, machineCode])
+}
+
+model AnalyzerTransmission {
+  id             String       @id @default(uuid())
+  analyzerId     String?
+  analyzer       LabAnalyzer? @relation(fields: [analyzerId], references: [id], onDelete: SetNull)
+  analyzerName   String
+  protocol       String       // ASTM_E1381, HL7_V2
+  sampleBarcode  String       // e.g. "BL-2026-0015-T1", "BL-2026-0015"
+  matchedCaseId  String?
+  rawPayload     String       // Full raw message text
+  parsedResults  String       // JSON string of parameter codes, values, units, flags
+  status         String       @default("MATCHED") // MATCHED, ORPHAN, ERROR, ACK_SENT
+  errorMessage   String?
+  createdAt      DateTime     @default(now())
+}
+

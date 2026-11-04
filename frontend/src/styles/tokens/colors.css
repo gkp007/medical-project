@@ -1,0 +1,52 @@
+/* Labsmart LIS — Design System Color Tokens */
+:root {
+  /* Brand & Action Colors */
+  --color-primary: #1565c0;
+  --color-primary-hover: #0d47a1;
+  --color-primary-active: #0a3875;
+  --color-primary-light: #eff6ff;
+  --color-primary-link: #2563eb;
+  --color-primary-focus: #3b82f6;
+
+  /* Surfaces & Backgrounds */
+  --surface-canvas: #f8fafc;
+  --surface-sidebar: #f9fafb;
+  --surface-card: #ffffff;
+  --surface-table-head: #f1f5f9;
+  --surface-table-hover: #f8fafc;
+  --surface-muted: #f1f5f9;
+
+  /* Status: Success (Completed, Paid, No due) */
+  --color-success: #15803d;
+  --color-success-bg: #dcfce7;
+  --color-success-border: #86efac;
+
+  /* Status: Warning (Pending, Partial) */
+  --color-warning: #b45309;
+  --color-warning-bg: #fef3c7;
+  --color-warning-border: #fcd34d;
+
+  /* Status: Danger (Balance Due, Abnormal Parameter, Critical) */
+  --color-danger: #b91c1c;
+  --color-danger-bg: #fee2e2;
+  --color-danger-border: #fca5a5;
+
+  /* Status: Info / In Process */
+  --color-info: #0369a1;
+  --color-info-bg: #e0f2fe;
+  --color-info-border: #7dd3fc;
+
+  /* Borders & Dividers */
+  --border-subtle: #e2e8f0;
+  --border-input: #d1d5db;
+  --border-strong: #94a3b8;
+  --border-focus: #2563eb;
+
+  /* Typography Colors */
+  --text-headings: #0f172a;
+  --text-section: #334155;
+  --text-body: #1e293b;
+  --text-secondary: #64748b;
+  --text-placeholder: #94a3b8;
+  --text-white: #ffffff;
+}

@@ -1,0 +1,75 @@
+/* Import Design System Tokens */
+@import '../tokens/colors.css';
+@import '../tokens/typography.css';
+@import '../tokens/spacing.css';
+@import '../tokens/elevation.css';
+@import './reset.css';
+@import '../layout/shell.css';
+@import '../components/index.css';
+
+/* Global Base Styles */
+body {
+  font-family: var(--font-family-sans);
+  background-color: var(--surface-canvas);
+  color: var(--text-body);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-regular);
+  min-height: 100vh;
+}
+
+/* Typography Utility Classes */
+.h1-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-headings);
+  line-height: var(--line-height-heading);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+.h2-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-section);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wider);
+}
+
+.h3-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-body);
+  line-height: var(--line-height-md);
+}
+
+.text-muted {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.text-caption {
+  color: var(--text-placeholder);
+  font-size: var(--font-size-xs);
+}
+
+.font-mono {
+  font-family: var(--font-family-mono);
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
