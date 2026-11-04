@@ -3,10 +3,12 @@ import { env } from './config/env.config.js';
 import { logger } from './core/logger/logger.js';
 import { connectDatabase, prisma } from './core/database/prisma.client.js';
 import { AnalyzerService } from './modules/analyzer/analyzer.service.js';
+import { seedAdminAndMastersIfNeeded } from './core/database/seedInit.js';
 
 const startServer = async () => {
   try {
     await connectDatabase();
+    await seedAdminAndMastersIfNeeded();
     await AnalyzerService.seedDefaultsIfNeeded();
     AnalyzerService.startListeners();
 
