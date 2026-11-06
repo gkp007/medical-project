@@ -26,6 +26,7 @@ export interface TopNavbarProps {
   onOpenSearch: () => void;
   onNavigateNewBill: () => void;
   onNavigateSettings: () => void;
+  onNavigatePublicSite?: () => void;
   onOpenTicketModal?: () => void;
   onOpenSmsModal?: () => void;
   onOpenReferModal?: () => void;
@@ -44,6 +45,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   onOpenSearch,
   onNavigateNewBill,
   onNavigateSettings,
+  onNavigatePublicSite,
   onOpenTicketModal,
   onOpenSmsModal,
   onOpenReferModal,
@@ -51,7 +53,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   smsBalance = 240,
   activeBranch = 'main',
   onSelectBranch,
-  clinicName = 'Apex Diagnostic Centre & Imaging Network',
+  clinicName = 'Aastha Polyclinic & Diagnostic Centre',
   userName = 'Dr. Sameer Verma, MD',
   userRole = 'Super Admin',
   onLogout,
@@ -645,6 +647,18 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
               <div style={{ padding: '8px 16px', borderBottom: '1px solid #f1f5f9' }}>
                 <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>{userName}</div>
                 <div style={{ fontSize: '11px', color: '#64748b' }}>Role: {userRole}</div>
+              </div>
+              <div
+                onClick={() => {
+                  setIsProfileOpen(false);
+                  if (onNavigatePublicSite) onNavigatePublicSite();
+                }}
+                style={{ padding: '8px 16px', fontSize: '13px', color: '#0284c7', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #f1f5f9' }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f9ff')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+              >
+                <ExternalLink size={14} color="#0284c7" />
+                <span style={{ fontWeight: 600 }}>Aastha Public Website</span>
               </div>
               <div
                 onClick={() => {

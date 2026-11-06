@@ -64,11 +64,15 @@ import { Card } from './components/atoms/Card';
 import { Button } from './components/atoms/Button';
 import { CheckCircle2 } from 'lucide-react';
 import { LoginPage } from './pages/auth/LoginPage';
+import { LandingPage } from './pages/public/LandingPage';
 import { TerminalLockModal } from './components/organisms/modals/TerminalLockModal';
 import { authApi, getAuthToken, clearAuthToken } from './services/api';
 
 const pathToScreen: Record<string, string> = {
-  '/': 'dashboard',
+  '/': 'landing',
+  '/home': 'landing',
+  '/landing': 'landing',
+  '/login': 'login',
   '/dashboard': 'dashboard',
   '/business/daily': 'daily_business',
   '/business/expenses': 'expenses',
@@ -115,7 +119,9 @@ const pathToScreen: Record<string, string> = {
 };
 
 const screenToPath: Record<string, string> = {
-  dashboard: '/',
+  landing: '/',
+  login: '/login',
+  dashboard: '/dashboard',
   daily_business: '/business/daily',
   expenses: '/business/expenses',
   due_reports: '/business/due-reports',
@@ -162,7 +168,7 @@ const screenToPath: Record<string, string> = {
 export function App() {
   const [activeScreen, setActiveScreenState] = useState<string>(() => {
     const path = window.location.pathname.replace(/\/$/, '') || '/';
-    return pathToScreen[path] || 'dashboard';
+    return pathToScreen[path] || 'landing';
   });
 
   const setActiveScreen = (screen: string) => {
@@ -176,7 +182,7 @@ export function App() {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname.replace(/\/$/, '') || '/';
-      setActiveScreenState(pathToScreen[path] || 'dashboard');
+      setActiveScreenState(pathToScreen[path] || 'landing');
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -283,6 +289,16 @@ export function App() {
 
   const renderActiveScreen = () => {
     switch (activeScreen) {
+      // 0. PUBLIC SCREENS
+      case 'landing':
+        return (
+          <LandingPage
+            onOpenLogin={() => setActiveScreen('login')}
+            onOpenDashboard={() => setActiveScreen('dashboard')}
+            currentUser={currentUser}
+          />
+        );
+
       // 1. STANDALONE SCREENS
       case 'dashboard':
         return (
@@ -537,16 +553,48 @@ export function App() {
         fontFamily: 'sans-serif'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>Apex Diagnostic Centre</div>
-          <div style={{ fontSize: '13px', color: '#94a3b8' }}>Loading secure LIS session...</div>
+          <div style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>Aastha Polyclinic & Diagnostic Centre</div>
+          <div style={{ fontSize: '13px', color: '#94a3b8' }}>Loading clinical session...</div>
         </div>
       </div>
     );
   }
 
-  // Unauthenticated screen
+  // 1. Landing Page (Publicly accessible to everyone)
+  if (activeScreen === 'landing') {
+    return (
+      <LandingPage
+        onOpenLogin={() => setActiveScreen('login')}
+        onOpenDashboard={() => setActiveScreen('dashboard')}
+        currentUser={currentUser}
+      />
+    );
+  }
+
+  // 2. Login Page
+  if (activeScreen === 'login') {
+    return (
+      <LoginPage
+        onLoginSuccess={(user, token) => {
+          handleLoginSuccess(user, token);
+          setActiveScreen('dashboard');
+        }}
+        onBackToHome={() => setActiveScreen('landing')}
+      />
+    );
+  }
+
+  // 3. Unauthenticated access to protected LIS routes
   if (!isAuthenticated) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <LoginPage
+        onLoginSuccess={(user, token) => {
+          handleLoginSuccess(user, token);
+          setActiveScreen('dashboard');
+        }}
+        onBackToHome={() => setActiveScreen('landing')}
+      />
+    );
   }
 
   return (

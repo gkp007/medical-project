@@ -37,7 +37,7 @@ export const MasterAppShell: React.FC<MasterAppShellProps> = ({
   const [activeBranch, setActiveBranch] = useState<string>(
     () => localStorage.getItem('labsmart_active_branch') || 'main'
   );
-  const [clinicName, setClinicName] = useState('Apex Diagnostic Centre');
+  const [clinicName, setClinicName] = useState('Aastha Polyclinic & Diagnostic Centre');
   const [userName, setUserName] = useState(currentUser?.fullName || 'Dr. Sameer Verma, MD');
   const [userRole, setUserRole] = useState(currentUser?.role || 'Super Admin');
   const [smsBalance, setSmsBalance] = useState(240);
@@ -114,6 +114,7 @@ export const MasterAppShell: React.FC<MasterAppShellProps> = ({
         onOpenSearch={() => setIsSearchOpen(true)}
         onNavigateNewBill={() => onNavigate('new_bill')}
         onNavigateSettings={() => onNavigate('settings')}
+        onNavigatePublicSite={() => onNavigate('landing')}
         onOpenTicketModal={() => setIsTicketOpen(true)}
         onOpenSmsModal={() => setIsSmsOpen(true)}
         onOpenReferModal={() => setIsReferOpen(true)}

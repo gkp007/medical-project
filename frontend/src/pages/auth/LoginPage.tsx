@@ -22,9 +22,10 @@ import { authApi } from '../../services/api';
 
 interface LoginPageProps {
   onLoginSuccess: (user: any, token: string) => void;
+  onBackToHome?: () => void;
 }
 
-export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
+export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onBackToHome }) => {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
 
   // Sign In States
@@ -191,6 +192,29 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           textAlign: 'center',
           position: 'relative'
         }}>
+          {onBackToHome && (
+            <button
+              onClick={onBackToHome}
+              style={{
+                position: 'absolute',
+                top: '14px',
+                left: '16px',
+                background: 'rgba(255, 255, 255, 0.15)',
+                border: 'none',
+                color: '#ffffff',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              ← Aastha Clinic Home
+            </button>
+          )}
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
