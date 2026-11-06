@@ -248,54 +248,40 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className="lp-topbar-left">
             <span className="lp-badge-pulse">
               <span className="lp-pulse-dot" />
-              NABL ISO 15189:2022 Accredited Laboratory & Diagnostic RIS
+              NABL ISO 15189:2022 Accredited
             </span>
             <span className="lp-topbar-item">
-              <Clock size={13} />
+              <Clock size={12} />
               Mon - Sat: 7:00 AM – 9:00 PM | Sun: 7:00 AM – 2:00 PM
+            </span>
+            <span className="lp-topbar-item">
+              <MapPin size={12} />
+              Plot 42, Health City Enclave
             </span>
           </div>
 
           <div className="lp-topbar-right">
             <a href="tel:+919876543210" className="lp-topbar-item" style={{ fontWeight: 600 }}>
-              <PhoneCall size={13} color="#38bdf8" />
-              Emergency Helpline: +91 98765 43210
+              <PhoneCall size={12} color="#38bdf8" />
+              Emergency: +91 98765 43210
             </a>
-            <span style={{ color: '#475569' }}>|</span>
+            <span style={{ color: '#334155' }}>|</span>
             {currentUser ? (
               <button
                 onClick={onOpenDashboard}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#38bdf8',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
+                className="lp-btn-top-staff"
+                style={{ background: '#0284c7', color: '#ffffff' }}
               >
-                <ShieldCheck size={14} />
-                Terminal ({currentUser.fullName})
+                <ShieldCheck size={12} />
+                Terminal ({currentUser.fullName.split(' ')[0]})
               </button>
             ) : (
               <button
                 onClick={onOpenLogin}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#94a3b8',
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
+                className="lp-btn-top-staff"
               >
-                <Lock size={12} />
-                Staff LIS Login
+                <Lock size={11} />
+                Staff / Doctor Login
               </button>
             )}
           </div>
@@ -312,23 +298,27 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           >
             <div className="lp-logo-icon">
-              <HeartPulse size={24} />
+              <HeartPulse size={22} />
             </div>
             <div className="lp-logo-text">
-              <h1>Aastha Polyclinic & Diagnostic Centre</h1>
-              <span>Advanced Multi-Specialty & Certified Diagnostic Network</span>
+              <div className="lp-brand-title">
+                Aastha <span className="lp-brand-light">Polyclinic & Diagnostic Centre</span>
+              </div>
+              <div className="lp-brand-subtitle">
+                <span>MULTI-SPECIALTY OPD</span> • <span>PATHOLOGY & RADIOLOGY NETWORK</span>
+              </div>
             </div>
           </div>
 
           <ul className="lp-nav-links">
             <li>
               <a href="#services" className="lp-nav-link">
-                Diagnostics & Imaging
+                Diagnostics
               </a>
             </li>
             <li>
               <a href="#tests" className="lp-nav-link">
-                Find Tests & Rates
+                Tests & Rates
               </a>
             </li>
             <li>
@@ -338,42 +328,42 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </li>
             <li>
               <a href="#doctors" className="lp-nav-link">
-                Specialist Doctors
+                Doctors
               </a>
             </li>
             <li>
               <a href="#tracker" className="lp-nav-link">
-                Online Reports
+                Track Report
               </a>
             </li>
             <li>
               <a href="#contact" className="lp-nav-link">
-                Contact & Timings
+                Contact
               </a>
             </li>
           </ul>
 
           <div className="lp-nav-actions">
             {currentUser ? (
-              <button onClick={onOpenDashboard} className="lp-btn-primary">
-                <Activity size={16} />
+              <button onClick={onOpenDashboard} className="lp-btn-book">
+                <Activity size={15} />
                 Enter LIS Workspace
               </button>
             ) : (
               <>
+                <a href="#tracker" className="lp-btn-track">
+                  <FileText size={14} color="#0284c7" />
+                  <span>Download Report</span>
+                </a>
                 <button
                   onClick={() => {
                     setBookingType('home_collection');
                     setIsBookingOpen(true);
                   }}
-                  className="lp-btn-primary"
+                  className="lp-btn-book"
                 >
-                  <Truck size={16} />
-                  Book Home Collection
-                </button>
-                <button onClick={onOpenLogin} className="lp-btn-staff">
-                  <Lock size={15} />
-                  Staff Portal
+                  <Truck size={15} />
+                  <span>Book Home Visit</span>
                 </button>
               </>
             )}
