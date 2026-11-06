@@ -6,6 +6,9 @@ import { authenticate, requirePermission } from '../../core/middleware/authentic
 
 const router = Router();
 
+// Public doctor directory for landing page (no auth required)
+router.get('/public', DoctorController.listDoctors);
+
 router.use(authenticate);
 
 router.get('/', DoctorController.listDoctors);

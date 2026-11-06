@@ -71,6 +71,50 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     notes: '',
   });
 
+  // Consultant Doctors (Dynamic from backend)
+  const [dynamicDoctors, setDynamicDoctors] = useState<any[]>([
+    {
+      id: 'doc-1',
+      name: 'Dr. Rajesh Gupta',
+      specialty: 'General Medicine & Diabetology',
+      degree: 'MD (Medicine), MBBS • 18+ Yrs Exp',
+      bio: 'Specialist in chronic metabolic diseases, diabetes management, hypertension, and lifestyle medicine.',
+      initials: 'RG',
+      avatarBg: '#eff6ff',
+      avatarColor: '#0284c7',
+    },
+    {
+      id: 'doc-2',
+      name: 'Dr. Sunita Deshmukh',
+      specialty: 'Obstetrics & Gynecology',
+      degree: 'MBBS, DGO • 15+ Yrs Exp',
+      bio: "Expert in high-risk pregnancy care, women's wellness, infertility screening, and hormonal health.",
+      initials: 'SD',
+      avatarBg: '#fdf2f8',
+      avatarColor: '#db2777',
+    },
+    {
+      id: 'doc-3',
+      name: 'Dr. A. K. Sharma',
+      specialty: 'Director of Pathology',
+      degree: 'MD (Pathology), Ex-AIIMS • 20+ Yrs Exp',
+      bio: 'Leads our NABL accredited laboratory quality programs, automated hematology, and histopathology.',
+      initials: 'AS',
+      avatarBg: '#ecfdf5',
+      avatarColor: '#059669',
+    },
+    {
+      id: 'doc-4',
+      name: 'Dr. Pradeep Verma',
+      specialty: 'Consultant Radiologist',
+      degree: 'MD, DMRD (Radiodiagnosis) • 14+ Yrs Exp',
+      bio: 'Specializes in fetal ultrasound anomalies, color Doppler vascular studies, digital radiography and CT imaging.',
+      initials: 'PV',
+      avatarBg: '#f5f3ff',
+      avatarColor: '#7c3aed',
+    },
+  ]);
+
   // Master Test Catalog (with live fallback & merging)
   const [dynamicCatalog, setDynamicCatalog] = useState<any[]>([
     {
@@ -195,7 +239,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     },
   ]);
 
-  // Load Live Tests from backend if available
+  // Load Live Tests & Doctors from backend if available
   useEffect(() => {
     publicApi
       .listTests()
@@ -208,8 +252,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             specimen: t.specimen || 'Serum',
             fasting: 'Standard protocol',
             tat: `Within ${t.tatHours || 4} Hours`,
-            rate: t.rate || 400,
-            originalRate: Math.round((t.rate || 400) * 1.3),
           }));
           // Merge unique by code
           setDynamicCatalog((prev) => {
@@ -221,6 +263,46 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       })
       .catch(() => {
         // use fallback catalog cleanly
+      });
+
+    // Load Doctors dynamically from backend database
+    publicApi
+      .listDoctors()
+      .then((res) => {
+        if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
+          const loaded = res.data.map((d: any, idx: number) => {
+            const initials = d.name
+              ? d.name
+                  .replace(/^Dr\.\s*/i, '')
+                  .split(' ')
+                  .map((n: string) => n[0])
+                  .join('')
+                  .slice(0, 2)
+                  .toUpperCase()
+              : 'DR';
+            const colors = [
+              { bg: '#eff6ff', color: '#0284c7' },
+              { bg: '#fdf2f8', color: '#db2777' },
+              { bg: '#ecfdf5', color: '#059669' },
+              { bg: '#f5f3ff', color: '#7c3aed' },
+            ];
+            const theme = colors[idx % colors.length];
+            return {
+              id: d.id,
+              name: d.name.startsWith('Dr.') ? d.name : `Dr. ${d.name}`,
+              specialty: d.specialty || 'Consultant Specialist',
+              degree: d.degree ? `${d.degree} • Experienced Specialist` : 'MBBS, MD',
+              bio: `Consultant in ${d.specialty || 'General Diagnostics'}. Daily clinical OPD consultations and case evaluations at Aastha Centre.`,
+              initials,
+              avatarBg: theme.bg,
+              avatarColor: theme.color,
+            };
+          });
+          setDynamicDoctors(loaded);
+        }
+      })
+      .catch(() => {
+        // use default doctors cleanly
       });
   }, []);
 
@@ -460,7 +542,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 }}
                 className="lp-nav-link"
               >
-                Tests & Rates
+                Tests & Scans
               </a>
             </li>
             <li>
@@ -1042,11 +1124,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
          -------------------------------------------------------------------- */}
       <section id="tests" className="lp-section">
         <div className="lp-section-header">
-          <span className="lp-section-tag">Transparent Diagnostics</span>
-          <h2 className="lp-section-title">Diagnostic Test Catalog & Price Calculator</h2>
+          <span className="lp-section-tag">Quality Diagnostics</span>
+          <h2 className="lp-section-title">Diagnostic Test Catalog & Investigation Directory</h2>
           <p className="lp-section-desc">
-            Search 150+ investigations, check fasting instructions, turnaround times, and add
-            to your home collection basket with 1 click.
+            Search 150+ investigations, check fasting instructions, turnaround times, and book
+            doorstep home sample collection with 1 click.
           </p>
         </div>
 
@@ -1167,11 +1249,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     }}
                   >
                     <div>
-                      <span style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a' }}>
-                        ₹{test.rate}
-                      </span>
-                      <span style={{ fontSize: '13px', color: '#94a3b8', textDecoration: 'line-through', marginLeft: '6px' }}>
-                        ₹{test.originalRate}
+                      <span
+                        style={{
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          color: '#059669',
+                          background: '#ecfdf5',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <Check size={13} /> NABL Certified
                       </span>
                     </div>
 
@@ -1232,10 +1323,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </div>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: '16px' }}>
-                    {basket.length} {basket.length === 1 ? 'Test' : 'Tests'} Selected in Basket
+                    {basket.length} {basket.length === 1 ? 'Test' : 'Tests'} Selected for Home Collection
                   </div>
                   <div style={{ fontSize: '13px', color: '#94a3b8' }}>
-                    Total Estimated Amount: <strong style={{ color: '#38bdf8' }}>₹{basketTotal}</strong> (Free doorstep sample collection within 5 km)
+                    Free doorstep sample pickup with certified zero-mixup vacuum tubes
                   </div>
                 </div>
               </div>
@@ -1290,10 +1381,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <h3 className="lp-package-title">Aastha Basic Wellness</h3>
             <div className="lp-package-subtitle">Essential screening for young adults (42 parameters)</div>
 
-            <div className="lp-package-price-wrap">
-              <span className="lp-package-price">₹799</span>
-              <span className="lp-package-original">₹1,500</span>
-              <span className="lp-package-discount">47% OFF</span>
+            <div style={{ display: 'flex', gap: '8px', margin: '14px 0 18px', flexWrap: 'wrap' }}>
+              <span style={{ background: '#ecfdf5', color: '#047857', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>
+                42 Vital Parameters
+              </span>
+              <span style={{ background: '#f0fdf4', color: '#16a34a', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>
+                Same-Day Report
+              </span>
             </div>
 
             <ul className="lp-package-tests">
@@ -1306,7 +1400,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             <button
               onClick={() => {
-                setBasket([{ code: 'PKG-BASIC', name: 'Aastha Basic Wellness Package (42 tests)', rate: 799 }]);
+                setBasket([{ code: 'PKG-BASIC', name: 'Aastha Basic Wellness Package (42 parameters)' }]);
                 setBookingType('home_collection');
                 setIsBookingOpen(true);
               }}
@@ -1323,10 +1417,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <h3 className="lp-package-title">Executive Comprehensive Checkup</h3>
             <div className="lp-package-subtitle">Holistic whole-body analysis (78 parameters)</div>
 
-            <div className="lp-package-price-wrap">
-              <span className="lp-package-price">₹1,999</span>
-              <span className="lp-package-original">₹4,200</span>
-              <span className="lp-package-discount">52% OFF</span>
+            <div style={{ display: 'flex', gap: '8px', margin: '14px 0 18px', flexWrap: 'wrap' }}>
+              <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>
+                78 Comprehensive Parameters
+              </span>
+              <span style={{ background: '#f0f9ff', color: '#0284c7', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>
+                Includes ECG & X-Ray
+              </span>
             </div>
 
             <ul className="lp-package-tests">
@@ -1341,7 +1438,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             <button
               onClick={() => {
-                setBasket([{ code: 'PKG-EXEC', name: 'Executive Comprehensive Checkup (78 tests)', rate: 1999 }]);
+                setBasket([{ code: 'PKG-EXEC', name: 'Executive Comprehensive Checkup (78 parameters)' }]);
                 setBookingType('home_collection');
                 setIsBookingOpen(true);
               }}
@@ -1357,10 +1454,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <h3 className="lp-package-title">Senior Citizen Golden Health</h3>
             <div className="lp-package-subtitle">Specialized geriatric profile with vitamins (92 parameters)</div>
 
-            <div className="lp-package-price-wrap">
-              <span className="lp-package-price">₹2,799</span>
-              <span className="lp-package-original">₹6,000</span>
-              <span className="lp-package-discount">53% OFF</span>
+            <div style={{ display: 'flex', gap: '8px', margin: '14px 0 18px', flexWrap: 'wrap' }}>
+              <span style={{ background: '#ecfdf5', color: '#047857', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>
+                92 Advanced Parameters
+              </span>
+              <span style={{ background: '#fef3c7', color: '#b45309', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>
+                Includes Vitamins & USG
+              </span>
             </div>
 
             <ul className="lp-package-tests">
@@ -1374,7 +1474,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             <button
               onClick={() => {
-                setBasket([{ code: 'PKG-SENIOR', name: 'Senior Citizen Golden Health Profile (92 tests)', rate: 2799 }]);
+                setBasket([{ code: 'PKG-SENIOR', name: 'Senior Citizen Golden Health Profile (92 parameters)' }]);
                 setBookingType('home_collection');
                 setIsBookingOpen(true);
               }}
@@ -1401,93 +1501,35 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
 
         <div className="lp-doctors-grid">
-          {/* Doctor 1 */}
-          <div className="lp-doctor-card">
-            <div className="lp-doctor-avatar">RG</div>
-            <h4 className="lp-doctor-name">Dr. Rajesh Gupta</h4>
-            <div className="lp-doctor-spec">General Medicine & Diabetology</div>
-            <div className="lp-doctor-deg">MD (Medicine), MBBS • 18+ Yrs Exp</div>
-            <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px 0' }}>
-              Specialist in chronic metabolic diseases, diabetes management, hypertension, and lifestyle medicine.
-            </p>
-            <button
-              onClick={() => {
-                setSelectedDoctor('Dr. Rajesh Gupta, MD (General Medicine)');
-                setBookingType('opd_visit');
-                setIsBookingOpen(true);
-              }}
-              className="lp-btn-outline"
-              style={{ fontSize: '12.5px', padding: '8px 16px' }}
-            >
-              Consult Dr. Gupta
-            </button>
-          </div>
-
-          {/* Doctor 2 */}
-          <div className="lp-doctor-card">
-            <div className="lp-doctor-avatar" style={{ background: '#fdf2f8', color: '#db2777' }}>SD</div>
-            <h4 className="lp-doctor-name">Dr. Sunita Deshmukh</h4>
-            <div className="lp-doctor-spec" style={{ color: '#db2777' }}>Obstetrics & Gynecology</div>
-            <div className="lp-doctor-deg">MBBS, DGO • 15+ Yrs Exp</div>
-            <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px 0' }}>
-              Expert in high-risk pregnancy care, women's wellness, infertility screening, and hormonal health.
-            </p>
-            <button
-              onClick={() => {
-                setSelectedDoctor('Dr. Sunita Deshmukh, MBBS, DGO (Gynecologist)');
-                setBookingType('opd_visit');
-                setIsBookingOpen(true);
-              }}
-              className="lp-btn-outline"
-              style={{ fontSize: '12.5px', padding: '8px 16px' }}
-            >
-              Consult Dr. Deshmukh
-            </button>
-          </div>
-
-          {/* Doctor 3 */}
-          <div className="lp-doctor-card">
-            <div className="lp-doctor-avatar" style={{ background: '#eff6ff', color: '#2563eb' }}>AS</div>
-            <h4 className="lp-doctor-name">Dr. A. K. Sharma</h4>
-            <div className="lp-doctor-spec" style={{ color: '#2563eb' }}>Director of Pathology</div>
-            <div className="lp-doctor-deg">MD (Pathology), Ex-AIIMS • 20+ Yrs Exp</div>
-            <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px 0' }}>
-              Leads our NABL accredited laboratory quality programs, automated hematology, and histopathology.
-            </p>
-            <button
-              onClick={() => {
-                setSelectedDoctor('Dr. A. K. Sharma, MD (Pathology)');
-                setBookingType('opd_visit');
-                setIsBookingOpen(true);
-              }}
-              className="lp-btn-outline"
-              style={{ fontSize: '12.5px', padding: '8px 16px' }}
-            >
-              Consult Dr. Sharma
-            </button>
-          </div>
-
-          {/* Doctor 4 */}
-          <div className="lp-doctor-card">
-            <div className="lp-doctor-avatar" style={{ background: '#f5f3ff', color: '#7c3aed' }}>PV</div>
-            <h4 className="lp-doctor-name">Dr. Pradeep Verma</h4>
-            <div className="lp-doctor-spec" style={{ color: '#7c3aed' }}>Consultant Radiologist</div>
-            <div className="lp-doctor-deg">MD, DMRD (Radiodiagnosis) • 14+ Yrs Exp</div>
-            <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px 0' }}>
-              Specializes in fetal ultrasound anomalies, color Doppler vascular studies, digital radiography and CT imaging.
-            </p>
-            <button
-              onClick={() => {
-                setSelectedDoctor('Dr. Pradeep Verma, MD (Radiology)');
-                setBookingType('opd_visit');
-                setIsBookingOpen(true);
-              }}
-              className="lp-btn-outline"
-              style={{ fontSize: '12.5px', padding: '8px 16px' }}
-            >
-              Consult Dr. Verma
-            </button>
-          </div>
+          {dynamicDoctors.map((doc) => (
+            <div key={doc.id} className="lp-doctor-card">
+              <div
+                className="lp-doctor-avatar"
+                style={{ background: doc.avatarBg || '#eff6ff', color: doc.avatarColor || '#0284c7' }}
+              >
+                {doc.initials}
+              </div>
+              <h4 className="lp-doctor-name">{doc.name}</h4>
+              <div className="lp-doctor-spec" style={{ color: doc.avatarColor || '#0284c7' }}>
+                {doc.specialty}
+              </div>
+              <div className="lp-doctor-deg">{doc.degree}</div>
+              <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px 0' }}>
+                {doc.bio}
+              </p>
+              <button
+                onClick={() => {
+                  setSelectedDoctor(`${doc.name} (${doc.specialty})`);
+                  setBookingType('opd_visit');
+                  setIsBookingOpen(true);
+                }}
+                className="lp-btn-outline"
+                style={{ fontSize: '12.5px', padding: '8px 16px' }}
+              >
+                Consult {doc.name.split(' ')[0]} {doc.name.split(' ')[1] || ''}
+              </button>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -1709,7 +1751,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     scrollToSection('tests');
                   }}
                 >
-                  Test Menu & Rates
+                  Diagnostic Test Menu
                 </a>
               </li>
               <li>
@@ -1936,11 +1978,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <div style={{ marginBottom: '6px' }}>
                     <strong>Date & Slot:</strong> {bookingSuccess.date} • {bookingSuccess.time}
                   </div>
-                  {bookingSuccess.totalAmount > 0 && (
-                    <div>
-                      <strong>Estimated Amount:</strong> ₹{bookingSuccess.totalAmount}
-                    </div>
-                  )}
                 </div>
 
                 {/* WhatsApp Quick Confirm Button */}
@@ -2169,8 +2206,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     >
                       <span style={{ color: '#64748b' }}>Selected tests ({basket.length}): </span>
                       <strong style={{ color: '#0f172a' }}>{basket.map((b) => b.name).join(', ')}</strong>
-                      <div style={{ marginTop: '4px', fontWeight: 700, color: '#0284c7' }}>
-                        Total Payable: ₹{basketTotal}
+                      <div style={{ marginTop: '4px', fontSize: '12px', color: '#059669', fontWeight: 600 }}>
+                        Doorstep sample pickup with vacuum collection tubes
                       </div>
                     </div>
                   )}

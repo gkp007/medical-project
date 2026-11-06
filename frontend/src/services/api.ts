@@ -609,6 +609,7 @@ export const publicApi = {
       body: JSON.stringify(data),
     }),
   listTests: () => request<any>('/masters/public/tests'),
+  listDoctors: () => request<any>('/doctors/public'),
 };
 
 
