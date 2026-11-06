@@ -664,4 +664,137 @@ export class CaseService {
       barcodes
     };
   }
+
+  // --- Public Self-Service APIs (Patient Portal) ---
+  static async publicTrackCase(query: string) {
+    if (!query) throw new BadRequestError('Search query (Bill #, UHID, or Mobile) is required');
+    const clean = query.trim();
+
+    const caseRecord = await prisma.case.findFirst({
+      where: {
+        OR: [
+          { billNumber: { equals: clean } },
+          { dailyCode: { equals: clean } },
+          { uhid: { equals: clean } },
+          { patient: { mobile: { contains: clean } } }
+        ]
+      },
+      include: {
+        patient: true,
+        doctor: true,
+        items: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (!caseRecord) {
+      throw new NotFoundError('No diagnostic records found matching this Bill # or Mobile');
+    }
+
+    let currentStage = 1;
+    const sStatus = (caseRecord.sampleStatus || '').toLowerCase();
+    const rStatus = (caseRecord.reportStatus || '').toLowerCase();
+
+    if (sStatus.includes('collected') || sStatus.includes('received')) {
+      currentStage = 2;
+    }
+    if (rStatus.includes('progress') || rStatus.includes('review') || rStatus.includes('testing')) {
+      currentStage = 3;
+    }
+    if (rStatus.includes('signed') || rStatus.includes('final') || rStatus.includes('completed')) {
+      currentStage = 4;
+    }
+
+    return {
+      caseId: caseRecord.id,
+      billNumber: caseRecord.billNumber,
+      dailyCode: caseRecord.dailyCode,
+      uhid: caseRecord.uhid,
+      patientName: caseRecord.patient?.fullName || 'Walk-in Patient',
+      patientGender: caseRecord.patient?.gender || 'Male',
+      patientAge: caseRecord.patient?.age || 30,
+      doctorName: caseRecord.doctor?.name || 'Self / Direct Walk-in',
+      registeredAt: caseRecord.createdAt,
+      modality: caseRecord.modality,
+      reportStatus: caseRecord.reportStatus,
+      sampleStatus: caseRecord.sampleStatus,
+      paymentStatus: caseRecord.paymentStatus,
+      currentStage,
+      isReady: currentStage === 4,
+      items: caseRecord.items.map(item => ({
+        testCode: item.testCode,
+        testName: item.testName,
+        department: item.department,
+        rate: item.rate
+      }))
+    };
+  }
+
+  static async publicBookAppointment(data: {
+    fullName: string;
+    mobile: string;
+    age?: number;
+    gender?: string;
+    serviceType: string;
+    address?: string;
+    preferredDate?: string;
+    preferredTime?: string;
+    doctorName?: string;
+    tests?: string[];
+    totalAmount?: number;
+    notes?: string;
+  }) {
+    if (!data.fullName || !data.mobile) {
+      throw new BadRequestError('Patient full name and mobile number are required');
+    }
+
+    let patient = await prisma.patient.findFirst({
+      where: { mobile: data.mobile.trim() }
+    });
+
+    if (!patient) {
+      const year = new Date().getFullYear();
+      const patientCount = await prisma.patient.count();
+      const uhid = `UHID-${year}-${String(patientCount + 1).padStart(4, '0')}`;
+      patient = await prisma.patient.create({
+        data: {
+          uhid,
+          fullName: data.fullName.trim(),
+          mobile: data.mobile.trim(),
+          age: Number(data.age) || 30,
+          gender: data.gender || 'Male',
+          address: data.address || null
+        }
+      });
+    }
+
+    const refNumber = `ASTH-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    try {
+      await prisma.notificationLog.create({
+        data: {
+          recipient: data.mobile,
+          channel: 'WHATSAPP',
+          subject: 'APPOINTMENT_REQUEST',
+          content: `Booking ${refNumber} for ${data.fullName}: ${data.serviceType} on ${data.preferredDate || 'Earliest Slot'}. Tests: ${(data.tests || []).join(', ') || 'Diagnostic Profile'}`
+        }
+      });
+    } catch {
+      // non-blocking
+    }
+
+    return {
+      referenceNumber: refNumber,
+      patientId: patient.id,
+      uhid: patient.uhid,
+      fullName: data.fullName,
+      mobile: data.mobile,
+      serviceType: data.serviceType,
+      preferredDate: data.preferredDate || 'Earliest Available Slot',
+      preferredTime: data.preferredTime || 'Morning Slot',
+      tests: data.tests || [],
+      totalAmount: data.totalAmount || 0,
+      createdAt: new Date().toISOString()
+    };
+  }
 }

@@ -91,4 +91,34 @@ export class CaseController {
       next(err);
     }
   }
+
+  // --- Public Self-Service Endpoints ---
+  static async publicTrackCase(req: any, res: Response, next: NextFunction) {
+    try {
+      const query = (req.query.query as string) || (req.params.query as string);
+      const tracking = await CaseService.publicTrackCase(query);
+      res.status(200).json({ success: true, data: tracking });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async publicGetReport(req: any, res: Response, next: NextFunction) {
+    try {
+      const layout = (req.query.layout as string) || 'A4';
+      const printData = await CaseService.getPrintableBill(req.params.id as string, layout);
+      res.status(200).json({ success: true, data: printData });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async publicBookAppointment(req: any, res: Response, next: NextFunction) {
+    try {
+      const booking = await CaseService.publicBookAppointment(req.body);
+      res.status(201).json({ success: true, data: booking });
+    } catch (err) {
+      next(err);
+    }
+  }
 }

@@ -582,3 +582,33 @@ export const analyzerApi = {
   getPendingResultsForCase: (caseId: string) => request<any>(`/analyzers/pending/${caseId}`),
 };
 
+// -------------------------------------------------------------
+// PUBLIC PATIENT PORTAL API (Self-Service Diagnostics & Tracking)
+// -------------------------------------------------------------
+export const publicApi = {
+  trackCase: (query: string) =>
+    request<any>(`/cases/public/track?query=${encodeURIComponent(query)}`),
+  getReport: (caseId: string, layout: string = 'A4') =>
+    request<any>(`/cases/public/report/${caseId}?layout=${layout}`),
+  bookAppointment: (data: {
+    fullName: string;
+    mobile: string;
+    age?: number;
+    gender?: string;
+    serviceType: string;
+    address?: string;
+    preferredDate?: string;
+    preferredTime?: string;
+    doctorName?: string;
+    tests?: string[];
+    totalAmount?: number;
+    notes?: string;
+  }) =>
+    request<any>('/cases/public/book-appointment', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  listTests: () => request<any>('/masters/public/tests'),
+};
+
+

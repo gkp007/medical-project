@@ -6,6 +6,11 @@ import { authenticate, requirePermission } from '../../core/middleware/authentic
 
 const router = Router();
 
+// --- Public Patient Self-Service Routes (No Auth Required) ---
+router.get('/public/track', CaseController.publicTrackCase);
+router.get('/public/report/:id', CaseController.publicGetReport);
+router.post('/public/book-appointment', CaseController.publicBookAppointment);
+
 router.use(authenticate);
 
 router.get('/', CaseController.listCases);

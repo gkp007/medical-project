@@ -4,6 +4,9 @@ import { authenticate } from '../../core/middleware/authenticate.js';
 
 const router = Router();
 
+// Public test directory
+router.get('/public/tests', MasterController.listTests);
+
 router.use(authenticate);
 
 // Tests
