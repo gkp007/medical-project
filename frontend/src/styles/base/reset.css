@@ -1,54 +1,56 @@
-/* Modern CSS Reset */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* Modern CSS Reset - scoped inside base layer to prevent overriding utilities */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 
-html, body {
-  height: 100%;
-}
+  html, body {
+    height: 100%;
+  }
 
-body {
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  body {
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-img, picture, video, canvas {
-  display: block;
-  max-width: 100%;
-}
+  img, picture, video, canvas {
+    display: block;
+    max-width: 100%;
+  }
 
-svg {
-  display: inline-block;
-  vertical-align: middle;
-}
+  svg {
+    display: inline-block;
+    vertical-align: middle;
+  }
 
-input, button, textarea, select {
-  font: inherit;
-}
+  input, button, textarea, select {
+    font: inherit;
+  }
 
-p, h1, h2, h3, h4, h5, h6 {
-  overflow-wrap: break-word;
-}
+  p, h1, h2, h3, h4, h5, h6 {
+    overflow-wrap: break-word;
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 
-button {
-  cursor: pointer;
-}
+  button {
+    cursor: pointer;
+  }
 
-/* Only strip default OS bevels from unstyled buttons */
-button:not([class*="bg-"]):not([class*="border"]):not([class*="btn"]):not([style*="background"]) {
-  background: none;
-  border: none;
-}
+  /* Only strip default OS bevels from unstyled buttons */
+  button:not([class*="bg-"]):not([class*="border"]):not([class*="btn"]):not([style*="background"]) {
+    background: none;
+    border: none;
+  }
 
-table {
-  border-collapse: collapse;
-  width: 100%;
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
 }

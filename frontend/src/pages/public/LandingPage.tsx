@@ -802,14 +802,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Watermark Logo Accent in Background */}
-          <div
-            className="pointer-events-none select-none absolute w-[600px] h-[600px] -right-32 -top-20"
-            style={{ opacity: 0.04 }}
-          >
-            <img src="/aastha-icon.svg" alt="" className="w-full h-full object-contain select-none" />
-          </div>
-
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
               {/* Left Column: Heading & CTAs */}
