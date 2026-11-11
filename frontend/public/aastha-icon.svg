@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" fill="none">
+  <defs>
+    <linearGradient id="nd_skyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00A3FF"></stop>
+      <stop offset="100%" stop-color="#008BE2"></stop>
+    </linearGradient>
+    <linearGradient id="nd_mintGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14F195"></stop>
+      <stop offset="100%" stop-color="#00E5A3"></stop>
+    </linearGradient>
+    <linearGradient id="nd_centerBlend" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00C4EE"></stop>
+      <stop offset="100%" stop-color="#18E7B2"></stop>
+    </linearGradient>
+  </defs>
+  <circle cx="170" cy="170" r="115" fill="url(#nd_skyGrad)"></circle>
+  <circle cx="830" cy="830" r="115" fill="url(#nd_mintGrad)"></circle>
+  <rect x="50" y="340" width="900" height="320" rx="160" fill="#38D7E7" fill-opacity="0.85"></rect>
+  <path d="M 50 500 C 50 411.6 121.6 340 210 340 L 340 340 L 340 660 L 210 660 C 121.6 660 50 588.4 50 500 Z" fill="#00B4F8" fill-opacity="0.95"></path>
+  <path d="M 50 500 C 50 411.6 121.6 340 210 340 C 125 365 70 425 70 500 C 70 575 125 635 210 660 C 121.6 660 50 588.4 50 500 Z" fill="#0096EB"></path>
+  <path d="M 660 340 L 790 340 C 878.4 340 950 411.6 950 500 C 950 588.4 878.4 660 790 660 L 660 660 Z" fill="#00E5A3" fill-opacity="0.95"></path>
+  <path d="M 790 340 C 878.4 340 950 411.6 950 500 C 950 588.4 878.4 660 790 660 C 835 625 860 568 860 500 C 860 432 835 375 790 340 Z" fill="#00C88C"></path>
+  <rect x="340" y="50" width="320" height="900" rx="160" fill="#4AE0CE" fill-opacity="0.8"></rect>
+  <path d="M 340 210 C 340 121.6 411.6 50 500 50 C 588.4 50 660 121.6 660 210 L 660 340 L 340 340 Z" fill="#00A3FF" fill-opacity="0.95"></path>
+  <path d="M 500 50 C 588.4 50 660 121.6 660 210 C 625 125 568 75 500 75 C 432 75 375 125 340 210 C 340 121.6 411.6 50 500 50 Z" fill="#008BE2"></path>
+  <path d="M 500 50 C 588.4 50 660 121.6 660 210 C 660 270 600 340 500 340 C 440 280 430 180 500 50 Z" fill="#28C2FF" fill-opacity="0.75"></path>
+  <path d="M 340 660 L 660 660 L 660 790 C 660 878.4 588.4 950 500 950 C 411.6 950 340 878.4 340 790 Z" fill="#14F195" fill-opacity="0.95"></path>
+  <path d="M 340 790 C 340 878.4 411.6 950 500 950 C 415 915 365 858 365 790 C 365 722 415 665 500 660 L 340 660 Z" fill="#00D282"></path>
+  <rect x="340" y="340" width="320" height="320" fill="url(#nd_centerBlend)" fill-opacity="0.9"></rect>
+</svg>
+

@@ -27,6 +27,141 @@ export class MasterService {
     });
   }
 
+  static async getTestById(id: string) {
+    const test = await prisma.investigation.findUnique({
+      where: { id },
+      include: {
+        parameters: {
+          include: { ranges: true },
+          orderBy: { sortOrder: 'asc' }
+        }
+      }
+    });
+    if (!test) throw new NotFoundError('Test investigation not found');
+
+    const allPanels = await prisma.testPanel.findMany();
+    const panelsIncluded = allPanels
+      .filter((p) => {
+        try {
+          const ids = JSON.parse(p.testIds || '[]');
+          return ids.includes(test.id) || ids.includes(test.code);
+        } catch {
+          return false;
+        }
+      })
+      .map((p) => ({ name: p.name, id: p.id }));
+
+    const enrichedParameters = test.parameters.map((param) => ({
+      ...param,
+      ranges: param.ranges.map((r) => {
+        let displayRange = `${r.lowerBound} - ${r.upperBound}`;
+        let minAgeUnit = 'Years';
+        let maxAgeUnit = 'Years';
+        let selectType = 'numeric_range';
+        if (r.textualNormal) {
+          try {
+            const parsed = JSON.parse(r.textualNormal);
+            if (parsed && typeof parsed === 'object') {
+              if (parsed.displayRange) displayRange = parsed.displayRange;
+              if (parsed.minAgeUnit) minAgeUnit = parsed.minAgeUnit;
+              if (parsed.maxAgeUnit) maxAgeUnit = parsed.maxAgeUnit;
+              if (parsed.selectType) selectType = parsed.selectType;
+            }
+          } catch {
+            displayRange = r.textualNormal;
+            selectType = 'text';
+          }
+        }
+        return {
+          ...r,
+          displayRange,
+          minAgeUnit,
+          maxAgeUnit,
+          selectType
+        };
+      })
+    }));
+
+    return {
+      ...test,
+      parameters: enrichedParameters,
+      panelsIncluded
+    };
+  }
+
+  static async updateNormalValues(testId: string, data: any) {
+    const test = await prisma.investigation.findUnique({
+      where: { id: testId },
+      include: { parameters: { include: { ranges: true } } }
+    });
+    if (!test) throw new NotFoundError('Test investigation not found');
+
+    let targetParam = data.parameterId
+      ? test.parameters.find((p) => p.id === data.parameterId)
+      : test.parameters[0];
+
+    if (!targetParam) {
+      targetParam = await prisma.testParameter.create({
+        data: {
+          investigationId: testId,
+          code: test.code,
+          name: test.name,
+          unit: data.unit || 'g/dl',
+          sortOrder: 1
+        },
+        include: { ranges: true }
+      });
+    }
+
+    await prisma.parameterRange.deleteMany({
+      where: { parameterId: targetParam.id }
+    });
+
+    if (data.unit) {
+      await prisma.testParameter.update({
+        where: { id: targetParam.id },
+        data: { unit: data.unit }
+      });
+    }
+
+    if (data.selectType === 'text') {
+      await prisma.parameterRange.create({
+        data: {
+          parameterId: targetParam.id,
+          gender: 'All',
+          minAge: 0,
+          maxAge: 120,
+          lowerBound: 0,
+          upperBound: 0,
+          textualNormal: data.textualNormal || 'Negative'
+        }
+      });
+    } else if (Array.isArray(data.ranges) && data.ranges.length > 0) {
+      for (const r of data.ranges) {
+        const metadata = {
+          displayRange: r.displayRange && r.displayRange.trim() ? r.displayRange.trim() : `${r.lowerBound} - ${r.upperBound}`,
+          minAgeUnit: r.minAgeUnit || 'Years',
+          maxAgeUnit: r.maxAgeUnit || 'Years',
+          selectType: 'numeric_range'
+        };
+
+        await prisma.parameterRange.create({
+          data: {
+            parameterId: targetParam.id,
+            gender: r.gender || 'Any',
+            minAge: Number(r.minAge || 0),
+            maxAge: Number(r.maxAge !== undefined ? r.maxAge : 120),
+            lowerBound: Number(r.lowerBound || 0),
+            upperBound: Number(r.upperBound || 0),
+            textualNormal: JSON.stringify(metadata)
+          }
+        });
+      }
+    }
+
+    return this.getTestById(testId);
+  }
+
   static async createTest(data: any) {
     return prisma.investigation.create({
       data: {

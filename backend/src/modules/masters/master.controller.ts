@@ -12,6 +12,24 @@ export class MasterController {
     }
   }
 
+  static async getTestById(req: Request, res: Response, next: NextFunction) {
+    try {
+      const test = await MasterService.getTestById(req.params.id as string);
+      res.status(200).json({ success: true, data: test });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async updateNormalValues(req: Request, res: Response, next: NextFunction) {
+    try {
+      const updated = await MasterService.updateNormalValues(req.params.id as string, req.body);
+      res.status(200).json({ success: true, data: updated, message: 'Normal values updated successfully' });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async createTest(req: Request, res: Response, next: NextFunction) {
     try {
       const created = await MasterService.createTest(req.body);

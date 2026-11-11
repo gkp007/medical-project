@@ -1,34 +1,67 @@
 import React, { useState, useEffect, useRef } from 'react';
+import './nd-styles.css';
 import './LandingPage.css';
 import {
-  Activity,
-  ShieldCheck,
+  Phone,
+  FlaskConical,
+  Microscope,
+  Mail,
   Clock,
-  PhoneCall,
-  MapPin,
   Calendar,
   Search,
-  FileText,
-  Download,
   CheckCircle2,
-  Award,
-  HeartPulse,
-  Stethoscope,
-  Microscope,
+  ChevronDown,
+  ChevronRight,
+  ChevronLeft,
+  X,
+  Menu,
   Star,
+  Users,
+  FileText,
+  Truck,
+  HeartPulse,
   Sparkles,
   ArrowRight,
-  Lock,
-  X,
-  Truck,
-  MessageSquare,
-  QrCode,
-  Check,
-  Printer,
+  ShieldCheck,
+  Award,
+  Stethoscope,
+  Activity,
+  MessageCircle,
+  Play,
+  Pause,
+  RefreshCw,
+  Send,
+  MapPin,
   ExternalLink,
-  ChevronRight
+  Lock,
+  CreditCard
 } from 'lucide-react';
-import { publicApi } from '../../services/api';
+
+import {
+  Doctor,
+  ClinicService,
+  HealthPackage,
+  DiagnosticTest,
+  BlogPost,
+  FAQItem,
+  Testimonial,
+  CLINIC_INFO,
+  DOCTORS_DATA,
+  SERVICES_DATA,
+  PACKAGES_DATA,
+  ALL_TESTS_DATA,
+  BLOGS_DATA,
+  FAQS_DATA,
+  TESTIMONIALS_DATA,
+} from './landingData';
+
+import { DoctorBookingModal } from './modals/DoctorBookingModal';
+import { TestBookingModal } from './modals/TestBookingModal';
+import { TrackBookingModal } from './modals/TrackBookingModal';
+import { ComparePackagesModal } from './modals/ComparePackagesModal';
+import { DepartmentDetailsModal } from './modals/DepartmentDetailsModal';
+import { DoctorProfileModal } from './modals/DoctorProfileModal';
+import { BlogArticleModal } from './modals/BlogArticleModal';
 
 interface LandingPageProps {
   onOpenLogin: () => void;
@@ -41,2366 +74,2593 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onOpenDashboard,
   currentUser,
 }) => {
-  // Report Tracker State
-  const [reportQuery, setReportQuery] = useState('');
-  const [reportStatus, setReportStatus] = useState<any | null>(null);
-  const [reportError, setReportError] = useState<string | null>(null);
-  const [isSearchingReport, setIsSearchingReport] = useState(false);
-  const [previewReport, setPreviewReport] = useState<any | null>(null);
-  const trackerInputRef = useRef<HTMLInputElement>(null);
-
-  // Test Finder State
-  const [testSearch, setTestSearch] = useState('');
-  const [selectedDept, setSelectedDept] = useState('ALL');
-  const [basket, setBasket] = useState<any[]>([]);
-
-  // Booking Modal State
-  const [isBookingOpen, setIsBookingOpen] = useState(false);
-  const [bookingType, setBookingType] = useState<'home_collection' | 'opd_visit'>('home_collection');
-  const [bookingSuccess, setBookingSuccess] = useState<any | null>(null);
-  const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
-  const [selectedDoctor, setSelectedDoctor] = useState<string>('Any Available Specialist');
-  const [bookingForm, setBookingForm] = useState({
-    fullName: '',
-    mobile: '',
-    age: '',
-    gender: 'Male',
-    address: '',
-    preferredDate: '',
-    preferredTime: 'Morning (07:00 AM - 10:00 AM)',
-    notes: '',
+  // Live Clock State (IST)
+  const [currentTime, setCurrentTime] = useState<{
+    day: string;
+    dateStr: string;
+    hours: string;
+    minutes: string;
+    seconds: string;
+    ampm: string;
+  }>({
+    day: 'Wed',
+    dateStr: '11 Nov',
+    hours: '05',
+    minutes: '30',
+    seconds: '00',
+    ampm: 'PM',
   });
 
-  // Consultant Doctors (Dynamic from backend)
-  const [dynamicDoctors, setDynamicDoctors] = useState<any[]>([
-    {
-      id: 'doc-1',
-      name: 'Dr. Rajesh Gupta',
-      specialty: 'General Medicine & Diabetology',
-      degree: 'MD (Medicine), MBBS • 18+ Yrs Exp',
-      bio: 'Specialist in chronic metabolic diseases, diabetes management, hypertension, and lifestyle medicine.',
-      initials: 'RG',
-      avatarBg: '#eff6ff',
-      avatarColor: '#0284c7',
-    },
-    {
-      id: 'doc-2',
-      name: 'Dr. Sunita Deshmukh',
-      specialty: 'Obstetrics & Gynecology',
-      degree: 'MBBS, DGO • 15+ Yrs Exp',
-      bio: "Expert in high-risk pregnancy care, women's wellness, infertility screening, and hormonal health.",
-      initials: 'SD',
-      avatarBg: '#fdf2f8',
-      avatarColor: '#db2777',
-    },
-    {
-      id: 'doc-3',
-      name: 'Dr. A. K. Sharma',
-      specialty: 'Director of Pathology',
-      degree: 'MD (Pathology), Ex-AIIMS • 20+ Yrs Exp',
-      bio: 'Leads our NABL accredited laboratory quality programs, automated hematology, and histopathology.',
-      initials: 'AS',
-      avatarBg: '#ecfdf5',
-      avatarColor: '#059669',
-    },
-    {
-      id: 'doc-4',
-      name: 'Dr. Pradeep Verma',
-      specialty: 'Consultant Radiologist',
-      degree: 'MD, DMRD (Radiodiagnosis) • 14+ Yrs Exp',
-      bio: 'Specializes in fetal ultrasound anomalies, color Doppler vascular studies, digital radiography and CT imaging.',
-      initials: 'PV',
-      avatarBg: '#f5f3ff',
-      avatarColor: '#7c3aed',
-    },
-  ]);
-
-  // Master Test Catalog (with live fallback & merging)
-  const [dynamicCatalog, setDynamicCatalog] = useState<any[]>([
-    {
-      code: 'CBC',
-      name: 'Complete Blood Count (CBC / Hemogram with ESR)',
-      dept: 'Pathology',
-      specimen: 'EDTA Whole Blood',
-      fasting: 'No fasting required',
-      tat: 'Within 4 Hours',
-      rate: 350,
-      originalRate: 450,
-    },
-    {
-      code: 'LFT',
-      name: 'Liver Function Test (Complete LFT Profile - 11 Tests)',
-      dept: 'Biochemistry',
-      specimen: 'Serum',
-      fasting: '8-10 Hours Fasting',
-      tat: 'Within 6 Hours',
-      rate: 650,
-      originalRate: 850,
-    },
-    {
-      code: 'KFT',
-      name: 'Kidney Function Test (KFT / RFT with Electrolytes)',
-      dept: 'Biochemistry',
-      specimen: 'Serum',
-      fasting: 'Overnight Fasting preferred',
-      tat: 'Within 6 Hours',
-      rate: 700,
-      originalRate: 900,
-    },
-    {
-      code: 'LIPID',
-      name: 'Lipid Profile Screen (Cholesterol, HDL, LDL, Triglycerides)',
-      dept: 'Biochemistry',
-      specimen: 'Serum',
-      fasting: '12 Hours Strict Fasting',
-      tat: 'Within 6 Hours',
-      rate: 600,
-      originalRate: 800,
-    },
-    {
-      code: 'HBA1C',
-      name: 'HbA1c (Glycosylated Hemoglobin for 3-Month Diabetes Index)',
-      dept: 'Biochemistry',
-      specimen: 'EDTA Whole Blood',
-      fasting: 'No fasting required',
-      tat: 'Within 4 Hours',
-      rate: 450,
-      originalRate: 600,
-    },
-    {
-      code: 'THYROID',
-      name: 'Thyroid Profile Total (T3, T4, Ultrasensitive TSH)',
-      dept: 'Biochemistry',
-      specimen: 'Serum',
-      fasting: 'Morning sample preferred',
-      tat: 'Within 6 Hours',
-      rate: 500,
-      originalRate: 700,
-    },
-    {
-      code: 'USG-ABD',
-      name: 'Ultrasound Whole Abdomen & Pelvis (High-Resolution 4D)',
-      dept: 'Radiology',
-      specimen: 'Diagnostic Scan',
-      fasting: 'Fasting 6 hrs + Full Urinary Bladder',
-      tat: 'Instant Report',
-      rate: 1200,
-      originalRate: 1500,
-    },
-    {
-      code: 'XRAY-CHEST',
-      name: 'Digital X-Ray Chest PA View (Low-Radiation DR)',
-      dept: 'Radiology',
-      specimen: 'Digital Radiography',
-      fasting: 'No preparation needed',
-      tat: 'Within 30 Mins',
-      rate: 400,
-      originalRate: 550,
-    },
-    {
-      code: 'CT-BRAIN',
-      name: 'CT Brain Plain (Multi-slice Spiral CT)',
-      dept: 'Radiology',
-      specimen: 'CT Imaging',
-      fasting: 'No preparation needed',
-      tat: 'Within 2 Hours',
-      rate: 2500,
-      originalRate: 3200,
-    },
-    {
-      code: 'CT-CHEST',
-      name: 'CT High Resolution Chest (HRCT Lungs)',
-      dept: 'Radiology',
-      specimen: 'CT Imaging',
-      fasting: 'Fasting 4 hours if contrast indicated',
-      tat: 'Within 2 Hours',
-      rate: 3500,
-      originalRate: 4500,
-    },
-    {
-      code: 'BIOPSY-IHC',
-      name: 'Skin Biopsy Histopathology & IHC Analysis',
-      dept: 'Histopathology',
-      specimen: 'Tissue Biopsy',
-      fasting: 'Clinical protocol',
-      tat: 'Within 48 Hours',
-      rate: 1800,
-      originalRate: 2400,
-    },
-    {
-      code: 'HLA-B27',
-      name: 'HLA B27 PCR DNA Testing (Ankylosing Spondylitis)',
-      dept: 'Molecular Biology',
-      specimen: 'EDTA Whole Blood',
-      fasting: 'No fasting required',
-      tat: 'Within 24 Hours',
-      rate: 2200,
-      originalRate: 2800,
-    },
-  ]);
-
-  // Load Live Tests & Doctors from backend if available
   useEffect(() => {
-    publicApi
-      .listTests()
-      .then((res) => {
-        if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
-          const liveList = res.data.map((t: any) => ({
-            code: t.code,
-            name: t.name,
-            dept: t.department || 'Pathology',
-            specimen: t.specimen || 'Serum',
-            fasting: 'Standard protocol',
-            tat: `Within ${t.tatHours || 4} Hours`,
-          }));
-          // Merge unique by code
-          setDynamicCatalog((prev) => {
-            const existingCodes = new Set(liveList.map((l: any) => l.code));
-            const remaining = prev.filter((p) => !existingCodes.has(p.code));
-            return [...liveList, ...remaining];
-          });
-        }
-      })
-      .catch(() => {
-        // use fallback catalog cleanly
+    const updateTime = () => {
+      const now = new Date();
+      const options: Intl.DateTimeFormatOptions = {
+        timeZone: 'Asia/Kolkata',
+        weekday: 'short',
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      };
+      const formatter = new Intl.DateTimeFormat('en-IN', options);
+      const parts = formatter.formatToParts(now);
+
+      const weekday = parts.find(p => p.type === 'weekday')?.value || 'Wed';
+      const day = parts.find(p => p.type === 'day')?.value || '11';
+      const month = parts.find(p => p.type === 'month')?.value || 'Nov';
+      const hour = parts.find(p => p.type === 'hour')?.value || '05';
+      const minute = parts.find(p => p.type === 'minute')?.value || '30';
+      const second = parts.find(p => p.type === 'second')?.value || '00';
+      const dayPeriod = parts.find(p => p.type === 'dayPeriod')?.value?.toUpperCase() || 'PM';
+
+      setCurrentTime({
+        day: weekday,
+        dateStr: `${day} ${month}`,
+        hours: hour,
+        minutes: minute,
+        seconds: second,
+        ampm: dayPeriod,
       });
-
-    // Load Doctors dynamically from backend database
-    publicApi
-      .listDoctors()
-      .then((res) => {
-        if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
-          const loaded = res.data.map((d: any, idx: number) => {
-            const initials = d.name
-              ? d.name
-                  .replace(/^Dr\.\s*/i, '')
-                  .split(' ')
-                  .map((n: string) => n[0])
-                  .join('')
-                  .slice(0, 2)
-                  .toUpperCase()
-              : 'DR';
-            const colors = [
-              { bg: '#eff6ff', color: '#0284c7' },
-              { bg: '#fdf2f8', color: '#db2777' },
-              { bg: '#ecfdf5', color: '#059669' },
-              { bg: '#f5f3ff', color: '#7c3aed' },
-            ];
-            const theme = colors[idx % colors.length];
-            return {
-              id: d.id,
-              name: d.name.startsWith('Dr.') ? d.name : `Dr. ${d.name}`,
-              specialty: d.specialty || 'Consultant Specialist',
-              degree: d.degree ? `${d.degree} • Experienced Specialist` : 'MBBS, MD',
-              bio: `Consultant in ${d.specialty || 'General Diagnostics'}. Daily clinical OPD consultations and case evaluations at Aastha Centre.`,
-              initials,
-              avatarBg: theme.bg,
-              avatarColor: theme.color,
-            };
-          });
-          setDynamicDoctors(loaded);
-        }
-      })
-      .catch(() => {
-        // use default doctors cleanly
-      });
-  }, []);
-
-  // Filtered Tests
-  const filteredTests = dynamicCatalog.filter((t) => {
-    const matchesDept = selectedDept === 'ALL' || t.dept.toLowerCase() === selectedDept.toLowerCase();
-    const matchesQuery =
-      t.name.toLowerCase().includes(testSearch.toLowerCase()) ||
-      t.code.toLowerCase().includes(testSearch.toLowerCase());
-    return matchesDept && matchesQuery;
-  });
-
-  // Handle Live Track Report
-  const handleTrackReport = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!reportQuery.trim()) return;
-
-    setIsSearchingReport(true);
-    setReportError(null);
-    setReportStatus(null);
-
-    const clean = reportQuery.trim();
-
-    try {
-      // 1. Try real backend query first
-      const res = await publicApi.trackCase(clean);
-      if (res?.success && res.data) {
-        const d = res.data;
-        setReportStatus({
-          caseId: d.caseId,
-          billNumber: d.billNumber,
-          dailyCode: d.dailyCode,
-          uhid: d.uhid,
-          patientName: d.patientName,
-          date: new Date(d.registeredAt).toLocaleDateString(),
-          investigations: d.items?.map((i: any) => i.testName) || ['Complete Diagnostic Profile'],
-          currentStage: d.currentStage || 4,
-          stageName: d.reportStatus || 'Signed Off & Verified by Pathologist',
-          readyForDownload: d.isReady || d.currentStage >= 4,
-          rawCase: d,
-        });
-        return;
-      }
-    } catch {
-      // fall through to intelligent fallback matching
-    } finally {
-      setIsSearchingReport(false);
-    }
-
-    // Fallback: match known demo bills or generate verified sample preview
-    const upper = clean.toUpperCase();
-    if (upper.includes('0001') || upper.includes('0002') || upper.includes('RAHUL') || upper.startsWith('BL-')) {
-      setReportStatus({
-        caseId: 'demo-case-0001',
-        billNumber: upper.startsWith('BL-') ? upper : 'BL-2026-0001',
-        dailyCode: 'L1',
-        uhid: 'UHID-2026-0001',
-        patientName: 'Rahul Sharma (32 Yrs / Male)',
-        date: '04 Nov 2026',
-        investigations: ['Complete Blood Count (CBC / Hemogram)'],
-        currentStage: 4,
-        stageName: 'Signed Off & Verified by Pathologist',
-        readyForDownload: true,
-      });
-    } else {
-      setReportError(`No active diagnostic records found for "${clean}". Please verify your Bill number or 10-digit mobile number.`);
-    }
-  };
-
-  const toggleBasket = (test: any) => {
-    if (basket.some((b) => b.code === test.code)) {
-      setBasket(basket.filter((b) => b.code !== test.code));
-    } else {
-      setBasket([...basket, test]);
-    }
-  };
-
-  const basketTotal = basket.reduce((acc, curr) => acc + curr.rate, 0);
-
-  // Handle Real Booking Submission
-  const handleBookingSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!bookingForm.fullName || !bookingForm.mobile) {
-      alert('Please fill patient full name and mobile number');
-      return;
-    }
-
-    setIsSubmittingBooking(true);
-
-    const payload = {
-      fullName: bookingForm.fullName.trim(),
-      mobile: bookingForm.mobile.trim(),
-      age: Number(bookingForm.age) || 30,
-      gender: bookingForm.gender,
-      serviceType: bookingType === 'home_collection' ? 'Home Sample Collection' : 'Clinic OPD Visit',
-      address: bookingForm.address.trim() || undefined,
-      preferredDate: bookingForm.preferredDate || new Date().toISOString().split('T')[0],
-      preferredTime: bookingForm.preferredTime,
-      doctorName: bookingType === 'opd_visit' ? selectedDoctor : undefined,
-      tests: basket.map((b) => b.name),
-      totalAmount: basketTotal,
-      notes: bookingForm.notes.trim() || undefined,
     };
 
-    let refNumber = `ASTH-${Math.floor(100000 + Math.random() * 900000)}`;
+    updateTime();
+    const timer = setInterval(updateTime, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-    try {
-      const res = await publicApi.bookAppointment(payload);
-      if (res?.success && res.data?.referenceNumber) {
-        refNumber = res.data.referenceNumber;
-      }
-    } catch {
-      // client-side fallback continues seamlessly
-    } finally {
-      setIsSubmittingBooking(false);
+  // Modals Open State
+  const [isDoctorBookingOpen, setIsDoctorBookingOpen] = useState(false);
+  const [selectedDoctorIdForBooking, setSelectedDoctorIdForBooking] = useState<string | null>(null);
+  const [selectedSpecialtyForBooking, setSelectedSpecialtyForBooking] = useState<string | null>(null);
+
+  const [isTestBookingOpen, setIsTestBookingOpen] = useState(false);
+  const [selectedTestIdForBooking, setSelectedTestIdForBooking] = useState<string | null>(null);
+  const [selectedPackageIdForBooking, setSelectedPackageIdForBooking] = useState<string | null>(null);
+  const [bookingMode, setBookingMode] = useState<'center' | 'home'>('center');
+
+  const [isTrackBookingOpen, setIsTrackBookingOpen] = useState(false);
+  const [isComparePackagesOpen, setIsComparePackagesOpen] = useState(false);
+
+  const [selectedDepartment, setSelectedDepartment] = useState<ClinicService | null>(null);
+  const [selectedDoctorProfile, setSelectedDoctorProfile] = useState<Doctor | null>(null);
+  const [selectedArticle, setSelectedArticle] = useState<BlogPost | null>(null);
+
+  // Navigation Menus State
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Live 3S Rotating Spotlight State
+  const [spotlightIndex, setSpotlightIndex] = useState(0);
+  const [isSpotlightPaused, setIsSpotlightPaused] = useState(false);
+
+  useEffect(() => {
+    if (isSpotlightPaused) return;
+    const interval = setInterval(() => {
+      setSpotlightIndex(prev => (prev + 1) % 5);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [isSpotlightPaused]);
+
+  // Test Directory State
+  const [testSearchQuery, setTestSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [testOffset, setTestOffset] = useState(0);
+  const [isTestShufflingPaused, setIsTestShufflingPaused] = useState(false);
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
+
+  const testCategories = [
+    'All',
+    'Biochemistry',
+    'Hematology',
+    'Immunology & Serology',
+    'Microbiology',
+    'Molecular Biology',
+    'Histopathology',
+    'Radiology & USG',
+    'Cardiac Diagnostics',
+    'Physiotherapy',
+  ];
+
+  // Auto shuffle test catalog every 7 seconds if not paused and no search query
+  useEffect(() => {
+    if (isTestShufflingPaused || testSearchQuery) return;
+    const interval = setInterval(() => {
+      setTestOffset(prev => (prev + 3) % (ALL_TESTS_DATA.length - 6));
+    }, 7000);
+    return () => clearInterval(interval);
+  }, [isTestShufflingPaused, testSearchQuery]);
+
+  const filteredTests = ALL_TESTS_DATA.filter(t => {
+    const matchesQuery =
+      !testSearchQuery ||
+      t.name.toLowerCase().includes(testSearchQuery.toLowerCase()) ||
+      t.code.toLowerCase().includes(testSearchQuery.toLowerCase()) ||
+      t.category.toLowerCase().includes(testSearchQuery.toLowerCase());
+
+    const matchesCategory =
+      selectedCategory === 'All' ||
+      t.category.toLowerCase().includes(selectedCategory.toLowerCase()) ||
+      t.subCategory?.toLowerCase().includes(selectedCategory.toLowerCase());
+
+    return matchesQuery && matchesCategory;
+  });
+
+  const displayedTests = testSearchQuery
+    ? filteredTests
+    : filteredTests.slice(testOffset, testOffset + 9).length >= 6
+    ? filteredTests.slice(testOffset, testOffset + 9)
+    : filteredTests.slice(0, 9);
+
+  // FAQ State
+  const [faqCategory, setFaqCategory] = useState('All');
+  const [expandedFaqId, setExpandedFaqId] = useState<string | null>('faq-1');
+
+  const filteredFaqs =
+    faqCategory === 'All'
+      ? FAQS_DATA
+      : FAQS_DATA.filter(f => f.category.toLowerCase().includes(faqCategory.toLowerCase()));
+
+  // Callback Enquiry Form State
+  const [callbackForm, setCallbackForm] = useState({
+    name: '',
+    phone: '',
+    subject: 'Doctor Appointment Inquiry',
+    message: '',
+  });
+  const [callbackStatus, setCallbackStatus] = useState<string | null>(null);
+
+  const handleCallbackSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!callbackForm.name.trim() || !callbackForm.phone.trim()) {
+      alert('Please provide your name and phone number');
+      return;
     }
-
-    setBookingSuccess({
-      refNumber,
-      patientName: bookingForm.fullName,
-      service: payload.serviceType,
-      doctor: payload.doctorName,
-      date: payload.preferredDate,
-      time: payload.preferredTime,
-      totalAmount: basketTotal || 0,
-      testCount: basket.length,
-      mobile: bookingForm.mobile,
-    });
-  };
-
-  // Smooth Scroll Helper
-  const scrollToSection = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  const handleDownloadClick = () => {
-    scrollToSection('tracker');
+    setCallbackStatus('submitting');
     setTimeout(() => {
-      trackerInputRef.current?.focus();
-    }, 400);
+      setCallbackStatus('success');
+      setCallbackForm({
+        name: '',
+        phone: '',
+        subject: 'Doctor Appointment Inquiry',
+        message: '',
+      });
+      setTimeout(() => setCallbackStatus(null), 5000);
+    }, 700);
+  };
+
+  const scrollCategories = (direction: 'left' | 'right') => {
+    if (categoryScrollRef.current) {
+      categoryScrollRef.current.scrollBy({
+        left: direction === 'left' ? -200 : 200,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  const handleOpenDoctorBooking = (doctorId?: string, specialty?: string) => {
+    setSelectedDoctorIdForBooking(doctorId || null);
+    setSelectedSpecialtyForBooking(specialty || null);
+    setIsDoctorBookingOpen(true);
+  };
+
+  const handleOpenTestBooking = (testId?: string, packageId?: string, mode: 'center' | 'home' = 'center') => {
+    setSelectedTestIdForBooking(testId || null);
+    setSelectedPackageIdForBooking(packageId || null);
+    setBookingMode(mode);
+    setIsTestBookingOpen(true);
   };
 
   return (
-    <div className="lp-container">
-      {/* --------------------------------------------------------------------
-          1. Top Announcement & Emergency Bar
-         -------------------------------------------------------------------- */}
-      <div className="lp-topbar">
-        <div className="lp-topbar-inner">
-          <div className="lp-topbar-left">
-            <span className="lp-badge-pulse">
-              <span className="lp-pulse-dot" />
-              NABL ISO 15189:2022 Accredited
-            </span>
-            <span className="lp-topbar-item">
-              <Clock size={12} />
-              Mon - Sat: 7:00 AM – 9:00 PM | Sun: 7:00 AM – 2:00 PM
-            </span>
-            <span className="lp-topbar-item">
-              <MapPin size={12} />
-              Plot 42, Health City Enclave
-            </span>
+    <div className="min-h-screen flex flex-col bg-transparent text-slate-900 font-sans selection:bg-sky-100 selection:text-sky-900 relative">
+      {/* =========================================================================
+          1. TOP MICRO-BAR: Helplines, Social Icons, IST Clock & Live Marquee Ticker
+          ========================================================================= */}
+      <div className="bg-slate-950 text-slate-200 text-xs border-b border-slate-800/80 select-none">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 flex flex-wrap items-center justify-between gap-3">
+          {/* Left Helplines */}
+          <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-6 gap-y-1.5">
+            <div className="flex items-center gap-1.5 text-sky-400 font-medium">
+              <Phone className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden xs:inline">Clinic Booking:</span>
+              <a
+                href={`tel:${CLINIC_INFO.phonePrimary}`}
+                className="text-white hover:text-sky-300 font-bold tracking-wide transition-colors"
+              >
+                {CLINIC_INFO.phonePrimary}
+              </a>
+            </div>
+
+            <div className="hidden sm:flex items-center gap-1.5 text-teal-400 font-medium">
+              <FlaskConical className="w-3.5 h-3.5 shrink-0" />
+              <span>Laboratory:</span>
+              <a
+                href={`tel:${CLINIC_INFO.phoneLab}`}
+                className="text-white hover:text-teal-300 font-semibold tracking-wide transition-colors"
+              >
+                {CLINIC_INFO.phoneLab}
+              </a>
+            </div>
+
+            <div className="hidden xl:flex items-center gap-1.5 text-cyan-400 font-medium">
+              <Microscope className="w-3.5 h-3.5 shrink-0" />
+              <span>Histopathology:</span>
+              <a
+                href={`tel:${CLINIC_INFO.phoneHistopath}`}
+                className="text-white hover:text-cyan-300 font-semibold tracking-wide transition-colors"
+              >
+                {CLINIC_INFO.phoneHistopath}
+              </a>
+            </div>
+
+            <div className="hidden md:flex items-center gap-1.5 text-slate-400">
+              <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <a
+                href={`mailto:${CLINIC_INFO.email}`}
+                className="text-slate-300 hover:text-white transition-colors"
+              >
+                {CLINIC_INFO.email}
+              </a>
+            </div>
           </div>
 
-          <div className="lp-topbar-right">
-            <a href="tel:+919876543210" className="lp-topbar-item" style={{ fontWeight: 600 }}>
-              <PhoneCall size={12} color="#38bdf8" />
-              Emergency: +91 98765 43210
-            </a>
-            <span style={{ color: '#334155' }}>|</span>
-            {currentUser ? (
-              <button
-                onClick={onOpenDashboard}
-                className="lp-btn-top-staff"
-                style={{ background: '#0284c7', color: '#ffffff' }}
-              >
-                <ShieldCheck size={12} />
-                Terminal ({currentUser.fullName.split(' ')[0]})
-              </button>
-            ) : (
-              <button
-                onClick={onOpenLogin}
-                className="lp-btn-top-staff"
-              >
-                <Lock size={11} />
-                Staff / Doctor Login
-              </button>
-            )}
+          {/* Right: Social Icons & Live Real-Time IST Clock */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="hidden lg:flex items-center pr-2 border-r border-slate-800">
+              <div className="inline-flex items-center gap-1.5 p-1 bg-slate-900/80 rounded-2xl border border-slate-700/60 backdrop-blur-md">
+                <a
+                  href={`https://wa.me/${CLINIC_INFO.whatsapp}?text=Hello%20Aastha%20Diagnostics%2C%20I%20would%20like%20to%20inquire%20about%20booking%20and%20reports`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Connect with Aastha Diagnostics on WhatsApp"
+                  className="p-2 rounded-xl text-slate-300 hover:text-white transition-all duration-150 hover:scale-105 bg-emerald-600 hover:bg-emerald-500"
+                  title="WhatsApp: Chat Live"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                </a>
+                <a
+                  href="https://facebook.com/aasthapolyclinic"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Visit Facebook Page"
+                  className="p-2 rounded-xl text-slate-300 hover:text-white transition-all duration-150 hover:scale-105 bg-blue-600 hover:bg-blue-500"
+                  title="Facebook: Official Page"
+                >
+                  <svg className="w-3.5 h-3.5 fill-currentColor" viewBox="0 0 24 24">
+                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+                  </svg>
+                </a>
+                <a
+                  href="https://instagram.com/aasthapolyclinic"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Follow on Instagram"
+                  className="p-2 rounded-xl text-slate-300 hover:text-white transition-all duration-150 hover:scale-105 bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 hover:opacity-90"
+                  title="Instagram: Health Tips"
+                >
+                  <svg className="w-3.5 h-3.5 stroke-currentColor fill-none" viewBox="0 0 24 24" strokeWidth="2">
+                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                  </svg>
+                </a>
+                <a
+                  href="https://maps.google.com/?q=Aastha+Polyclinic+and+Diagnostics"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Read and Write Google Reviews"
+                  className="p-2 rounded-xl text-slate-300 hover:text-white transition-all duration-150 hover:scale-105 bg-amber-500 hover:bg-amber-400"
+                  title="Google Review: 5.0 ★ Rating"
+                >
+                  <Star className="w-3.5 h-3.5 fill-white text-white" />
+                </a>
+              </div>
+            </div>
+
+            {/* Live IST Clock with pulsing green dot */}
+            <div
+              className="inline-flex items-center gap-2 bg-slate-900/90 text-slate-100 border border-slate-700/80 px-2.5 sm:px-3 py-1 rounded-xl shadow-xs backdrop-blur-md select-none font-mono"
+              title="Clinic Real-Time Indian Standard Time (IST)"
+            >
+              <div className="flex items-center gap-1.5 text-teal-400">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                <Clock className="w-3.5 h-3.5 text-teal-300 shrink-0" />
+              </div>
+              <span className="hidden sm:inline-block text-[11px] font-sans font-medium text-slate-300 border-r border-slate-700/80 pr-2">
+                {currentTime.day}, {currentTime.dateStr}
+              </span>
+              <div className="flex items-baseline gap-1 text-xs sm:text-sm font-bold tracking-wider text-white">
+                <span className="text-teal-300 font-extrabold">{currentTime.hours}</span>
+                <span className="text-teal-400/80 animate-pulse">:</span>
+                <span className="text-teal-300 font-extrabold">{currentTime.minutes}</span>
+                <span className="text-teal-400/80 animate-pulse">:</span>
+                <span className="text-sky-300 text-xs font-semibold">{currentTime.seconds}</span>
+                <span className="text-[10px] font-sans font-black text-amber-300 ml-0.5 uppercase tracking-normal">
+                  {currentTime.ampm}
+                </span>
+                <span className="text-[9px] font-sans font-bold text-slate-400 hidden xs:inline ml-0.5">
+                  IST
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* --------------------------------------------------------------------
-          2. Sticky Main Header
-         -------------------------------------------------------------------- */}
-      <nav className="lp-navbar">
-        <div className="lp-navbar-inner">
-          <div
-            className="lp-logo"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          >
-            <div className="lp-logo-icon">
-              <HeartPulse size={22} />
-            </div>
-            <div className="lp-logo-text">
-              <div className="lp-brand-title">
-                Aastha <span className="lp-brand-light">Polyclinic & Diagnostic Centre</span>
-              </div>
-              <div className="lp-brand-subtitle">
-                <span>MULTI-SPECIALTY OPD</span> • <span>PATHOLOGY & RADIOLOGY NETWORK</span>
-              </div>
-            </div>
+      {/* Marquee Announcement Ticker */}
+      <div className="bg-gradient-to-r from-sky-950 via-slate-900 to-teal-950 text-white border-b border-sky-500/20 py-2 overflow-hidden relative shadow-xs select-none">
+        <div className="flex items-center">
+          <div className="shrink-0 flex items-center gap-1.5 bg-sky-900/90 text-sky-200 border border-sky-400/40 px-2.5 sm:px-3.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold mx-2 sm:mx-4 z-10 shadow-sm backdrop-blur-md">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            <span className="uppercase tracking-wider whitespace-nowrap">Welcome</span>
           </div>
 
-          <ul className="lp-nav-links">
-            <li>
-              <a
-                href="#services"
-                onClick={(e) => {
-                  e.preventDefault();
-                  scrollToSection('services');
-                }}
-                className="lp-nav-link"
-              >
-                Diagnostics
-              </a>
-            </li>
-            <li>
-              <a
-                href="#tests"
-                onClick={(e) => {
-                  e.preventDefault();
-                  scrollToSection('tests');
-                }}
-                className="lp-nav-link"
-              >
-                Tests & Scans
-              </a>
-            </li>
-            <li>
-              <a
-                href="#packages"
-                onClick={(e) => {
-                  e.preventDefault();
-                  scrollToSection('packages');
-                }}
-                className="lp-nav-link"
-              >
-                Health Packages
-              </a>
-            </li>
-            <li>
-              <a
-                href="#doctors"
-                onClick={(e) => {
-                  e.preventDefault();
-                  scrollToSection('doctors');
-                }}
-                className="lp-nav-link"
-              >
-                Doctors
-              </a>
-            </li>
-            <li>
-              <a
-                href="#tracker"
-                onClick={(e) => {
-                  e.preventDefault();
-                  scrollToSection('tracker');
-                }}
-                className="lp-nav-link"
-              >
-                Track Report
-              </a>
-            </li>
-            <li>
-              <a
-                href="#contact"
-                onClick={(e) => {
-                  e.preventDefault();
-                  scrollToSection('contact');
-                }}
-                className="lp-nav-link"
-              >
-                Contact
-              </a>
-            </li>
-          </ul>
-
-          <div className="lp-nav-actions">
-            {currentUser ? (
-              <button onClick={onOpenDashboard} className="lp-btn-book">
-                <Activity size={15} />
-                Enter LIS Workspace
-              </button>
-            ) : (
-              <>
-                <button onClick={handleDownloadClick} className="lp-btn-track">
-                  <FileText size={14} color="#0284c7" />
-                  <span>Download Report</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setBookingType('home_collection');
-                    setIsBookingOpen(true);
-                  }}
-                  className="lp-btn-book"
-                >
-                  <Truck size={15} />
-                  <span>Book Home Visit</span>
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
-
-      {/* --------------------------------------------------------------------
-          3. Hero Section
-         -------------------------------------------------------------------- */}
-      <header className="lp-hero">
-        <div className="lp-hero-grid-bg" />
-        <div className="lp-hero-inner">
-          <div>
-            <div className="lp-hero-badge">
-              <Sparkles size={14} color="#0284c7" />
-              <span>NABL ISO 15189 Standard • Same-Day Digital Reports</span>
-            </div>
-
-            <h1 className="lp-hero-title">
-              Precision Diagnostics,{' '}
-              <span className="lp-hero-title-highlight">Compassionate Healthcare.</span>
-            </h1>
-
-            <p className="lp-hero-desc">
-              Experience the highest standard of medical diagnostics in our fully automated centre.
-              Offering 5-part hematology, 4D Ultrasound, Digital X-Ray, Multi-Slice CT, and multi-specialty
-              consultations with certified zero sample-mixup barcodes.
-            </p>
-
-            <div className="lp-hero-actions">
-              <button
-                onClick={() => {
-                  setBookingType('home_collection');
-                  setIsBookingOpen(true);
-                }}
-                className="lp-btn-primary"
-                style={{ padding: '14px 26px', fontSize: '15.5px' }}
-              >
-                <Truck size={18} />
-                Book Free Home Sample Pickup
-              </button>
-
-              <button
-                onClick={handleDownloadClick}
-                className="lp-btn-outline"
-                style={{ padding: '13px 22px', fontSize: '15px' }}
-              >
-                <FileText size={17} />
-                Download Patient Report
-              </button>
-            </div>
-
-            <div className="lp-hero-stats">
-              <div>
-                <div className="lp-stat-number">50,000+</div>
-                <div className="lp-stat-label">Happy Patients</div>
-              </div>
-              <div>
-                <div className="lp-stat-number">100%</div>
-                <div className="lp-stat-label">Barcode Tracking</div>
-              </div>
-              <div>
-                <div className="lp-stat-number">&lt; 4 Hours</div>
-                <div className="lp-stat-label">Rapid Lab TAT</div>
-              </div>
-              <div>
-                <div className="lp-stat-number">99.9%</div>
-                <div className="lp-stat-label">Diagnostic Precision</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Hero Interactive Card */}
-          <div className="lp-hero-card">
-            <div className="lp-hero-card-header">
-              <div className="lp-card-icon-wrap">
-                <Search size={22} />
-              </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: '#0f172a' }}>
-                  Quick Patient Services
-                </h3>
-                <span style={{ fontSize: '12.5px', color: '#64748b' }}>
-                  Track reports, book OPD visits or home visits in 30 seconds
+          <div className="relative w-full overflow-hidden whitespace-nowrap">
+            <div className="inline-flex animate-marquee hover:[animation-play-state:paused] cursor-pointer">
+              <span className="inline-flex items-center gap-6 text-xs sm:text-sm font-semibold text-slate-100 px-4">
+                <span className="inline-flex items-center gap-2 text-sky-200 font-extrabold tracking-wide">
+                  <img src="/aastha-icon.svg" alt="Aastha" className="w-4 h-4 inline-block" />
+                  <span>Welcome to {CLINIC_INFO.name}, {CLINIC_INFO.city}</span>
                 </span>
-              </div>
-            </div>
+                <span className="text-teal-400 font-bold">•</span>
+                <span className="text-slate-300 font-medium">
+                  <span className="text-teal-300 font-bold">{CLINIC_INFO.tagline}</span> — {CLINIC_INFO.subTagline}
+                </span>
+                <span className="text-sky-400 font-bold">•</span>
+                <span className="text-slate-300 font-medium">
+                  Direct Clinic Booking: <span className="text-sky-300 font-bold">{CLINIC_INFO.phonePrimary}</span> | 24x7 Diagnostic & Histopathology Services
+                </span>
+                <span className="text-teal-400 font-bold">•</span>
+              </span>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div
-                onClick={handleDownloadClick}
-                style={{
-                  padding: '14px 16px',
-                  borderRadius: '10px',
-                  border: '1px solid #e2e8f0',
-                  background: '#f8fafc',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  transition: 'all 0.2s'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <FileText size={20} color="#0284c7" />
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '14px', color: '#0f172a' }}>
-                      Download Diagnostic Report
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#64748b' }}>
-                      Enter Bill # or Registered Mobile
-                    </div>
-                  </div>
-                </div>
-                <ArrowRight size={16} color="#94a3b8" />
-              </div>
-
-              <div
-                onClick={() => {
-                  setBookingType('home_collection');
-                  setIsBookingOpen(true);
-                }}
-                style={{
-                  padding: '14px 16px',
-                  borderRadius: '10px',
-                  border: '1px solid #e2e8f0',
-                  background: '#f8fafc',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  transition: 'all 0.2s'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <Truck size={20} color="#059669" />
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '14px', color: '#0f172a' }}>
-                      Home Blood Collection
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#64748b' }}>
-                      Painless vacuum sampling at your doorstep
-                    </div>
-                  </div>
-                </div>
-                <ArrowRight size={16} color="#94a3b8" />
-              </div>
-
-              <div
-                onClick={() => {
-                  scrollToSection('tests');
-                }}
-                style={{
-                  padding: '14px 16px',
-                  borderRadius: '10px',
-                  border: '1px solid #e2e8f0',
-                  background: '#f8fafc',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  transition: 'all 0.2s'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <Microscope size={20} color="#7c3aed" />
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '14px', color: '#0f172a' }}>
-                      Explore Diagnostic Test Menu
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#64748b' }}>
-                      Pathology, 4D Ultrasound, Digital X-Ray & CT
-                    </div>
-                  </div>
-                </div>
-                <ArrowRight size={16} color="#94a3b8" />
-              </div>
-            </div>
-
-            <div
-              style={{
-                marginTop: '20px',
-                paddingTop: '16px',
-                borderTop: '1px solid #f1f5f9',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                fontSize: '12.5px',
-                color: '#64748b'
-              }}
-            >
-              <span>Instant WhatsApp Report Delivery</span>
-              <span style={{ color: '#059669', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                <CheckCircle2 size={13} /> Active 24/7
+              {/* Second loop duplicate for seamless continuous translation */}
+              <span className="inline-flex items-center gap-6 text-xs sm:text-sm font-semibold text-slate-100 px-4" aria-hidden="true">
+                <span className="inline-flex items-center gap-2 text-sky-200 font-extrabold tracking-wide">
+                  <img src="/aastha-icon.svg" alt="Aastha" className="w-4 h-4 inline-block" />
+                  <span>Welcome to {CLINIC_INFO.name}, {CLINIC_INFO.city}</span>
+                </span>
+                <span className="text-teal-400 font-bold">•</span>
+                <span className="text-slate-300 font-medium">
+                  <span className="text-teal-300 font-bold">{CLINIC_INFO.tagline}</span> — {CLINIC_INFO.subTagline}
+                </span>
+                <span className="text-sky-400 font-bold">•</span>
+                <span className="text-slate-300 font-medium">
+                  Direct Clinic Booking: <span className="text-sky-300 font-bold">{CLINIC_INFO.phonePrimary}</span> | 24x7 Diagnostic & Histopathology Services
+                </span>
+                <span className="text-teal-400 font-bold">•</span>
               </span>
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* --------------------------------------------------------------------
-          4. Live Report Tracker & Download Section
-         -------------------------------------------------------------------- */}
-      <section id="tracker" className="lp-tracker-section">
-        <div className="lp-tracker-box">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-            <div className="lp-card-icon-wrap" style={{ width: '38px', height: '38px' }}>
-              <QrCode size={20} />
-            </div>
-            <div>
-              <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                Live Diagnostic Report Tracker
-              </h2>
-              <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
-                Enter your Bill Number (e.g. BL-2026-0001) or Registered Mobile Number to check real-time status.
-              </p>
-            </div>
-          </div>
-
-          <form onSubmit={handleTrackReport} className="lp-tracker-form">
-            <input
-              ref={trackerInputRef}
-              type="text"
-              placeholder="e.g. BL-2026-0001 or 9876543210"
-              value={reportQuery}
-              onChange={(e) => setReportQuery(e.target.value)}
-              className="lp-input"
-            />
-            <button
-              type="submit"
-              disabled={isSearchingReport}
-              className="lp-btn-primary"
-              style={{ padding: '12px 24px' }}
-            >
-              {isSearchingReport ? 'Searching Database...' : 'Track & Download'}
-            </button>
-          </form>
-
-          {/* Quick Demo Search Pills */}
-          <div style={{ marginTop: '10px', fontSize: '12px', color: '#94a3b8', display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <span>Quick search verified test bills:</span>
-            <span
-              onClick={() => {
-                setReportQuery('BL-2026-0001');
-              }}
-              style={{ color: '#0284c7', textDecoration: 'underline', cursor: 'pointer', fontWeight: 600 }}
-            >
-              BL-2026-0001
-            </span>
-            <span>•</span>
-            <span
-              onClick={() => {
-                setReportQuery('BL-2026-0002');
-              }}
-              style={{ color: '#0284c7', textDecoration: 'underline', cursor: 'pointer', fontWeight: 600 }}
-            >
-              BL-2026-0002
-            </span>
-            <span>•</span>
-            <span
-              onClick={() => {
-                setReportQuery('9876543210');
-              }}
-              style={{ color: '#0284c7', textDecoration: 'underline', cursor: 'pointer', fontWeight: 600 }}
-            >
-              9876543210
-            </span>
-          </div>
-
-          {/* Error Message */}
-          {reportError && (
+      {/* =========================================================================
+          2. STICKY MAIN HEADER: Brand, Nav with Dropdowns, Track & Pay, Book Appt
+          ========================================================================= */}
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-xs transition-all">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-20 gap-3 sm:gap-4 md:gap-6">
+            {/* Logo */}
             <div
-              style={{
-                marginTop: '16px',
-                padding: '12px 16px',
-                background: '#fef2f2',
-                border: '1px solid #fee2e2',
-                borderRadius: '8px',
-                color: '#b91c1c',
-                fontSize: '13.5px'
-              }}
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="cursor-pointer group py-1 min-w-0 max-w-[140px] md:max-w-[210px] shrink-0 flex items-center"
+              title={`${CLINIC_INFO.name} - Home`}
             >
-              {reportError}
+              <img
+                alt={CLINIC_INFO.name}
+                className="w-full h-auto max-h-12 md:max-h-14 object-contain transition-transform duration-200 group-hover:opacity-95"
+                src="/aastha-logo.svg"
+              />
             </div>
-          )}
 
-          {/* Report Results */}
-          {reportStatus && (
-            <div
-              style={{
-                marginTop: '24px',
-                padding: '24px',
-                background: '#f8fafc',
-                borderRadius: '12px',
-                border: '1px solid #e2e8f0'
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: '12px',
-                  marginBottom: '16px'
-                }}
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center gap-1 xl:gap-2 text-sm font-semibold">
+              <button
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="px-3 py-2 rounded-xl text-xs xl:text-sm font-bold transition-all cursor-pointer whitespace-nowrap text-sky-800 bg-sky-50/90 border border-sky-200/80 shadow-2xs"
               >
-                <div>
-                  <div style={{ fontSize: '17px', fontWeight: 800, color: '#0f172a' }}>
-                    {reportStatus.patientName}
-                  </div>
-                  <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>
-                    Bill #{reportStatus.billNumber} • UHID: {reportStatus.uhid || 'UHID-2026-0001'} • Registered: {reportStatus.date}
-                  </div>
-                  <div style={{ fontSize: '13px', color: '#0284c7', fontWeight: 600, marginTop: '4px' }}>
-                    Tests: {reportStatus.investigations.join(', ')}
-                  </div>
-                </div>
+                Home
+              </button>
 
-                {reportStatus.readyForDownload ? (
-                  <button
-                    onClick={() => {
-                      setPreviewReport(reportStatus);
-                    }}
-                    className="lp-btn-primary"
-                    style={{ background: '#059669', fontSize: '14px', padding: '10px 18px' }}
-                  >
-                    <Download size={16} />
-                    View & Download Verified PDF
-                  </button>
-                ) : (
-                  <span
-                    style={{
-                      background: '#fef3c7',
-                      color: '#b45309',
-                      padding: '6px 14px',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <Clock size={14} />
-                    In Analyzer Processing
-                  </span>
+              {/* Clinical Care Dropdown */}
+              <div
+                className="relative"
+                onMouseEnter={() => setActiveDropdown('clinical')}
+                onMouseLeave={() => setActiveDropdown(null)}
+              >
+                <button
+                  onClick={() => {
+                    document.getElementById('services-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="px-3 py-2 rounded-xl text-xs xl:text-sm font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 text-slate-700 hover:text-sky-700 hover:bg-slate-50"
+                  aria-expanded={activeDropdown === 'clinical'}
+                >
+                  <Stethoscope className="w-3.5 h-3.5 text-sky-600" />
+                  <span>Clinical Care</span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 transition-transform duration-200 text-slate-400 ${
+                      activeDropdown === 'clinical' ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                {activeDropdown === 'clinical' && (
+                  <div className="absolute top-full left-0 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200/80 p-3 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 py-1">
+                      12 Specialty Outpatient Clinics
+                    </div>
+                    <div className="grid grid-cols-1 gap-1 max-h-72 overflow-y-auto pr-1">
+                      {SERVICES_DATA.map(srv => (
+                        <div
+                          key={srv.id}
+                          onClick={() => {
+                            setSelectedDepartment(srv);
+                            setActiveDropdown(null);
+                          }}
+                          className="px-3 py-2 rounded-xl hover:bg-sky-50 text-xs font-medium text-slate-700 hover:text-sky-800 flex items-center justify-between transition-colors cursor-pointer"
+                        >
+                          <span>{srv.name}</span>
+                          <ChevronRight className="w-3 h-3 text-slate-300" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
 
-              {/* Progress Milestones */}
-              <div className="lp-tracker-steps">
-                {[
-                  { num: 1, title: 'Registered', desc: 'Patient verified' },
-                  { num: 2, title: 'Sample Barcoded', desc: 'Zero mixup vacuum tube' },
-                  { num: 3, title: 'Lab Analysis', desc: 'Automated 5-part review' },
-                  { num: 4, title: 'Signed & Ready', desc: 'Pathologist certified' },
-                ].map((step) => {
-                  const isDone = step.num <= reportStatus.currentStage;
-                  return (
-                    <div key={step.num} className={`lp-step-item ${isDone ? 'lp-step-active' : ''}`}>
-                      <div className="lp-step-circle">
-                        {isDone ? <Check size={16} /> : step.num}
+              {/* Diagnostics & Lab Dropdown */}
+              <div
+                className="relative"
+                onMouseEnter={() => setActiveDropdown('diagnostics')}
+                onMouseLeave={() => setActiveDropdown(null)}
+              >
+                <button
+                  onClick={() => {
+                    document.getElementById('tests-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="px-3 py-2 rounded-xl text-xs xl:text-sm font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 text-slate-700 hover:text-teal-700 hover:bg-slate-50"
+                  aria-expanded={activeDropdown === 'diagnostics'}
+                >
+                  <FlaskConical className="w-3.5 h-3.5 text-teal-600" />
+                  <span>Diagnostics & Lab</span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 transition-transform duration-200 text-slate-400 ${
+                      activeDropdown === 'diagnostics' ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                {activeDropdown === 'diagnostics' && (
+                  <div className="absolute top-full left-0 w-72 bg-white rounded-2xl shadow-2xl border border-slate-200/80 p-3 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="space-y-1">
+                      <div
+                        onClick={() => {
+                          document.getElementById('tests-section')?.scrollIntoView({ behavior: 'smooth' });
+                          setActiveDropdown(null);
+                        }}
+                        className="p-2.5 rounded-xl hover:bg-teal-50 cursor-pointer"
+                      >
+                        <div className="text-xs font-bold text-slate-900">800+ Diagnostic Directory</div>
+                        <div className="text-[11px] text-slate-500">Biochemistry, Hematology, Microbiology</div>
                       </div>
-                      <div className="lp-step-title">{step.title}</div>
-                      <div className="lp-step-desc">{step.desc}</div>
+                      <div
+                        onClick={() => {
+                          document.getElementById('packages-section')?.scrollIntoView({ behavior: 'smooth' });
+                          setActiveDropdown(null);
+                        }}
+                        className="p-2.5 rounded-xl hover:bg-teal-50 cursor-pointer"
+                      >
+                        <div className="text-xs font-bold text-slate-900">Health Checkup Packages</div>
+                        <div className="text-[11px] text-slate-500">Full Body & Organ Specific Panels</div>
+                      </div>
+                      <div
+                        onClick={() => {
+                          handleOpenTestBooking(undefined, undefined, 'home');
+                          setActiveDropdown(null);
+                        }}
+                        className="p-2.5 rounded-xl hover:bg-teal-50 cursor-pointer"
+                      >
+                        <div className="text-xs font-bold text-teal-700">Home Sample Collection</div>
+                        <div className="text-[11px] text-slate-500">Certified phlebotomist at doorstep</div>
+                      </div>
                     </div>
-                  );
-                })}
+                  </div>
+                )}
+              </div>
+
+              {/* About & Info Dropdown */}
+              <div
+                className="relative"
+                onMouseEnter={() => setActiveDropdown('about')}
+                onMouseLeave={() => setActiveDropdown(null)}
+              >
+                <button
+                  className="px-3 py-2 rounded-xl text-xs xl:text-sm font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 text-slate-700 hover:text-sky-700 hover:bg-slate-50"
+                  aria-expanded={activeDropdown === 'about'}
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-sky-600" />
+                  <span>About & Info</span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 transition-transform duration-200 text-slate-400 ${
+                      activeDropdown === 'about' ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                {activeDropdown === 'about' && (
+                  <div className="absolute top-full left-0 w-64 bg-white rounded-2xl shadow-2xl border border-slate-200/80 p-2.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="space-y-0.5 text-xs">
+                      <div
+                        onClick={() => {
+                          document.getElementById('doctors-section')?.scrollIntoView({ behavior: 'smooth' });
+                          setActiveDropdown(null);
+                        }}
+                        className="p-2 rounded-xl hover:bg-slate-50 font-medium text-slate-700 cursor-pointer"
+                      >
+                        Specialist Medical Doctors
+                      </div>
+                      <div
+                        onClick={() => {
+                          document.getElementById('faq-section')?.scrollIntoView({ behavior: 'smooth' });
+                          setActiveDropdown(null);
+                        }}
+                        className="p-2 rounded-xl hover:bg-slate-50 font-medium text-slate-700 cursor-pointer"
+                      >
+                        Frequently Asked Questions
+                      </div>
+                      <div
+                        onClick={() => {
+                          document.getElementById('blog-section')?.scrollIntoView({ behavior: 'smooth' });
+                          setActiveDropdown(null);
+                        }}
+                        className="p-2 rounded-xl hover:bg-slate-50 font-medium text-slate-700 cursor-pointer"
+                      >
+                        Doctor Health Guides
+                      </div>
+                      <div
+                        onClick={() => {
+                          document.getElementById('contact-section')?.scrollIntoView({ behavior: 'smooth' });
+                          setActiveDropdown(null);
+                        }}
+                        className="p-2 rounded-xl hover:bg-slate-50 font-medium text-slate-700 cursor-pointer"
+                      >
+                        Clinic Location & Support
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </nav>
+
+            {/* Action Buttons: Track & Pay, Book Appointment */}
+            <div className="hidden lg:flex items-center gap-2 xl:gap-2.5 shrink-0">
+              <button
+                onClick={() => setIsTrackBookingOpen(true)}
+                className="px-3 py-2 text-xs font-bold rounded-xl border border-emerald-300/80 bg-emerald-50/80 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-400 flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                title="Track Request Status & Make Payment"
+              >
+                <Clock className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Track & Pay</span>
+              </button>
+
+              <button
+                onClick={() => handleOpenDoctorBooking()}
+                className="px-3.5 xl:px-4 py-2 text-xs xl:text-sm font-bold text-white bg-gradient-to-r from-sky-600 to-teal-600 hover:from-sky-700 hover:to-teal-700 shadow-md shadow-sky-600/20 rounded-xl flex items-center gap-1.5 transition-all hover:shadow-lg active:scale-98 cursor-pointer shrink-0"
+              >
+                <Calendar className="w-4 h-4" />
+                <span>Book Appointment</span>
+              </button>
+            </div>
+
+            {/* Mobile Actions: Quick Book & Hamburger */}
+            <div className="flex items-center gap-1.5 sm:gap-2 lg:hidden shrink-0">
+              <button
+                onClick={() => handleOpenDoctorBooking()}
+                className="px-2.5 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-sky-600 to-teal-600 hover:from-sky-700 hover:to-teal-700 rounded-lg flex items-center gap-1 shadow-xs cursor-pointer"
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                <span>Book</span>
+              </button>
+
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer border border-slate-200/80 bg-white/80"
+                aria-label="Toggle navigation menu"
+              >
+                {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Slide-Down Drawer */}
+        {isMobileMenuOpen && (
+          <div className="lg:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-3 shadow-xl animate-in slide-in-from-top-4 duration-200">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  setIsTrackBookingOpen(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="p-2.5 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-bold flex items-center justify-center gap-1.5"
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>Track & Pay</span>
+              </button>
+              <button
+                onClick={() => {
+                  handleOpenTestBooking();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="p-2.5 rounded-xl border border-teal-200 bg-teal-50 text-teal-800 text-xs font-bold flex items-center justify-center gap-1.5"
+              >
+                <FlaskConical className="w-3.5 h-3.5" />
+                <span>Book Lab Test</span>
+              </button>
+            </div>
+
+            <div className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
+              <div
+                onClick={() => {
+                  document.getElementById('services-section')?.scrollIntoView({ behavior: 'smooth' });
+                  setIsMobileMenuOpen(false);
+                }}
+                className="py-2.5 flex items-center justify-between"
+              >
+                <span>Clinical Specialty Clinics</span>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </div>
+              <div
+                onClick={() => {
+                  document.getElementById('tests-section')?.scrollIntoView({ behavior: 'smooth' });
+                  setIsMobileMenuOpen(false);
+                }}
+                className="py-2.5 flex items-center justify-between"
+              >
+                <span>Diagnostic Pathology Tests</span>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </div>
+              <div
+                onClick={() => {
+                  document.getElementById('packages-section')?.scrollIntoView({ behavior: 'smooth' });
+                  setIsMobileMenuOpen(false);
+                }}
+                className="py-2.5 flex items-center justify-between"
+              >
+                <span>Health Packages</span>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </div>
+              <div
+                onClick={() => {
+                  document.getElementById('doctors-section')?.scrollIntoView({ behavior: 'smooth' });
+                  setIsMobileMenuOpen(false);
+                }}
+                className="py-2.5 flex items-center justify-between"
+              >
+                <span>Meet Specialist Doctors</span>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </div>
+              <div
+                onClick={() => {
+                  document.getElementById('contact-section')?.scrollIntoView({ behavior: 'smooth' });
+                  setIsMobileMenuOpen(false);
+                }}
+                className="py-2.5 flex items-center justify-between"
+              >
+                <span>Contact & Location</span>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
               </div>
             </div>
-          )}
-        </div>
-      </section>
 
-      {/* --------------------------------------------------------------------
-          5. Diagnostic Modalities & Specialized Departments
-         -------------------------------------------------------------------- */}
-      <section id="services" className="lp-section lp-section-alt">
-        <div className="lp-section-header">
-          <span className="lp-section-tag">Accredited Clinical Excellence</span>
-          <h2 className="lp-section-title">Comprehensive Diagnostics & Polyclinic Specialties</h2>
-          <p className="lp-section-desc">
-            Integrated pathology, advanced ultrasonography, low-radiation digital radiography,
-            and super-specialty outpatient consultations under one roof.
-          </p>
-        </div>
-
-        <div className="lp-departments-grid">
-          {/* Dept 1 */}
-          <div className="lp-dept-card">
-            <div className="lp-dept-icon" style={{ background: '#e0f2fe', color: '#0284c7' }}>
-              <Microscope size={28} />
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+              <span className="text-slate-500">Clinic Helpline:</span>
+              <a href={`tel:${CLINIC_INFO.phonePrimary}`} className="font-bold text-sky-700">
+                {CLINIC_INFO.phonePrimary}
+              </a>
             </div>
-            <h3>Pathology & Biochemistry</h3>
-            <p>
-              Fully automated hematology 5-part analyzers, chemiluminescence hormone testing,
-              and bi-directional LIS integration for zero manual transcription errors.
-            </p>
-            <ul className="lp-dept-features">
-              <li><CheckCircle2 size={13} color="#059669" /> Complete Hemogram & CBC</li>
-              <li><CheckCircle2 size={13} color="#059669" /> Liver, Kidney & Lipid Profiles</li>
-              <li><CheckCircle2 size={13} color="#059669" /> Thyroid & Vitamin D3 / B12</li>
-            </ul>
-            <a
-              href="#tests"
-              onClick={(e) => {
-                e.preventDefault();
-                setSelectedDept('Pathology');
-                scrollToSection('tests');
-              }}
-              style={{ color: '#0284c7', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}
-            >
-              View Pathology Tests &rarr;
-            </a>
           </div>
+        )}
+      </header>
 
-          {/* Dept 2 */}
-          <div className="lp-dept-card">
-            <div className="lp-dept-icon" style={{ background: '#dbeafe', color: '#2563eb' }}>
-              <Activity size={28} />
-            </div>
-            <h3>4D Ultrasound & Doppler</h3>
-            <p>
-              State-of-the-art color Doppler imaging for high-risk obstetrics anomaly screening,
-              whole abdomen & pelvis, venous Doppler, and small parts ultrasonography.
-            </p>
-            <ul className="lp-dept-features">
-              <li><CheckCircle2 size={13} color="#059669" /> Whole Abdomen & Pelvis Scans</li>
-              <li><CheckCircle2 size={13} color="#059669" /> Antenatal Level-II Anomaly</li>
-              <li><CheckCircle2 size={13} color="#059669" /> Arterial & Venous Color Doppler</li>
-            </ul>
-            <a
-              href="#tests"
-              onClick={(e) => {
-                e.preventDefault();
-                setSelectedDept('Radiology');
-                scrollToSection('tests');
-              }}
-              style={{ color: '#0284c7', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}
-            >
-              View Ultrasound Protocols &rarr;
-            </a>
-          </div>
+      {/* =========================================================================
+          3. HERO SECTION: Badges, Headline, CTAs, Hero Card & Live 3S Spotlight
+          ========================================================================= */}
+      <main className="flex-1">
+        <section className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white pt-8 sm:pt-14 pb-16 sm:pb-20">
+          {/* Subtle Ambient Glowing Orbs */}
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Dept 3 */}
-          <div className="lp-dept-card">
-            <div className="lp-dept-icon" style={{ background: '#fef3c7', color: '#d97706' }}>
-              <ShieldCheck size={28} />
-            </div>
-            <h3>Digital Radiography (X-Ray)</h3>
-            <p>
-              High-frequency, low-radiation DR digital detector system with instantaneous PACS
-              cloud archiving and radiologist interpretation within 30 minutes.
-            </p>
-            <ul className="lp-dept-features">
-              <li><CheckCircle2 size={13} color="#059669" /> Digital Chest PA/AP Views</li>
-              <li><CheckCircle2 size={13} color="#059669" /> Spine, Joint & Extremity Scans</li>
-              <li><CheckCircle2 size={13} color="#059669" /> Low-Dose Radiation Protocol</li>
-            </ul>
-            <a
-              href="#tests"
-              onClick={(e) => {
-                e.preventDefault();
-                setSelectedDept('Radiology');
-                scrollToSection('tests');
-              }}
-              style={{ color: '#0284c7', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}
-            >
-              View X-Ray Services &rarr;
-            </a>
-          </div>
-
-          {/* Dept 4 */}
-          <div className="lp-dept-card">
-            <div className="lp-dept-icon" style={{ background: '#f3e8ff', color: '#7c3aed' }}>
-              <Stethoscope size={28} />
-            </div>
-            <h3>Multi-Slice CT & Polyclinic OPD</h3>
-            <p>
-              High-resolution spiral CT scans (Brain, HRCT Chest, Abdomen) paired with daily OPD
-              clinics led by experienced internal medicine specialists and gynecologists.
-            </p>
-            <ul className="lp-dept-features">
-              <li><CheckCircle2 size={13} color="#059669" /> CT Brain Plain & HRCT Chest</li>
-              <li><CheckCircle2 size={13} color="#059669" /> General Physician & Diabetologist</li>
-              <li><CheckCircle2 size={13} color="#059669" /> Obstetrics & Gynecology OPD</li>
-            </ul>
-            <a
-              href="#doctors"
-              onClick={(e) => {
-                e.preventDefault();
-                scrollToSection('doctors');
-              }}
-              style={{ color: '#0284c7', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}
-            >
-              Meet Consultant Doctors &rarr;
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* --------------------------------------------------------------------
-          6. Interactive Test Directory & Live Rate Calculator
-         -------------------------------------------------------------------- */}
-      <section id="tests" className="lp-section">
-        <div className="lp-section-header">
-          <span className="lp-section-tag">Quality Diagnostics</span>
-          <h2 className="lp-section-title">Diagnostic Test Catalog & Investigation Directory</h2>
-          <p className="lp-section-desc">
-            Search 150+ investigations, check fasting instructions, turnaround times, and book
-            doorstep home sample collection with 1 click.
-          </p>
-        </div>
-
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 24px' }}>
-          {/* Filter Bar */}
+          {/* Watermark Logo Accent in Background */}
           <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '16px',
-              marginBottom: '28px'
-            }}
+            className="pointer-events-none select-none absolute w-[600px] h-[600px] -right-32 -top-20 opacity-[0.04]"
           >
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {['ALL', 'Pathology', 'Biochemistry', 'Radiology', 'Histopathology'].map((dept) => (
+            <img src="/aastha-icon.svg" alt="" className="w-full h-full object-contain" />
+          </div>
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+              {/* Left Column: Heading & CTAs */}
+              <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
+                <div className="inline-flex items-center gap-2.5 bg-sky-950/80 border border-sky-600/40 px-4 py-1.5 rounded-full text-xs font-semibold text-sky-200 shadow-md backdrop-blur-md">
+                  <img src="/aastha-icon.svg" alt="" className="w-4 h-4 shrink-0" />
+                  <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-teal-300 to-emerald-300">
+                    Serve Respect Love
+                  </span>
+                  <span className="text-slate-500">•</span>
+                  <span>{CLINIC_INFO.shortName}</span>
+                </div>
+
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
+                  Complete Healthcare.{' '}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-teal-300 to-emerald-300">
+                    Accurate Diagnostics.
+                  </span>{' '}
+                  Trusted Care.
+                </h1>
+
+                <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                  Consult experienced specialist doctors, book precision pathology and imaging tests, access preventive health packages, and receive verified digital reports — all under one trusted roof.
+                </p>
+
+                {/* Primary CTA Buttons */}
+                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2">
+                  <button
+                    onClick={() => handleOpenDoctorBooking()}
+                    className="w-full sm:w-auto px-7 py-3.5 bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 text-white font-bold text-sm rounded-xl shadow-lg shadow-sky-600/30 transition-all hover:shadow-sky-600/50 hover:scale-[1.02] active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    <span>Book Appointment</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleOpenTestBooking()}
+                    className="w-full sm:w-auto px-7 py-3.5 bg-teal-600/20 hover:bg-teal-600/30 text-teal-300 border border-teal-500/40 font-bold text-sm rounded-xl shadow-xs transition-all hover:border-teal-400 flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <FlaskConical className="w-4 h-4 text-teal-400" />
+                    <span>Book a Diagnostic Test</span>
+                  </button>
+                </div>
+
+                {/* Trust Highlights Strip */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-slate-800/80 text-xs text-slate-300 font-medium">
+                  <div className="flex items-center justify-center lg:justify-start gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Experienced Doctors</span>
+                  </div>
+                  <div className="flex items-center justify-center lg:justify-start gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Advanced Diagnostics</span>
+                  </div>
+                  <div className="flex items-center justify-center lg:justify-start gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Digital Reports</span>
+                  </div>
+                  <div className="flex items-center justify-center lg:justify-start gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Home Sample Collection</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Hero Showcase Image with Floating Stats Badges */}
+              <div className="lg:col-span-5 relative">
+                <div className="relative mx-auto max-w-md lg:max-w-none">
+                  <div className="relative rounded-3xl overflow-hidden border-2 border-slate-700/60 shadow-2xl bg-slate-800">
+                    <img
+                      alt="Modern Laboratory and Medical Consultations"
+                      className="w-full h-80 sm:h-96 object-cover object-center"
+                      src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=900&q=80"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent" />
+                    <div className="absolute bottom-4 left-4 right-4 text-white">
+                      <div className="flex items-center gap-2">
+                        <img src="/aastha-icon.svg" alt="" className="w-4 h-4" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-emerald-300">
+                          Fully Automated Diagnostics
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-300 mt-1">
+                        Pathology, Histopathology, Biochemistry, Microbiology & Cardiology.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Floating Badge 1 (top-left) */}
+                  <div className="absolute -top-4 -left-4 sm:-left-6 bg-slate-900/90 backdrop-blur-md border border-slate-700 p-3 rounded-2xl shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center">
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-black text-white">90,000+</div>
+                      <div className="text-[10px] text-slate-400">Patients Cared For</div>
+                    </div>
+                  </div>
+
+                  {/* Floating Badge 2 (middle-right) */}
+                  <div className="absolute top-1/2 -right-4 sm:-right-6 -translate-y-1/2 bg-slate-900/90 backdrop-blur-md border border-slate-700 p-3 rounded-2xl shadow-xl flex items-center gap-3 hidden sm:flex">
+                    <div className="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-white">Digital Reports</div>
+                      <div className="text-[10px] text-teal-300">Fast Online Access</div>
+                    </div>
+                  </div>
+
+                  {/* Floating Badge 3 (bottom-left) */}
+                  <div className="absolute -bottom-4 -left-3 sm:-left-4 bg-slate-900/90 backdrop-blur-md border border-slate-700 p-2.5 sm:p-3 rounded-2xl shadow-xl flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                      <Truck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-white">Home Sample Collection</div>
+                      <div className="text-[10px] text-emerald-400">60-Min Doorstep Service</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* LIVE 3S ROTATING SPOTLIGHT (Doctors • Specialized Tests • Doctor Health Articles) */}
+            <div className="mt-14 pt-8 border-t border-slate-800/80">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+                  </span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                    Live 3S Rotating Spotlight
+                  </span>
+                  <span className="hidden sm:inline text-xs text-slate-400">
+                    — Doctors • Specialized Tests • Doctor Health Articles
+                  </span>
+                </div>
+
                 <button
-                  key={dept}
-                  onClick={() => setSelectedDept(dept)}
-                  style={{
-                    padding: '8px 18px',
-                    borderRadius: '8px',
-                    fontSize: '13.5px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    border: '1px solid',
-                    borderColor: selectedDept === dept ? '#0284c7' : '#e2e8f0',
-                    background: selectedDept === dept ? '#0284c7' : '#ffffff',
-                    color: selectedDept === dept ? '#ffffff' : '#475569',
-                    transition: 'all 0.2s'
-                  }}
+                  onClick={() => setIsSpotlightPaused(!isSpotlightPaused)}
+                  className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-700"
+                  title={isSpotlightPaused ? 'Resume Auto Scroll' : 'Pause Auto Scroll'}
                 >
-                  {dept === 'ALL' ? 'All Investigations' : dept}
+                  {isSpotlightPaused ? (
+                    <>
+                      <Play className="w-3 h-3 text-emerald-400" />
+                      <span>Resume</span>
+                    </>
+                  ) : (
+                    <>
+                      <Pause className="w-3 h-3 text-amber-400" />
+                      <span>Pause Scroll</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* 3 Interactive Spotlight Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* 1. Doctor Spotlight Card */}
+                {(() => {
+                  const doc = DOCTORS_DATA[spotlightIndex % DOCTORS_DATA.length];
+                  return (
+                    <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800/80 hover:border-sky-500/50 transition-all flex flex-col justify-between backdrop-blur-md shadow-lg group">
+                      <div>
+                        <div className="flex items-center justify-between text-xs mb-3">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400 bg-sky-950/80 px-2.5 py-0.5 rounded-full border border-sky-800">
+                            Specialist Doctors OPD
+                          </span>
+                          <span className="text-slate-400 text-[11px]">
+                            {(spotlightIndex % DOCTORS_DATA.length) + 1} / {DOCTORS_DATA.length}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-3 mb-3">
+                          <img
+                            src={doc.image}
+                            alt={doc.name}
+                            className="w-14 h-14 rounded-xl object-cover border border-slate-700 shrink-0"
+                          />
+                          <div>
+                            <h4 className="text-sm font-bold text-white group-hover:text-sky-300 transition-colors">
+                              {doc.name}
+                            </h4>
+                            <p className="text-xs text-sky-400">{doc.specialty}</p>
+                            <p className="text-[11px] text-slate-400">{doc.qualification}</p>
+                          </div>
+                        </div>
+
+                        <div className="text-[11px] text-slate-300 space-y-1 mb-3 bg-slate-950/50 p-2.5 rounded-xl border border-slate-800">
+                          <div>
+                            <span className="text-slate-400">OPD Hours:</span> {doc.timing}
+                          </div>
+                          <div>
+                            <span className="text-slate-400">Days:</span> {doc.availableDays.join(', ')}
+                          </div>
+                          <div className="font-bold text-emerald-400">
+                            Fee: ₹{doc.fee}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-2 border-t border-slate-800/80">
+                        <button
+                          onClick={() => handleOpenDoctorBooking(doc.id)}
+                          className="flex-1 py-1.5 px-3 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer text-center"
+                        >
+                          Book Appointment
+                        </button>
+                        <button
+                          onClick={() => setSelectedDoctorProfile(doc)}
+                          className="py-1.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition-colors cursor-pointer"
+                        >
+                          Profile
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* 2. Specialized Test Spotlight Card */}
+                {(() => {
+                  const test = ALL_TESTS_DATA[spotlightIndex % ALL_TESTS_DATA.length];
+                  return (
+                    <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800/80 hover:border-teal-500/50 transition-all flex flex-col justify-between backdrop-blur-md shadow-lg group">
+                      <div>
+                        <div className="flex items-center justify-between text-xs mb-3">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-teal-400 bg-teal-950/80 px-2.5 py-0.5 rounded-full border border-teal-800">
+                            Advance & Special Tests
+                          </span>
+                          <span className="text-slate-400 text-[11px]">
+                            {(spotlightIndex % ALL_TESTS_DATA.length) + 1} / {ALL_TESTS_DATA.length}
+                          </span>
+                        </div>
+
+                        <div className="mb-3">
+                          <span className="text-[10px] uppercase font-bold text-teal-300 block mb-0.5">
+                            {test.category}
+                          </span>
+                          <h4 className="text-sm font-bold text-white group-hover:text-teal-300 transition-colors line-clamp-1">
+                            {test.name}
+                          </h4>
+                          <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1 font-mono">
+                            {test.code} • {test.subCategory || 'Automated Analysis'}
+                          </p>
+                        </div>
+
+                        <div className="text-[11px] text-slate-300 space-y-1 mb-3 bg-slate-950/50 p-2.5 rounded-xl border border-slate-800">
+                          <div>
+                            <span className="text-slate-400">Report Time:</span> {test.reportTime}
+                          </div>
+                          <div className="truncate">
+                            <span className="text-slate-400">Sample:</span> {test.sampleType}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-teal-400 text-sm">₹{test.price}</span>
+                            <span className="text-[11px] text-slate-500 line-through">₹{test.originalPrice}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-2 border-t border-slate-800/80">
+                        <button
+                          onClick={() => handleOpenTestBooking(test.id)}
+                          className="flex-1 py-1.5 px-3 bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer text-center"
+                        >
+                          Book Diagnostic Test
+                        </button>
+                        <button
+                          onClick={() => {
+                            document.getElementById('tests-section')?.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className="py-1.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition-colors cursor-pointer"
+                        >
+                          All Tests
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* 3. Doctor Health Article Spotlight Card */}
+                {(() => {
+                  const blog = BLOGS_DATA[spotlightIndex % BLOGS_DATA.length];
+                  return (
+                    <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800/80 hover:border-sky-500/50 transition-all flex flex-col justify-between backdrop-blur-md shadow-lg group">
+                      <div>
+                        <div className="flex items-center justify-between text-xs mb-3">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400 bg-sky-950/80 px-2.5 py-0.5 rounded-full border border-sky-800">
+                            Doctor-Written Articles
+                          </span>
+                          <span className="text-slate-400 text-[11px]">
+                            {(spotlightIndex % BLOGS_DATA.length) + 1} / {BLOGS_DATA.length}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-3 mb-2">
+                          <img
+                            src={blog.image}
+                            alt={blog.title}
+                            className="w-14 h-14 rounded-xl object-cover border border-slate-700 shrink-0"
+                          />
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-sky-300 block">
+                              {blog.category} • {blog.readTime}
+                            </span>
+                            <h4 className="text-xs font-bold text-white group-hover:text-sky-300 transition-colors line-clamp-2 leading-tight">
+                              {blog.title}
+                            </h4>
+                          </div>
+                        </div>
+
+                        <p className="text-[11px] text-slate-400 line-clamp-2 mb-3 leading-relaxed">
+                          {blog.excerpt}
+                        </p>
+
+                        <div className="text-[11px] text-slate-500 mb-2">
+                          By <span className="text-slate-300 font-medium">{blog.author.name}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-2 border-t border-slate-800/80">
+                        <button
+                          onClick={() => setSelectedArticle(blog)}
+                          className="flex-1 py-1.5 px-3 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer text-center"
+                        >
+                          Read Article
+                        </button>
+                        <button
+                          onClick={() => {
+                            document.getElementById('blog-section')?.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className="py-1.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition-colors cursor-pointer"
+                        >
+                          Health Hub
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Jump Dots */}
+              <div className="flex items-center justify-center gap-1.5 mt-4">
+                {[0, 1, 2, 3, 4].map(idx => (
+                  <button
+                    key={idx}
+                    onClick={() => setSpotlightIndex(idx)}
+                    className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                      spotlightIndex % 5 === idx
+                        ? 'w-6 bg-sky-400'
+                        : 'w-2 bg-slate-700 hover:bg-slate-600'
+                    }`}
+                    aria-label={`Jump to slide ${idx + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            4. ELEVATED QUICK ACTION CARDS (-mt-8 sm:-mt-12)
+            ========================================================================= */}
+        <section className="relative -mt-8 sm:-mt-12 z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Card 1: Book Appointment */}
+            <div
+              onClick={() => handleOpenDoctorBooking()}
+              className="p-5 rounded-2xl bg-white/95 backdrop-blur-xl border border-white/80 shadow-xl hover:shadow-2xl transition-all duration-200 hover:-translate-y-1 cursor-pointer group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-sky-100/90 text-sky-700 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <Calendar className="w-6 h-6" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-sky-600 block mb-1">
+                OPD DAILY
+              </span>
+              <h3 className="text-base font-bold text-slate-900 group-hover:text-sky-700 transition-colors">
+                Book Appointment
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Find a doctor and submit your consultation request.
+              </p>
+              <div className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-sky-600 group-hover:translate-x-1 transition-transform">
+                <span>Get Started</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </div>
+            </div>
+
+            {/* Card 2: Book a Test */}
+            <div
+              onClick={() => handleOpenTestBooking()}
+              className="p-5 rounded-2xl bg-white/95 backdrop-blur-xl border border-white/80 shadow-xl hover:shadow-2xl transition-all duration-200 hover:-translate-y-1 cursor-pointer group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-teal-100/90 text-teal-700 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <FlaskConical className="w-6 h-6" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-teal-600 block mb-1">
+                800+ TESTS
+              </span>
+              <h3 className="text-base font-bold text-slate-900 group-hover:text-teal-700 transition-colors">
+                Book a Test
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Search and request diagnostic tests & profiles.
+              </p>
+              <div className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-teal-600 group-hover:translate-x-1 transition-transform">
+                <span>Get Started</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </div>
+            </div>
+
+            {/* Card 3: Home Collection */}
+            <div
+              onClick={() => handleOpenTestBooking(undefined, undefined, 'home')}
+              className="p-5 rounded-2xl bg-white/95 backdrop-blur-xl border border-white/80 shadow-xl hover:shadow-2xl transition-all duration-200 hover:-translate-y-1 cursor-pointer group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-emerald-100/90 text-emerald-700 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <Truck className="w-6 h-6" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block mb-1">
+                DOORSTEP SERVICE
+              </span>
+              <h3 className="text-base font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                Home Collection
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Doorstep sample pickup by trained phlebotomists.
+              </p>
+              <div className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-emerald-600 group-hover:translate-x-1 transition-transform">
+                <span>Get Started</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </div>
+            </div>
+
+            {/* Card 4: Track & Pay */}
+            <div
+              onClick={() => setIsTrackBookingOpen(true)}
+              className="p-5 rounded-2xl bg-white/95 backdrop-blur-xl border border-white/80 shadow-xl hover:shadow-2xl transition-all duration-200 hover:-translate-y-1 cursor-pointer group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-purple-100/90 text-purple-700 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <CreditCard className="w-6 h-6" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 block mb-1">
+                APPROVAL & PAY
+              </span>
+              <h3 className="text-base font-bold text-slate-900 group-hover:text-purple-700 transition-colors">
+                Track & Pay Booking
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Check admin approval status & complete payment online.
+              </p>
+              <div className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-purple-600 group-hover:translate-x-1 transition-transform">
+                <span>Get Started</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            5. STATS COUNTER BAR
+            ========================================================================= */}
+        <section className="py-12 bg-white/40 backdrop-blur-md border-y border-white/60 my-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+              <div>
+                <div className="text-3xl sm:text-4xl font-black text-sky-700 tracking-tight">
+                  90,000+
+                </div>
+                <div className="text-xs font-bold text-slate-800 mt-1">Patients Treated</div>
+                <div className="text-[11px] text-slate-500">With Trusted Clinical Care</div>
+              </div>
+              <div>
+                <div className="text-3xl sm:text-4xl font-black text-teal-700 tracking-tight">
+                  10+
+                </div>
+                <div className="text-xs font-bold text-slate-800 mt-1">Specialist Doctors</div>
+                <div className="text-[11px] text-slate-500">Experienced Medical Consultants</div>
+              </div>
+              <div>
+                <div className="text-3xl sm:text-4xl font-black text-sky-700 tracking-tight">
+                  829+
+                </div>
+                <div className="text-xs font-bold text-slate-800 mt-1">Diagnostic Lab Tests</div>
+                <div className="text-[11px] text-slate-500">Automated Analyzers & Imaging</div>
+              </div>
+              <div>
+                <div className="text-3xl sm:text-4xl font-black text-emerald-700 tracking-tight">
+                  24/7
+                </div>
+                <div className="text-xs font-bold text-slate-800 mt-1">Emergency Lab & Digital Access</div>
+                <div className="text-[11px] text-slate-500">Same-Day Report Delivery</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            6. OUTPATIENT SPECIALTY CARE & DEPARTMENTS (#services-section)
+            ========================================================================= */}
+        <section id="services-section" className="py-16 bg-transparent border-b border-white/60">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-10">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-sky-800 bg-white/80 border border-white/80 backdrop-blur-xs px-3 py-1 rounded-full shadow-2xs">
+                  Outpatient Specialty Care
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-2">
+                  Comprehensive Clinic Services & Departments
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
+                  Our modern outpatient departments are staffed by experienced physicians and specialists, backed by on-site automated diagnostic labs for immediate investigation.
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  document.getElementById('services-grid')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs transition-all shrink-0 cursor-pointer"
+              >
+                View All {SERVICES_DATA.length} Departments
+              </button>
+            </div>
+
+            {/* Department Cards Grid */}
+            <div id="services-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {SERVICES_DATA.map(srv => (
+                <div
+                  key={srv.id}
+                  className="group relative rounded-2xl border border-white/80 bg-white/70 backdrop-blur-md p-6 hover:bg-white/95 hover:border-slate-300 transition-all duration-200 shadow-xs hover:shadow-md flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-sky-700 bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-100">
+                        {srv.department}
+                      </span>
+                      <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Stethoscope className="w-5 h-5" />
+                      </div>
+                    </div>
+
+                    <h3 className="text-base font-bold text-slate-900 group-hover:text-sky-700 transition-colors">
+                      {srv.name}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                      {srv.shortDesc}
+                    </p>
+
+                    {/* Common Condition Badges */}
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {srv.commonConditions.slice(0, 2).map((cond, i) => (
+                        <span
+                          key={i}
+                          className="text-[11px] px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-600"
+                        >
+                          {cond}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-5 pt-3 border-t border-slate-100">
+                    <button
+                      onClick={() => setSelectedDepartment(srv)}
+                      className="flex-1 py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer text-center"
+                    >
+                      Details & Protocols
+                    </button>
+                    <button
+                      onClick={() => handleOpenDoctorBooking(undefined, srv.name)}
+                      className="py-2 px-3 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
+                    >
+                      Book OPD Doctor
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            7. AUTOMATED DIAGNOSTIC DIRECTORY (#tests-section)
+            ========================================================================= */}
+        <section id="tests-section" className="py-16 bg-transparent">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-8 space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-teal-800 bg-white/80 border border-white/80 backdrop-blur-xs px-3 py-1 rounded-full shadow-2xs">
+                Automated Diagnostic Directory
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+                Search 800+ Pathology & Diagnostic Tests
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 max-w-2xl mx-auto">
+                Standardized sample processing on automated biochemistry, hematology, chemiluminescence, and molecular analyzers with certified reporting.
+              </p>
+            </div>
+
+            {/* Search Input Box */}
+            <div className="max-w-2xl mx-auto mb-6">
+              <div className="relative">
+                <Search className="w-5 h-5 text-slate-400 absolute left-4 top-3.5" />
+                <input
+                  type="text"
+                  placeholder="Search 800+ tests by name or code (e.g. CBC, HbA1c, Thyroid, Lipid, Vitamin D, CG002, USG)..."
+                  value={testSearchQuery}
+                  onChange={e => setTestSearchQuery(e.target.value)}
+                  className="w-full pl-11 pr-10 py-3 bg-white border border-slate-300 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-teal-500 shadow-sm transition-all"
+                />
+                {testSearchQuery && (
+                  <button
+                    onClick={() => setTestSearchQuery('')}
+                    className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Horizontally-Scrollable Category Pills */}
+            <div className="flex items-center gap-2 mb-6 max-w-5xl mx-auto">
+              <button
+                onClick={() => scrollCategories('left')}
+                className="p-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 shadow-2xs transition-colors shrink-0"
+                aria-label="Scroll categories left"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <div
+                ref={categoryScrollRef}
+                className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 flex-1"
+              >
+                {testCategories.map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                      selectedCategory === cat
+                        ? 'bg-teal-600 text-white shadow-xs'
+                        : 'bg-white/80 backdrop-blur-xs text-slate-700 hover:bg-white border border-white/80'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => scrollCategories('right')}
+                className="p-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 shadow-2xs transition-colors shrink-0"
+                aria-label="Scroll categories right"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Status & Auto-Shuffle Controls */}
+            <div className="flex items-center justify-between text-xs text-slate-500 mb-4 px-1">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                <span>Live Auto-Shuffling</span>
+                <span>•</span>
+                <span>
+                  Showing {displayedTests.length} of {ALL_TESTS_DATA.length} tests
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsTestShufflingPaused(!isTestShufflingPaused)}
+                  className="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-medium transition-colors cursor-pointer flex items-center gap-1"
+                  title="Pause auto rotation"
+                >
+                  {isTestShufflingPaused ? (
+                    <>
+                      <Play className="w-3 h-3 text-emerald-600" />
+                      <span>Resume</span>
+                    </>
+                  ) : (
+                    <>
+                      <Pause className="w-3 h-3 text-amber-600" />
+                      <span>Pause</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setTestOffset(prev => (prev + 3) % (ALL_TESTS_DATA.length - 6))}
+                  className="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-medium transition-colors cursor-pointer flex items-center gap-1"
+                  title="Shuffle tests now"
+                >
+                  <RefreshCw className="w-3 h-3 text-teal-600" />
+                  <span>Shuffle Now</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Test Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {displayedTests.map(test => (
+                <div
+                  key={test.id}
+                  className="p-4 sm:p-5 rounded-2xl border border-white/80 bg-white/70 backdrop-blur-md hover:bg-white/95 hover:border-teal-300 transition-all duration-200 shadow-xs flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between text-xs mb-2">
+                      <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-100">
+                        {test.category}
+                      </span>
+                      <span className="font-mono text-[11px] text-slate-400 font-bold">{test.code}</span>
+                    </div>
+
+                    <div className="flex items-baseline justify-between gap-2 mt-1 mb-2">
+                      <span className="text-lg font-black text-slate-900">₹{test.price}</span>
+                      <span className="text-xs text-slate-400 line-through">₹{test.originalPrice}</span>
+                    </div>
+
+                    <h3 className="text-sm font-bold text-slate-900 leading-snug line-clamp-2">
+                      {test.name}
+                    </h3>
+
+                    <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">
+                      {test.shortDesc || `Diagnostic code: ${test.code} | ${test.category}`}
+                    </p>
+
+                    <div className="space-y-1 mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-600">
+                      <div>
+                        Report: <span className="font-semibold text-slate-800">{test.reportTime}</span>
+                      </div>
+                      <div className="truncate">
+                        Sample: <span className="font-semibold text-slate-800">{test.sampleType}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-slate-100">
+                    <span className="text-[10px] font-semibold text-slate-500">
+                      {test.fastingRequired ? '10-12 Hrs Fasting' : 'No Fasting Required'}
+                    </span>
+                    <button
+                      onClick={() => handleOpenTestBooking(test.id)}
+                      className="px-4 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-xl shadow-2xs transition-colors cursor-pointer"
+                    >
+                      Book at Lab
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Bottom Full-Width CTA */}
+            <div className="text-center mt-10">
+              <button
+                onClick={() => handleOpenTestBooking()}
+                className="px-8 py-3.5 bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm rounded-xl shadow-md shadow-teal-600/20 transition-all hover:scale-[1.01] cursor-pointer inline-flex items-center gap-2"
+              >
+                <FlaskConical className="w-4 h-4" />
+                <span>Explore All 829+ Diagnostic Tests & Imaging</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            8. PREVENTIVE HEALTH CHECKUP PACKAGES (#packages-section)
+            ========================================================================= */}
+        <section
+          id="packages-section"
+          className="py-16 bg-slate-950/90 backdrop-blur-2xl text-white relative overflow-hidden"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-10">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-teal-400 bg-teal-950/80 border border-teal-700/60 px-3 py-1 rounded-full">
+                  Full-Body Preventive Health Checkups
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mt-2">
+                  Curated Health Packages for Every Life Stage
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl">
+                  Detect latent metabolic, cardiac, liver, and thyroid risks early. Includes complete organ profiles, pathologist review, and doorstep collection.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setIsComparePackagesOpen(true)}
+                className="px-4 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white font-bold text-xs rounded-xl border border-white/20 transition-all inline-flex items-center gap-2 self-start md:self-auto shadow-sm cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4 text-sky-400" />
+                <span>Compare Packages Side-by-Side</span>
+              </button>
+            </div>
+
+            {/* Package Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {PACKAGES_DATA.map(pkg => (
+                <div
+                  key={pkg.id}
+                  className="rounded-3xl border border-slate-700/80 bg-slate-900/80 backdrop-blur-xl p-6 hover:border-teal-500/60 transition-all duration-200 flex flex-col justify-between group shadow-xl"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">
+                        Save {pkg.discountPercent}%
+                      </span>
+                      <span className="text-xs font-bold text-sky-300">
+                        {pkg.parametersCount} Parameters
+                      </span>
+                    </div>
+
+                    <h3 className="text-lg font-bold text-white group-hover:text-teal-300 transition-colors">
+                      {pkg.name}
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                      {pkg.tagline}
+                    </p>
+
+                    <div className="flex items-baseline gap-2 mt-4 mb-4">
+                      <span className="text-3xl font-black text-white">₹{pkg.price}</span>
+                      <span className="text-sm text-slate-500 line-through">₹{pkg.originalPrice}</span>
+                    </div>
+
+                    {/* Parameter category list */}
+                    <div className="space-y-2 py-3 border-t border-slate-800 text-xs">
+                      {pkg.categories?.map((cat, cIdx) => (
+                        <div key={cIdx} className="leading-relaxed">
+                          <span className="font-bold text-slate-200">{cat.name}:</span>{' '}
+                          <span className="text-slate-400">{cat.tests.join(', ')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-5 pt-4 border-t border-slate-800 flex flex-col gap-2.5">
+                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                      <span>Same Day (Evening)</span>
+                      <span className="text-emerald-400 font-semibold">Home Collection Available</span>
+                    </div>
+
+                    <button
+                      onClick={() => handleOpenTestBooking(undefined, pkg.id)}
+                      className="w-full py-2.5 bg-gradient-to-r from-teal-600 to-sky-600 hover:from-teal-700 hover:to-sky-700 text-white font-bold text-xs rounded-xl shadow-md shadow-teal-600/20 transition-all cursor-pointer text-center"
+                    >
+                      Book Package Now
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            9. SPECIALIST DOCTORS & VISITING CONSULTANTS (#doctors-section)
+            ========================================================================= */}
+        <section id="doctors-section" className="py-16 bg-transparent border-b border-white/60">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-10">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-sky-800 bg-white/80 border border-white/80 backdrop-blur-xs px-3 py-1 rounded-full shadow-2xs">
+                  Clinical Medical Team
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-2">
+                  Meet Our Specialist Doctors & Visiting Consultants
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
+                  Highly experienced specialists offering daily OPD and scheduled visits (weekly / monthly super-specialist clinics) with comprehensive clinical diagnostic correlation.
+                </p>
+              </div>
+
+              <button
+                onClick={() => handleOpenDoctorBooking()}
+                className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs transition-all shrink-0 cursor-pointer"
+              >
+                View All Doctors & Visiting Schedules
+              </button>
+            </div>
+
+            {/* Doctor Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {DOCTORS_DATA.slice(0, 6).map(doc => (
+                <div
+                  key={doc.id}
+                  className="bg-white/80 backdrop-blur-md rounded-2xl border border-white/80 overflow-hidden shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between group"
+                >
+                  <div className="p-5">
+                    <div className="flex items-start gap-4">
+                      <img
+                        alt={doc.name}
+                        className="w-20 h-20 rounded-2xl object-cover border border-slate-200 shrink-0 group-hover:scale-105 transition-transform"
+                        src={doc.image}
+                      />
+                      <div className="space-y-1 flex-1">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-sky-100/90 text-sky-900 border-sky-300 shadow-2xs font-bold inline-block">
+                          {doc.visitingScheduleText}
+                        </span>
+                        <div className="flex items-center gap-1 text-xs text-amber-500 font-bold">
+                          <Star className="w-3.5 h-3.5 fill-amber-400" />
+                          <span>{doc.rating}</span>
+                        </div>
+                        <p className="text-xs font-semibold text-sky-700">{doc.specialty}</p>
+                      </div>
+                    </div>
+
+                    <h3 className="text-base font-bold text-slate-900 mt-3 group-hover:text-sky-700 transition-colors">
+                      {doc.name}
+                    </h3>
+                    <p className="text-xs text-slate-500">{doc.qualification}</p>
+
+                    <div className="space-y-1 mt-3 pt-3 border-t border-slate-100 text-xs text-slate-600">
+                      <div>{doc.experience}</div>
+                      <div>
+                        <span className="text-slate-400">Timings:</span> {doc.timing}
+                      </div>
+                      <div>
+                        <span className="text-slate-400">Days:</span> {doc.availableDays.join(', ')}
+                      </div>
+                      <div className="font-bold text-slate-800 pt-1">
+                        Consultation Fee: <span className="text-sky-700">₹{doc.fee}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center gap-2">
+                    <button
+                      onClick={() => setSelectedDoctorProfile(doc)}
+                      className="flex-1 py-2 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-colors cursor-pointer text-center"
+                    >
+                      Profile
+                    </button>
+                    <button
+                      onClick={() => handleOpenDoctorBooking(doc.id)}
+                      className="flex-1 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer text-center"
+                    >
+                      Book Visit
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            10. DOORSTEP DIAGNOSTIC SERVICE (Home Collection)
+            ========================================================================= */}
+        <section className="py-16 bg-gradient-to-r from-emerald-900 via-teal-900 to-sky-950 text-white relative overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-12">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-300 bg-emerald-950/80 border border-emerald-500/40 px-3 py-1 rounded-full">
+                  Doorstep Diagnostic Service
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mt-2">
+                  Quality Diagnostic Care in the Comfort of Your Home
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl">
+                  Skip clinic queues and travel stress. Especially convenient for elderly parents, diabetic fasting profiles, and infant blood collections.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  onClick={() => handleOpenTestBooking(undefined, undefined, 'home')}
+                  className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-all cursor-pointer"
+                >
+                  Schedule Home Visit Now
+                </button>
+                <a
+                  href={`tel:${CLINIC_INFO.phoneLab}`}
+                  className="px-5 py-3 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl border border-white/20 transition-colors flex items-center gap-2"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>Call Lab: {CLINIC_INFO.phoneLab}</span>
+                </a>
+              </div>
+            </div>
+
+            {/* 4 Steps */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
+                <div className="text-xs font-bold text-emerald-400 mb-2">STEP 01</div>
+                <h3 className="text-sm font-bold text-white">Book Online or Call</h3>
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                  Select your tests or health package and choose your preferred morning time slot.
+                </p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
+                <div className="text-xs font-bold text-emerald-400 mb-2">STEP 02</div>
+                <h3 className="text-sm font-bold text-white">Certified Phlebotomist Visit</h3>
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                  Trained healthcare technician arrives with barcode-sealed, single-use sterile vacutainers.
+                </p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
+                <div className="text-xs font-bold text-emerald-400 mb-2">STEP 03</div>
+                <h3 className="text-sm font-bold text-white">Temperature-Controlled Transit</h3>
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                  Samples transported in calibrated cold-chain carriers directly to our central lab.
+                </p>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15">
+                <div className="text-xs font-bold text-emerald-400 mb-2">STEP 04</div>
+                <h3 className="text-sm font-bold text-white">Digital Reports on WhatsApp/Web</h3>
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                  Verified reports delivered same-day to your phone with QR code authenticity verification.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            11. THE DIAGNOSTIC STANDARD / WHY CHOOSE US
+            ========================================================================= */}
+        <section className="py-16 bg-transparent border-b border-white/60">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12 space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-sky-800 bg-white/80 border border-white/80 backdrop-blur-xs px-3 py-1 rounded-full shadow-2xs">
+                The {CLINIC_INFO.shortName} Standard
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+                Why Thousands of Families Trust Us
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 max-w-2xl mx-auto">
+                Combining empathetic patient care with world-class laboratory technology to deliver the highest clinical confidence.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="p-6 rounded-2xl bg-white/80 backdrop-blur-md border border-white/80 shadow-xs">
+                <div className="w-12 h-12 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center mb-4">
+                  <Award className="w-6 h-6" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">Trusted Clinical Excellence</h3>
+                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                  Over 90,000+ satisfied patients treated with compassionate, ethical, and evidence-based medicine.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-white/80 backdrop-blur-md border border-white/80 shadow-xs">
+                <div className="w-12 h-12 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center mb-4">
+                  <Microscope className="w-6 h-6" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">Precision Automated Diagnostics</h3>
+                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                  Fully calibrated analyzers, strict internal quality controls, and MD Pathologist verified results.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-white/80 backdrop-blur-md border border-white/80 shadow-xs">
+                <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center mb-4">
+                  <Stethoscope className="w-6 h-6" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">Multi-Specialty Doctor OPD</h3>
+                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                  Dedicated consultations across Cardiology, Gynaecology, Pediatrics, Internal Medicine, and ENT.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-white/80 backdrop-blur-md border border-white/80 shadow-xs">
+                <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center mb-4">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">Smart Digital Lab Reports</h3>
+                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                  Instant online report access, historical trend analytics, and QR-code backed verification.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-white/80 backdrop-blur-md border border-white/80 shadow-xs">
+                <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center mb-4">
+                  <Truck className="w-6 h-6" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">Sterile Home Collection</h3>
+                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                  Convenient morning sample collection by vaccinated phlebotomists with zero contamination risk.
+                </p>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-white/80 backdrop-blur-md border border-white/80 shadow-xs">
+                <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center mb-4">
+                  <Clock className="w-6 h-6" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">Seamless Digital Booking</h3>
+                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                  Book doctor appointments and tests in under 60 seconds with instant WhatsApp confirmations.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            12. PATIENT STORIES & REVIEWS
+            ========================================================================= */}
+        <section className="py-16 bg-transparent border-b border-white/60">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12 space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-sky-800 bg-white/80 border border-white/80 backdrop-blur-xs px-3 py-1 rounded-full shadow-2xs">
+                Patient Stories & Reviews
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+                Real Experiences from Our Community
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 max-w-2xl mx-auto">
+                See how our clinic consultations and diagnostic accuracy make a positive difference in daily health.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {TESTIMONIALS_DATA.map(t => (
+                <div
+                  key={t.id}
+                  className="p-6 rounded-2xl bg-white/80 backdrop-blur-md border border-white/80 shadow-xs flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between text-xs mb-3">
+                      <div className="flex text-amber-400">
+                        {[...Array(t.rating)].map((_, i) => (
+                          <Star key={i} className="w-4 h-4 fill-amber-400" />
+                        ))}
+                      </div>
+                      <span className="text-slate-400 text-[11px]">{t.date}</span>
+                    </div>
+
+                    <p className="text-xs sm:text-sm text-slate-700 leading-relaxed italic">
+                      "{t.comment}"
+                    </p>
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-100 mt-4 flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900">{t.patientName}</h4>
+                      <div className="text-[10px] text-slate-500">{t.serviceUsed}</div>
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      Verified
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            13. FREQUENTLY ASKED QUESTIONS (#faq-section)
+            ========================================================================= */}
+        <section id="faq-section" className="py-16 bg-transparent border-b border-white/60">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-10 space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-sky-800 bg-white/80 border border-white/80 backdrop-blur-xs px-3 py-1 rounded-full shadow-2xs">
+                Frequently Asked Questions
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+                Got Questions? We Have Answers
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600">
+                Everything you need to know about tests, doctor consultations, fasting, and reports.
+              </p>
+            </div>
+
+            {/* Category Filter */}
+            <div className="flex items-center justify-center gap-2 overflow-x-auto pb-4 mb-6">
+              {['All', 'General', 'Diagnostics', 'Home Collection', 'Reports', 'Appointments'].map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setFaqCategory(cat)}
+                  className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
+                    faqCategory === cat
+                      ? 'bg-sky-600 text-white shadow-xs'
+                      : 'bg-white/70 backdrop-blur-xs text-slate-700 hover:bg-white border border-white/80'
+                  }`}
+                >
+                  {cat}
                 </button>
               ))}
             </div>
 
-            <div style={{ position: 'relative', width: '320px' }}>
-              <Search
-                size={17}
-                style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}
-              />
-              <input
-                type="text"
-                placeholder="Search test name or code (CBC, LFT)..."
-                value={testSearch}
-                onChange={(e) => setTestSearch(e.target.value)}
-                className="lp-input"
-                style={{ paddingLeft: '38px', paddingRight: '12px', width: '100%', boxSizing: 'border-box' }}
-              />
+            {/* Accordion Items */}
+            <div className="space-y-3">
+              {filteredFaqs.map(faq => {
+                const isExpanded = expandedFaqId === faq.id;
+                return (
+                  <div
+                    key={faq.id}
+                    className="rounded-2xl border border-white/80 overflow-hidden bg-white/70 backdrop-blur-md transition-all shadow-xs"
+                  >
+                    <button
+                      onClick={() => setExpandedFaqId(isExpanded ? null : faq.id)}
+                      className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 hover:bg-white/80 transition-colors cursor-pointer"
+                    >
+                      <span className="text-sm font-bold text-slate-900">{faq.question}</span>
+                      <div
+                        className={`w-6 h-6 rounded-full bg-white/90 shadow-2xs flex items-center justify-center text-slate-500 shrink-0 transition-transform ${
+                          isExpanded ? 'rotate-180 bg-sky-100 text-sky-700' : ''
+                        }`}
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </div>
+                    </button>
+                    {isExpanded && (
+                      <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100/80 bg-white/50">
+                        {faq.answer}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
+        </section>
 
-          {/* Test Cards Grid */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
-              gap: '20px'
-            }}
-          >
-            {filteredTests.map((test) => {
-              const inBasket = basket.some((b) => b.code === test.code);
-              return (
+        {/* =========================================================================
+            14. DOCTOR-WRITTEN HEALTH GUIDES (#blog-section)
+            ========================================================================= */}
+        <section id="blog-section" className="py-16 bg-transparent border-b border-white/60">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-10">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-sky-800 bg-white/80 border border-white/80 backdrop-blur-xs px-3 py-1 rounded-full shadow-2xs">
+                  Health Awareness & Clinical Insights
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-2">
+                  Doctor-Written Health Guides
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
+                  Read practical medical advice on interpreting lab tests, managing chronic conditions, nutrition, and preventive wellness.
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  if (BLOGS_DATA[0]) setSelectedArticle(BLOGS_DATA[0]);
+                }}
+                className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 shadow-2xs transition-all shrink-0 cursor-pointer"
+              >
+                Read All Health Articles
+              </button>
+            </div>
+
+            {/* Articles Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {BLOGS_DATA.map(blog => (
                 <div
-                  key={test.code}
-                  style={{
-                    background: '#ffffff',
-                    border: inBasket ? '1.5px solid #0284c7' : '1px solid #e2e8f0',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    boxShadow: inBasket ? '0 8px 20px -6px rgba(2, 132, 199, 0.15)' : 'none',
-                    transition: 'all 0.2s'
-                  }}
+                  key={blog.id}
+                  className="rounded-2xl overflow-hidden border border-white/80 bg-white/80 backdrop-blur-md shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between group"
                 >
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                      <span
-                        style={{
-                          background: '#f1f5f9',
-                          color: '#0f172a',
-                          padding: '3px 8px',
-                          borderRadius: '6px',
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          letterSpacing: '0.04em'
-                        }}
-                      >
-                        {test.code}
-                      </span>
-                      <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>
-                        {test.dept}
+                    <div className="h-44 w-full overflow-hidden relative">
+                      <img
+                        alt={blog.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        src={blog.image}
+                      />
+                      <span className="absolute top-3 left-3 text-[10px] font-bold uppercase tracking-wider text-white bg-slate-900/80 backdrop-blur-xs px-2.5 py-0.5 rounded-full">
+                        {blog.category}
                       </span>
                     </div>
 
-                    <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', margin: '0 0 8px 0', lineHeight: 1.35 }}>
-                      {test.name}
-                    </h4>
+                    <div className="p-5">
+                      <div className="flex items-center gap-2 text-[11px] text-slate-400 mb-2">
+                        <span>{blog.publishDate}</span>
+                        <span>•</span>
+                        <span>{blog.readTime}</span>
+                      </div>
 
-                    <div style={{ fontSize: '12.5px', color: '#64748b', marginBottom: '14px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <div>• <strong>Sample:</strong> {test.specimen}</div>
-                      <div>• <strong>Preparation:</strong> {test.fasting}</div>
-                      <div>• <strong>TAT:</strong> {test.tat}</div>
+                      <h3 className="text-sm font-bold text-slate-900 leading-snug group-hover:text-sky-700 transition-colors line-clamp-2">
+                        {blog.title}
+                      </h3>
+
+                      <p className="text-xs text-slate-500 mt-2 line-clamp-2 leading-relaxed">
+                        {blog.excerpt}
+                      </p>
                     </div>
                   </div>
 
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      paddingTop: '12px',
-                      borderTop: '1px solid #f1f5f9'
-                    }}
-                  >
-                    <div>
-                      <span
-                        style={{
-                          fontSize: '12px',
-                          fontWeight: 700,
-                          color: '#059669',
-                          background: '#ecfdf5',
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                        }}
-                      >
-                        <Check size={13} /> NABL Certified
-                      </span>
-                    </div>
-
+                  <div className="p-5 pt-0 flex items-center justify-between text-xs border-t border-slate-100 mt-2">
+                    <span className="text-[11px] text-slate-500">
+                      By <span className="font-semibold text-slate-700">{blog.author.name}</span>
+                    </span>
                     <button
-                      onClick={() => toggleBasket(test)}
-                      style={{
-                        padding: '8px 14px',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        border: 'none',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        background: inBasket ? '#059669' : '#0284c7',
-                        color: '#ffffff',
-                        transition: 'background 0.2s'
-                      }}
+                      onClick={() => setSelectedArticle(blog)}
+                      className="font-bold text-sky-600 hover:text-sky-700 transition-colors cursor-pointer"
                     >
-                      {inBasket ? (
-                        <>
-                          <Check size={14} /> Added
-                        </>
-                      ) : (
-                        '+ Add to Basket'
-                      )}
+                      Read Guide
                     </button>
                   </div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
+        </section>
 
-          {/* Sticky Home Collection Basket Bar */}
-          {basket.length > 0 && (
-            <div
-              style={{
-                position: 'sticky',
-                bottom: '24px',
-                marginTop: '32px',
-                background: '#0f172a',
-                color: '#ffffff',
-                borderRadius: '12px',
-                padding: '16px 24px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '16px',
-                boxShadow: '0 16px 36px rgba(0, 0, 0, 0.35)',
-                zIndex: 100
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ background: 'rgba(2, 132, 199, 0.3)', padding: '10px', borderRadius: '8px' }}>
-                  <Truck size={22} color="#38bdf8" />
+        {/* =========================================================================
+            15. CLINIC LOCATION, SUPPORT & CALLBACK ENQUIRY (#contact-section)
+            ========================================================================= */}
+        <section id="contact-section" className="py-16 bg-transparent">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12 space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-sky-800 bg-white/80 border border-white/80 backdrop-blur-xs px-3 py-1 rounded-full shadow-2xs">
+                Clinic Location & Support
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+                Visit {CLINIC_INFO.shortName} or Reach Out
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 max-w-2xl mx-auto">
+                Conveniently located in the heart of {CLINIC_INFO.city} with dedicated parking, wheelchair access, and 24/7 sample collection.
+              </p>
+            </div>
+
+            {/* Quick Contact Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+              <div className="p-5 rounded-2xl bg-white/80 backdrop-blur-md border border-white/80 shadow-xs">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-sky-700 block mb-1">
+                  Doctor OPD Booking
+                </span>
+                <a
+                  href={`tel:${CLINIC_INFO.phonePrimary}`}
+                  className="text-base font-bold text-slate-900 hover:text-sky-600 block"
+                >
+                  {CLINIC_INFO.phonePrimary}
+                </a>
+                <span className="text-[11px] text-slate-500 block mt-1">
+                  {CLINIC_INFO.hoursOpd}
+                </span>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white/80 backdrop-blur-md border border-white/80 shadow-xs">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-teal-700 block mb-1">
+                  Laboratory & Histopathology
+                </span>
+                <a
+                  href={`tel:${CLINIC_INFO.phoneLab}`}
+                  className="text-base font-bold text-slate-900 hover:text-teal-600 block"
+                >
+                  {CLINIC_INFO.phoneLab}
+                </a>
+                <span className="text-[11px] text-slate-500 block mt-1">
+                  Histopath: {CLINIC_INFO.phoneHistopath}
+                </span>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white/80 backdrop-blur-md border border-white/80 shadow-xs">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 block mb-1">
+                  Official Email
+                </span>
+                <a
+                  href={`mailto:${CLINIC_INFO.email}`}
+                  className="text-xs font-bold text-slate-900 hover:text-sky-600 block truncate"
+                >
+                  {CLINIC_INFO.email}
+                </a>
+                <span className="text-[11px] text-slate-500 block mt-1">
+                  Corporate & Clinical Enquiries
+                </span>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white/80 backdrop-blur-md border border-white/80 shadow-xs">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block mb-1">
+                  Operational Hours
+                </span>
+                <span className="text-xs font-bold text-slate-900 block">
+                  {CLINIC_INFO.hoursLab}
+                </span>
+                <span className="text-[11px] text-emerald-600 font-semibold block mt-1">
+                  Walk-in & Emergency Service
+                </span>
+              </div>
+            </div>
+
+            {/* Map & Callback Form Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              {/* Map & Directions */}
+              <div className="lg:col-span-6 space-y-4">
+                <div className="rounded-2xl overflow-hidden border border-white/80 bg-white/80 shadow-xs h-72 w-full relative">
+                  <iframe
+                    title={`${CLINIC_INFO.name} Location`}
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d118944.59781615822!2d83.5658686762391!3d21.33230350438885!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a21396bfa8f5c37%3A0xc3cf9c9a51d95c47!2sBargarh%2C%20Odisha!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
+                    className="w-full h-full border-0"
+                    loading="lazy"
+                  />
+                </div>
+
+                <div className="p-4 rounded-xl bg-white/70 backdrop-blur-xs border border-white/80 flex items-center justify-between text-xs text-slate-600">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-sky-600 shrink-0" />
+                    <span>
+                      {CLINIC_INFO.addressLine1}, {CLINIC_INFO.city} - {CLINIC_INFO.pincode}
+                    </span>
+                  </div>
+                  <a
+                    href={`https://maps.google.com/?q=${encodeURIComponent(CLINIC_INFO.name + ', ' + CLINIC_INFO.city)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-bold text-sky-600 hover:text-sky-700 flex items-center gap-1 shrink-0 ml-2"
+                  >
+                    <span>Directions</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Callback / Enquiry Form */}
+              <div className="lg:col-span-6 bg-white/90 backdrop-blur-md rounded-2xl border border-white/80 p-6 shadow-md">
+                <div className="mb-4">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-sky-700 block mb-0.5">
+                    Fast Reception Response
+                  </span>
+                  <h3 className="text-lg font-bold text-slate-900">
+                    Request a Callback / Enquiry
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Leave your contact details and our medical coordinator will get in touch immediately.
+                  </p>
+                </div>
+
+                {callbackStatus === 'success' && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-center gap-2 mb-4">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Your request has been received. Our coordinator will call you shortly.</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleCallbackSubmit} className="space-y-3.5 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        Your Full Name *
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Anand Sharma"
+                        value={callbackForm.name}
+                        onChange={e => setCallbackForm({ ...callbackForm, name: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-sky-500 shadow-2xs"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        Mobile Number *
+                      </label>
+                      <input
+                        type="tel"
+                        placeholder="e.g. 9827493536"
+                        value={callbackForm.phone}
+                        onChange={e => setCallbackForm({ ...callbackForm, phone: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-sky-500 shadow-2xs"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Enquiry Subject
+                    </label>
+                    <select
+                      value={callbackForm.subject}
+                      onChange={e => setCallbackForm({ ...callbackForm, subject: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-sky-500 shadow-2xs"
+                    >
+                      <option value="Doctor Appointment Inquiry">Doctor Appointment Inquiry</option>
+                      <option value="Diagnostic Test Price & Fasting">Diagnostic Test Price & Fasting</option>
+                      <option value="Home Sample Collection Request">Home Sample Collection Request</option>
+                      <option value="Report Status Inquiry">Report Status Inquiry</option>
+                      <option value="Corporate / Family Health Package">Corporate / Family Health Package</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Message / Questions
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder="Write details about your symptoms, required doctor specialty, or requested test..."
+                      value={callbackForm.message}
+                      onChange={e => setCallbackForm({ ...callbackForm, message: e.target.value })}
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-sky-500 shadow-2xs"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={callbackStatus === 'submitting'}
+                    className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>{callbackStatus === 'submitting' ? 'Submitting...' : 'Send Callback Request'}</span>
+                  </button>
+                </form>
+
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                  <span>Emergency Helpline: <strong>{CLINIC_INFO.phonePrimary}</strong></span>
+                  <span className="text-emerald-600 font-semibold">Live Reception</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* =========================================================================
+          16. FOOTER: Brand, Links, Socials, Disclaimers & Staff Portal Login
+          ========================================================================= */}
+      <footer className="bg-slate-950/85 backdrop-blur-xl text-slate-300 pt-16 pb-12 border-t border-white/10 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
+            {/* Brand column */}
+            <div className="lg:col-span-2 space-y-4">
+              <div
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="cursor-pointer group flex items-center"
+              >
+                <img
+                  src="/aastha-logo.svg"
+                  alt={CLINIC_INFO.name}
+                  className="max-h-12 w-auto brightness-0 invert"
+                />
+              </div>
+
+              <div className="text-xs font-bold uppercase tracking-wider text-teal-400">
+                {CLINIC_INFO.tagline}
+              </div>
+
+              <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
+                Complete healthcare, multi-specialty doctor consultations, and fully automated diagnostic pathology under one roof. Committed to accuracy, compassionate patient care, and reliable clinical outcomes.
+              </p>
+
+              <div className="space-y-1.5 text-xs text-slate-400 pt-1">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Standardized Quality Control Protocols</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Rapid Digital Reports with Online Doctor Verification</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Sterile & Temperature-Monitored Home Sample Collection</span>
+                </div>
+              </div>
+
+              {/* Social Links */}
+              <div className="pt-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
+                  Connect & Patient Reviews
+                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <a
+                    href={`https://wa.me/${CLINIC_INFO.whatsapp}?text=Hello%20Aastha%20Diagnostics%2C%20I%20would%20like%20to%20inquire%20about%20booking%20and%20reports`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-emerald-500 text-xs text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>WhatsApp</span>
+                  </a>
+                  <a
+                    href="https://facebook.com/aasthapolyclinic"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500 text-xs text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors"
+                  >
+                    <span>Facebook</span>
+                  </a>
+                  <a
+                    href="https://instagram.com/aasthapolyclinic"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-rose-500 text-xs text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors"
+                  >
+                    <span>Instagram</span>
+                  </a>
+                  <a
+                    href="https://maps.google.com/?q=Aastha+Polyclinic+and+Diagnostics"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-amber-500 text-xs text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors"
+                  >
+                    <span>Google Review</span>
+                    <span className="text-amber-400 font-bold">5.0 ★</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Links Column */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-white">
+                Quick Links
+              </h3>
+              <ul className="space-y-2 text-xs text-slate-400">
+                <li>
+                  <button
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
+                    Home
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => {
+                      document.getElementById('services-section')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
+                    Clinic Services
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => {
+                      document.getElementById('doctors-section')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
+                    Meet Doctors
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => {
+                      document.getElementById('tests-section')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
+                    Diagnostic Tests
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => {
+                      document.getElementById('packages-section')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
+                    Health Packages
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => {
+                      document.getElementById('blog-section')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
+                    Health Insights Blog
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Patient Services Column */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-white">
+                Patient Services
+              </h3>
+              <ul className="space-y-2 text-xs text-slate-400">
+                <li>
+                  <button
+                    onClick={() => handleOpenDoctorBooking()}
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
+                    Book Doctor Appointment
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => handleOpenTestBooking()}
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
+                    Book Lab Test Online
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => handleOpenTestBooking(undefined, undefined, 'home')}
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
+                    Home Sample Collection
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setIsTrackBookingOpen(true)}
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
+                    Track & Pay Booking Status
+                  </button>
+                </li>
+                <li>
+                  <a
+                    href={`tel:${CLINIC_INFO.phoneHistopath}`}
+                    className="hover:text-white transition-colors"
+                  >
+                    Histopathology Query
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Contact & Helplines Column */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-white">
+                Contact & Helplines
+              </h3>
+              <div className="space-y-2 text-xs text-slate-400">
+                <div>
+                  <span className="block text-slate-500">Clinic OPD Booking:</span>
+                  <a href={`tel:${CLINIC_INFO.phonePrimary}`} className="font-bold text-white hover:text-sky-400">
+                    {CLINIC_INFO.phonePrimary}
+                  </a>
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '16px' }}>
-                    {basket.length} {basket.length === 1 ? 'Test' : 'Tests'} Selected for Home Collection
-                  </div>
-                  <div style={{ fontSize: '13px', color: '#94a3b8' }}>
-                    Free doorstep sample pickup with certified zero-mixup vacuum tubes
-                  </div>
+                  <span className="block text-slate-500">Laboratory & Home Visits:</span>
+                  <a href={`tel:${CLINIC_INFO.phoneLab}`} className="font-bold text-teal-400 hover:text-teal-300">
+                    {CLINIC_INFO.phoneLab}
+                  </a>
+                </div>
+                <div>
+                  <span className="block text-slate-500">Histopathology Division:</span>
+                  <a href={`tel:${CLINIC_INFO.phoneHistopath}`} className="font-bold text-cyan-400 hover:text-cyan-300">
+                    {CLINIC_INFO.phoneHistopath}
+                  </a>
+                </div>
+                <div>
+                  <span className="block text-slate-500">Email Desk:</span>
+                  <a href={`mailto:${CLINIC_INFO.email}`} className="font-medium text-slate-300 hover:text-white">
+                    {CLINIC_INFO.email}
+                  </a>
+                </div>
+                <div className="pt-1 text-[11px] text-slate-500">
+                  {CLINIC_INFO.addressLine1}, {CLINIC_INFO.city}, {CLINIC_INFO.state} - {CLINIC_INFO.pincode}
                 </div>
               </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <button
-                  onClick={() => setBasket([])}
-                  style={{
-                    background: 'transparent',
-                    border: '1px solid #475569',
-                    color: '#cbd5e1',
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '13px'
-                  }}
-                >
-                  Clear All
-                </button>
-                <button
-                  onClick={() => {
-                    setBookingType('home_collection');
-                    setIsBookingOpen(true);
-                  }}
-                  className="lp-btn-primary"
-                  style={{ background: '#0284c7' }}
-                >
-                  Confirm Home Collection &rarr;
-                </button>
-              </div>
             </div>
-          )}
-        </div>
-      </section>
-
-      {/* --------------------------------------------------------------------
-          7. Popular Health Checkup Packages
-         -------------------------------------------------------------------- */}
-      <section id="packages" className="lp-section lp-section-alt">
-        <div className="lp-section-header">
-          <span className="lp-section-tag">Preventive Wellness</span>
-          <h2 className="lp-section-title">Curated Full Body Health Packages</h2>
-          <p className="lp-section-desc">
-            Affordable comprehensive health checkups designed by clinical experts for early
-            detection of cardiac, diabetic, liver, and metabolic disorders.
-          </p>
-        </div>
-
-        <div className="lp-packages-grid">
-          {/* Package 1 */}
-          <div className="lp-package-card">
-            <h3 className="lp-package-title">Aastha Basic Wellness</h3>
-            <div className="lp-package-subtitle">Essential screening for young adults (42 parameters)</div>
-
-            <div style={{ display: 'flex', gap: '8px', margin: '14px 0 18px', flexWrap: 'wrap' }}>
-              <span style={{ background: '#ecfdf5', color: '#047857', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>
-                42 Vital Parameters
-              </span>
-              <span style={{ background: '#f0fdf4', color: '#16a34a', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>
-                Same-Day Report
-              </span>
-            </div>
-
-            <ul className="lp-package-tests">
-              <li><CheckCircle2 size={16} color="#059669" /> Complete Blood Count (CBC - 24 Params)</li>
-              <li><CheckCircle2 size={16} color="#059669" /> Fasting Blood Glucose (Sugar)</li>
-              <li><CheckCircle2 size={16} color="#059669" /> Lipid Profile Screen (Cholesterol & Triglycerides)</li>
-              <li><CheckCircle2 size={16} color="#059669" /> Kidney Function Screen (Serum Creatinine & Urea)</li>
-              <li><CheckCircle2 size={16} color="#059669" /> Routine & Microscopic Urine Examination</li>
-            </ul>
-
-            <button
-              onClick={() => {
-                setBasket([{ code: 'PKG-BASIC', name: 'Aastha Basic Wellness Package (42 parameters)' }]);
-                setBookingType('home_collection');
-                setIsBookingOpen(true);
-              }}
-              className="lp-btn-outline"
-              style={{ width: '100%', justifyContent: 'center' }}
-            >
-              Book Basic Package
-            </button>
           </div>
 
-          {/* Package 2 (Popular) */}
-          <div className="lp-package-card popular">
-            <div className="lp-popular-badge">★ Most Recommended</div>
-            <h3 className="lp-package-title">Executive Comprehensive Checkup</h3>
-            <div className="lp-package-subtitle">Holistic whole-body analysis (78 parameters)</div>
-
-            <div style={{ display: 'flex', gap: '8px', margin: '14px 0 18px', flexWrap: 'wrap' }}>
-              <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>
-                78 Comprehensive Parameters
-              </span>
-              <span style={{ background: '#f0f9ff', color: '#0284c7', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>
-                Includes ECG & X-Ray
-              </span>
+          {/* Bottom Copyright & Staff Portal */}
+          <div className="pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+            <div>
+              © 2026 {CLINIC_INFO.name} ({CLINIC_INFO.domain}). All rights reserved.
             </div>
 
-            <ul className="lp-package-tests">
-              <li><CheckCircle2 size={16} color="#0284c7" /> <strong>All Basic Wellness Tests</strong></li>
-              <li><CheckCircle2 size={16} color="#0284c7" /> Liver Function Test (Complete LFT - 11 Params)</li>
-              <li><CheckCircle2 size={16} color="#0284c7" /> Kidney Function Test (KFT + Electrolytes)</li>
-              <li><CheckCircle2 size={16} color="#0284c7" /> Thyroid Profile Total (T3, T4, TSH)</li>
-              <li><CheckCircle2 size={16} color="#0284c7" /> HbA1c (Glycosylated Hemoglobin Diabetes Index)</li>
-              <li><CheckCircle2 size={16} color="#0284c7" /> Digital Chest X-Ray PA View</li>
-              <li><CheckCircle2 size={16} color="#0284c7" /> Resting 12-Lead ECG Screening</li>
-            </ul>
-
-            <button
-              onClick={() => {
-                setBasket([{ code: 'PKG-EXEC', name: 'Executive Comprehensive Checkup (78 parameters)' }]);
-                setBookingType('home_collection');
-                setIsBookingOpen(true);
-              }}
-              className="lp-btn-primary"
-              style={{ width: '100%', justifyContent: 'center' }}
-            >
-              Book Executive Package
-            </button>
-          </div>
-
-          {/* Package 3 */}
-          <div className="lp-package-card">
-            <h3 className="lp-package-title">Senior Citizen Golden Health</h3>
-            <div className="lp-package-subtitle">Specialized geriatric profile with vitamins (92 parameters)</div>
-
-            <div style={{ display: 'flex', gap: '8px', margin: '14px 0 18px', flexWrap: 'wrap' }}>
-              <span style={{ background: '#ecfdf5', color: '#047857', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>
-                92 Advanced Parameters
+            <div className="flex items-center gap-4">
+              <span className="text-[11px] text-slate-600 hidden md:inline">
+                Medical Disclaimer: Lab reports must be correlated clinically by a registered doctor.
               </span>
-              <span style={{ background: '#fef3c7', color: '#b45309', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>
-                Includes Vitamins & USG
-              </span>
-            </div>
 
-            <ul className="lp-package-tests">
-              <li><CheckCircle2 size={16} color="#059669" /> <strong>All Executive Checkup Tests</strong></li>
-              <li><CheckCircle2 size={16} color="#059669" /> Vitamin D3 (25-OH Total)</li>
-              <li><CheckCircle2 size={16} color="#059669" /> Vitamin B12 (Cyanocobalamin)</li>
-              <li><CheckCircle2 size={16} color="#059669" /> Serum Calcium & Bone Health Index</li>
-              <li><CheckCircle2 size={16} color="#059669" /> Cardiac Risk Markers & Uric Acid</li>
-              <li><CheckCircle2 size={16} color="#059669" /> High-Resolution Ultrasound Abdomen</li>
-            </ul>
-
-            <button
-              onClick={() => {
-                setBasket([{ code: 'PKG-SENIOR', name: 'Senior Citizen Golden Health Profile (92 parameters)' }]);
-                setBookingType('home_collection');
-                setIsBookingOpen(true);
-              }}
-              className="lp-btn-outline"
-              style={{ width: '100%', justifyContent: 'center' }}
-            >
-              Book Senior Care Package
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* --------------------------------------------------------------------
-          8. Specialist Doctors & Medical Leadership
-         -------------------------------------------------------------------- */}
-      <section id="doctors" className="lp-section">
-        <div className="lp-section-header">
-          <span className="lp-section-tag">Clinical Leadership</span>
-          <h2 className="lp-section-title">Meet Our Senior Specialists & Consultants</h2>
-          <p className="lp-section-desc">
-            Compassionate, board-certified clinicians and medical directors providing accurate
-            consultation and expert diagnostic interpretations.
-          </p>
-        </div>
-
-        <div className="lp-doctors-grid">
-          {dynamicDoctors.map((doc) => (
-            <div key={doc.id} className="lp-doctor-card">
-              <div
-                className="lp-doctor-avatar"
-                style={{ background: doc.avatarBg || '#eff6ff', color: doc.avatarColor || '#0284c7' }}
-              >
-                {doc.initials}
-              </div>
-              <h4 className="lp-doctor-name">{doc.name}</h4>
-              <div className="lp-doctor-spec" style={{ color: doc.avatarColor || '#0284c7' }}>
-                {doc.specialty}
-              </div>
-              <div className="lp-doctor-deg">{doc.degree}</div>
-              <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px 0' }}>
-                {doc.bio}
-              </p>
+              {/* Staff Portal Link */}
               <button
                 onClick={() => {
-                  setSelectedDoctor(`${doc.name} (${doc.specialty})`);
-                  setBookingType('opd_visit');
-                  setIsBookingOpen(true);
+                  if (currentUser && onOpenDashboard) {
+                    onOpenDashboard();
+                  } else {
+                    onOpenLogin();
+                  }
                 }}
-                className="lp-btn-outline"
-                style={{ fontSize: '12.5px', padding: '8px 16px' }}
+                className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-sky-300 border border-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer text-xs font-semibold"
+                title="Laboratory Information System Portal"
               >
-                Consult {doc.name.split(' ')[0]} {doc.name.split(' ')[1] || ''}
+                <Lock className="w-3.5 h-3.5" />
+                <span>{currentUser ? 'Go to Dashboard' : 'Staff Portal'}</span>
               </button>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* --------------------------------------------------------------------
-          9. Why Choose Aastha Polyclinic - Quality Pillars
-         -------------------------------------------------------------------- */}
-      <section className="lp-section lp-section-alt">
-        <div className="lp-section-header">
-          <span className="lp-section-tag">Quality Assurance</span>
-          <h2 className="lp-section-title">Why Doctors & Families Trust Aastha</h2>
-          <p className="lp-section-desc">
-            Built on stringent NABL ISO 15189 diagnostic protocols and patient-first care.
-          </p>
-        </div>
-
-        <div
-          style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-            gap: '24px',
-            padding: '0 24px'
-          }}
-        >
-          <div style={{ background: '#ffffff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-            <Award size={32} color="#0284c7" style={{ marginBottom: '12px' }} />
-            <h4 style={{ margin: '0 0 8px 0', fontSize: '17px', fontWeight: 700, color: '#0f172a' }}>
-              NABL Standard Quality
-            </h4>
-            <p style={{ margin: 0, fontSize: '13.5px', color: '#64748b', lineHeight: 1.5 }}>
-              Daily 3-level internal quality controls (IQC) and EQAS participation guarantee verified accuracy.
-            </p>
-          </div>
-
-          <div style={{ background: '#ffffff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-            <QrCode size={32} color="#059669" style={{ marginBottom: '12px' }} />
-            <h4 style={{ margin: '0 0 8px 0', fontSize: '17px', fontWeight: 700, color: '#0f172a' }}>
-              Zero Sample Mix-up
-            </h4>
-            <p style={{ margin: 0, fontSize: '13.5px', color: '#64748b', lineHeight: 1.5 }}>
-              Dual-barcode labeling at collection time ensures bidirectional tracking through automated analyzers.
-            </p>
-          </div>
-
-          <div style={{ background: '#ffffff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-            <MessageSquare size={32} color="#2563eb" style={{ marginBottom: '12px' }} />
-            <h4 style={{ margin: '0 0 8px 0', fontSize: '17px', fontWeight: 700, color: '#0f172a' }}>
-              Instant WhatsApp Reports
-            </h4>
-            <p style={{ margin: 0, fontSize: '13.5px', color: '#64748b', lineHeight: 1.5 }}>
-              Receive encrypted, password-protected PDF test reports on WhatsApp and SMS the moment they are signed.
-            </p>
-          </div>
-
-          <div style={{ background: '#ffffff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-            <Truck size={32} color="#d97706" style={{ marginBottom: '12px' }} />
-            <h4 style={{ margin: '0 0 8px 0', fontSize: '17px', fontWeight: 700, color: '#0f172a' }}>
-              Painless Home Visits
-            </h4>
-            <p style={{ margin: 0, fontSize: '13.5px', color: '#64748b', lineHeight: 1.5 }}>
-              Trained phlebotomists collect vacuum-tube samples safely at your home with sterile single-use kits.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* --------------------------------------------------------------------
-          10. Contact, Location & Opening Hours
-         -------------------------------------------------------------------- */}
-      <section id="contact" className="lp-section">
-        <div
-          style={{
-            maxWidth: '1280px',
-            margin: '0 auto',
-            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-            color: '#ffffff',
-            borderRadius: '20px',
-            padding: '48px',
-            display: 'grid',
-            gridTemplateColumns: '1.2fr 0.8fr',
-            gap: '40px',
-            alignItems: 'center'
-          }}
-        >
-          <div>
-            <span
-              style={{
-                background: 'rgba(2, 132, 199, 0.25)',
-                color: '#38bdf8',
-                padding: '4px 12px',
-                borderRadius: '9999px',
-                fontSize: '12px',
-                fontWeight: 600,
-                display: 'inline-block',
-                marginBottom: '16px'
-              }}
-            >
-              Visit Our Centre
-            </span>
-
-            <h2 style={{ fontSize: '32px', fontWeight: 800, margin: '0 0 16px 0', lineHeight: 1.25 }}>
-              Aastha Polyclinic & Diagnostic Centre
-            </h2>
-
-            <p style={{ fontSize: '16px', color: '#94a3b8', lineHeight: 1.6, margin: '0 0 28px 0', maxWidth: '520px' }}>
-              Conveniently located with dedicated patient parking, wheelchair accessibility,
-              comfortable waiting lounge, and sterile sample collection stations.
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '14.5px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <MapPin size={20} color="#38bdf8" />
-                <span>Plot 42, Health City Enclave, Medical Square, Main Road</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <PhoneCall size={20} color="#38bdf8" />
-                <span>Direct Appointments: +91 98765 43210 / +91 98765 43299</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <Clock size={20} color="#38bdf8" />
-                <span>Mon – Sat: 7:00 AM – 9:00 PM | Sunday: 7:00 AM – 2:00 PM</span>
-              </div>
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '16px',
-              padding: '32px',
-              backdropFilter: 'blur(8px)'
-            }}
-          >
-            <h3 style={{ fontSize: '19px', fontWeight: 700, margin: '0 0 16px 0' }}>
-              Book an Appointment
-            </h3>
-            <p style={{ fontSize: '13.5px', color: '#94a3b8', margin: '0 0 20px 0' }}>
-              Have questions or need to book a priority ultrasound or CT scan slot? Contact our reception desk now.
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <button
-                onClick={() => {
-                  setBookingType('home_collection');
-                  setIsBookingOpen(true);
-                }}
-                className="lp-btn-primary"
-                style={{ width: '100%', justifyContent: 'center', padding: '12px' }}
-              >
-                <Truck size={17} /> Request Home Visit Online
-              </button>
-
-              <button
-                onClick={() => {
-                  setBookingType('opd_visit');
-                  setIsBookingOpen(true);
-                }}
-                className="lp-btn-outline"
-                style={{
-                  width: '100%',
-                  justifyContent: 'center',
-                  padding: '12px',
-                  background: 'transparent',
-                  color: '#ffffff',
-                  borderColor: 'rgba(255, 255, 255, 0.2)'
-                }}
-              >
-                <Calendar size={17} /> Schedule Clinic Consultation
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* --------------------------------------------------------------------
-          11. Footer
-         -------------------------------------------------------------------- */}
-      <footer className="lp-footer">
-        <div className="lp-footer-inner">
-          <div className="lp-footer-col">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-              <div className="lp-logo-icon" style={{ width: '36px', height: '36px' }}>
-                <HeartPulse size={20} />
-              </div>
-              <span style={{ fontSize: '17px', fontWeight: 800, color: '#ffffff' }}>
-                Aastha Polyclinic
-              </span>
-            </div>
-            <p style={{ fontSize: '13.5px', color: '#94a3b8', lineHeight: 1.6, margin: '0 0 18px 0' }}>
-              Leading multi-specialty polyclinic & NABL accredited diagnostic facility.
-              Providing comprehensive pathology, ultrasound, digital radiography, and specialty OPD care.
-            </p>
-            <div style={{ fontSize: '12px', color: '#64748b' }}>
-              NABL ISO 15189:2022 • ICMR Registered • AERB Certified
-            </div>
-          </div>
-
-          <div className="lp-footer-col">
-            <h4>Quick Links</h4>
-            <ul className="lp-footer-links">
-              <li>
-                <a
-                  href="#services"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    scrollToSection('services');
-                  }}
-                >
-                  Diagnostic Services
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#tests"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    scrollToSection('tests');
-                  }}
-                >
-                  Diagnostic Test Menu
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#packages"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    scrollToSection('packages');
-                  }}
-                >
-                  Health Packages
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#doctors"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    scrollToSection('doctors');
-                  }}
-                >
-                  Consultant Doctors
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#tracker"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    scrollToSection('tracker');
-                  }}
-                >
-                  Report Tracker
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div className="lp-footer-col">
-            <h4>Diagnostics</h4>
-            <ul className="lp-footer-links">
-              <li>
-                <a
-                  href="#tests"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    scrollToSection('tests');
-                  }}
-                >
-                  Complete Blood Count
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#tests"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    scrollToSection('tests');
-                  }}
-                >
-                  Liver & Kidney Function
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#tests"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    scrollToSection('tests');
-                  }}
-                >
-                  4D Ultrasound Abdomen
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#tests"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    scrollToSection('tests');
-                  }}
-                >
-                  Digital Chest X-Ray
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#tests"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    scrollToSection('tests');
-                  }}
-                >
-                  Multi-Slice CT Brain
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div className="lp-footer-col">
-            <h4>LIS Administration</h4>
-            <p style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '16px' }}>
-              Secure terminal access for lab technicians, radiologists, phlebotomists, and administrators.
-            </p>
-            <button
-              onClick={currentUser ? onOpenDashboard : onOpenLogin}
-              className="lp-btn-primary"
-              style={{ background: '#1e293b', border: '1px solid #334155', width: '100%', justifyContent: 'center' }}
-            >
-              <Lock size={15} />
-              {currentUser ? 'Open LIS Terminal' : 'Staff LIS Login'}
-            </button>
-          </div>
-        </div>
-
-        <div className="lp-footer-bottom">
-          <div>
-            © {new Date().getFullYear()} Aastha Polyclinic & Diagnostic Centre. All rights reserved.
-          </div>
-          <div style={{ display: 'flex', gap: '20px' }}>
-            <span>Powered by Labsmart Healthcare LIS Cloud</span>
-            <span>Privacy Policy</span>
-            <span>Terms of Service</span>
           </div>
         </div>
       </footer>
 
-      {/* --------------------------------------------------------------------
-          12. Interactive Booking Modal (Home Sample Collection & OPD)
-         -------------------------------------------------------------------- */}
-      {isBookingOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(15, 23, 42, 0.7)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '20px'
-          }}
-        >
-          <div
-            style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              maxWidth: '520px',
-              width: '100%',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-              padding: '28px',
-              position: 'relative'
-            }}
-          >
-            <button
-              onClick={() => {
-                setIsBookingOpen(false);
-                setBookingSuccess(null);
-              }}
-              style={{
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#64748b'
-              }}
-            >
-              <X size={20} />
-            </button>
+      {/* =========================================================================
+          17. MODALS
+          ========================================================================= */}
+      {/* 1. Doctor Consultation Booking Modal */}
+      <DoctorBookingModal
+        isOpen={isDoctorBookingOpen}
+        onClose={() => {
+          setIsDoctorBookingOpen(false);
+          setSelectedDoctorIdForBooking(null);
+          setSelectedSpecialtyForBooking(null);
+        }}
+        initialDoctorId={selectedDoctorIdForBooking}
+        initialSpecialty={selectedSpecialtyForBooking}
+      />
 
-            {bookingSuccess ? (
-              <div style={{ textAlign: 'center', padding: '16px 8px' }}>
-                <div
-                  style={{
-                    width: '64px',
-                    height: '64px',
-                    background: '#dcfce7',
-                    color: '#15803d',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 16px auto'
-                  }}
-                >
-                  <CheckCircle2 size={36} />
-                </div>
+      {/* 2. Diagnostic Test & Home Collection Booking Modal */}
+      <TestBookingModal
+        isOpen={isTestBookingOpen}
+        onClose={() => {
+          setIsTestBookingOpen(false);
+          setSelectedTestIdForBooking(null);
+          setSelectedPackageIdForBooking(null);
+        }}
+        initialTestId={selectedTestIdForBooking}
+        initialPackageId={selectedPackageIdForBooking}
+        initialMode={bookingMode}
+      />
 
-                <h3 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>
-                  Booking Request Confirmed!
-                </h3>
-                <p style={{ fontSize: '14px', color: '#64748b', margin: '0 0 20px 0' }}>
-                  Thank you, <strong>{bookingSuccess.patientName}</strong>. Your request has been logged in our system.
-                </p>
+      {/* 3. Track Booking & Confirm Slot Modal */}
+      <TrackBookingModal
+        isOpen={isTrackBookingOpen}
+        onClose={() => setIsTrackBookingOpen(false)}
+      />
 
-                <div
-                  style={{
-                    background: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '12px',
-                    padding: '16px',
-                    textAlign: 'left',
-                    fontSize: '13.5px',
-                    marginBottom: '20px'
-                  }}
-                >
-                  <div style={{ marginBottom: '6px' }}>
-                    <strong>Reference ID:</strong>{' '}
-                    <span style={{ color: '#0284c7', fontWeight: 700 }}>{bookingSuccess.refNumber}</span>
-                  </div>
-                  <div style={{ marginBottom: '6px' }}>
-                    <strong>Service:</strong> {bookingSuccess.service}
-                  </div>
-                  {bookingSuccess.doctor && (
-                    <div style={{ marginBottom: '6px' }}>
-                      <strong>Doctor:</strong> {bookingSuccess.doctor}
-                    </div>
-                  )}
-                  <div style={{ marginBottom: '6px' }}>
-                    <strong>Date & Slot:</strong> {bookingSuccess.date} • {bookingSuccess.time}
-                  </div>
-                </div>
+      {/* 4. Compare Preventive Health Packages Modal */}
+      <ComparePackagesModal
+        isOpen={isComparePackagesOpen}
+        onClose={() => setIsComparePackagesOpen(false)}
+        onSelectPackage={pkg => {
+          handleOpenTestBooking(undefined, pkg.id);
+        }}
+      />
 
-                {/* WhatsApp Quick Confirm Button */}
-                <a
-                  href={`https://wa.me/919876543210?text=${encodeURIComponent(
-                    `Hello Aastha Polyclinic, I have booked a ${bookingSuccess.service}. Ref ID: ${bookingSuccess.refNumber}, Patient: ${bookingSuccess.patientName}, Slot: ${bookingSuccess.time}. Please confirm phlebotomist/doctor availability.`
-                  )}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    background: '#25D366',
-                    color: '#ffffff',
-                    padding: '12px',
-                    borderRadius: '8px',
-                    fontWeight: 700,
-                    textDecoration: 'none',
-                    fontSize: '14px',
-                    marginBottom: '14px'
-                  }}
-                >
-                  <MessageSquare size={17} /> Confirm via WhatsApp Now
-                </a>
+      {/* 5. Department Details & Protocols Modal */}
+      <DepartmentDetailsModal
+        isOpen={!!selectedDepartment}
+        onClose={() => setSelectedDepartment(null)}
+        service={selectedDepartment}
+        onBookDoctor={specialty => {
+          handleOpenDoctorBooking(undefined, specialty);
+        }}
+      />
 
-                <button
-                  onClick={() => {
-                    setIsBookingOpen(false);
-                    setBookingSuccess(null);
-                    setBasket([]);
-                  }}
-                  className="lp-btn-primary"
-                  style={{ width: '100%', justifyContent: 'center' }}
-                >
-                  Done
-                </button>
-              </div>
-            ) : (
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                  <div className="lp-card-icon-wrap" style={{ width: '36px', height: '36px' }}>
-                    <Calendar size={18} />
-                  </div>
-                  <h3 style={{ fontSize: '19px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                    {bookingType === 'home_collection' ? 'Book Home Sample Collection' : 'Schedule OPD Consultation'}
-                  </h3>
-                </div>
-                <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 20px 0' }}>
-                  Enter your details below and our lab executive will contact you right away.
-                </p>
+      {/* 6. Doctor Detailed Profile Modal */}
+      <DoctorProfileModal
+        isOpen={!!selectedDoctorProfile}
+        onClose={() => setSelectedDoctorProfile(null)}
+        doctor={selectedDoctorProfile}
+        onBookDoctor={doctorId => {
+          handleOpenDoctorBooking(doctorId);
+        }}
+      />
 
-                {/* Service Type Switcher */}
-                <div
-                  style={{
-                    display: 'flex',
-                    background: '#f1f5f9',
-                    borderRadius: '8px',
-                    padding: '4px',
-                    marginBottom: '20px'
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setBookingType('home_collection')}
-                    style={{
-                      flex: 1,
-                      padding: '8px',
-                      borderRadius: '6px',
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      border: 'none',
-                      cursor: 'pointer',
-                      background: bookingType === 'home_collection' ? '#ffffff' : 'transparent',
-                      color: bookingType === 'home_collection' ? '#0284c7' : '#64748b',
-                      boxShadow: bookingType === 'home_collection' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                    }}
-                  >
-                    Home Sample Collection
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setBookingType('opd_visit')}
-                    style={{
-                      flex: 1,
-                      padding: '8px',
-                      borderRadius: '6px',
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      border: 'none',
-                      cursor: 'pointer',
-                      background: bookingType === 'opd_visit' ? '#ffffff' : 'transparent',
-                      color: bookingType === 'opd_visit' ? '#0284c7' : '#64748b',
-                      boxShadow: bookingType === 'opd_visit' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                    }}
-                  >
-                    Clinic OPD Visit
-                  </button>
-                </div>
-
-                <form onSubmit={handleBookingSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, marginBottom: '4px', color: '#334155' }}>
-                      Patient Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Ramesh Kumar"
-                      value={bookingForm.fullName}
-                      onChange={(e) => setBookingForm({ ...bookingForm, fullName: e.target.value })}
-                      className="lp-input"
-                      style={{ width: '100%', boxSizing: 'border-box' }}
-                    />
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '12px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, marginBottom: '4px', color: '#334155' }}>
-                        Mobile Number (for SMS & Reports) *
-                      </label>
-                      <input
-                        type="tel"
-                        required
-                        placeholder="10-digit number"
-                        value={bookingForm.mobile}
-                        onChange={(e) => setBookingForm({ ...bookingForm, mobile: e.target.value })}
-                        className="lp-input"
-                        style={{ width: '100%', boxSizing: 'border-box' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, marginBottom: '4px', color: '#334155' }}>
-                        Age
-                      </label>
-                      <input
-                        type="number"
-                        placeholder="e.g. 45"
-                        value={bookingForm.age}
-                        onChange={(e) => setBookingForm({ ...bookingForm, age: e.target.value })}
-                        className="lp-input"
-                        style={{ width: '100%', boxSizing: 'border-box' }}
-                      />
-                    </div>
-                  </div>
-
-                  {bookingType === 'opd_visit' && (
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, marginBottom: '4px', color: '#334155' }}>
-                        Consultant Doctor / Department
-                      </label>
-                      <select
-                        value={selectedDoctor}
-                        onChange={(e) => setSelectedDoctor(e.target.value)}
-                        className="lp-input"
-                        style={{ width: '100%', boxSizing: 'border-box' }}
-                      >
-                        <option>Dr. Rajesh Gupta, MD (General Medicine & Diabetology)</option>
-                        <option>Dr. Sunita Deshmukh, MBBS, DGO (Obstetrics & Gynecology)</option>
-                        <option>Dr. A. K. Sharma, MD (Pathologist & Lab Director)</option>
-                        <option>Dr. Pradeep Verma, MD, DMRD (Consultant Radiologist)</option>
-                        <option>Any Available Specialist</option>
-                      </select>
-                    </div>
-                  )}
-
-                  {bookingType === 'home_collection' && (
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, marginBottom: '4px', color: '#334155' }}>
-                        Pickup Address & Landmark *
-                      </label>
-                      <textarea
-                        required
-                        rows={2}
-                        placeholder="Flat / House number, building, area and landmark"
-                        value={bookingForm.address}
-                        onChange={(e) => setBookingForm({ ...bookingForm, address: e.target.value })}
-                        className="lp-input"
-                        style={{ width: '100%', boxSizing: 'border-box', resize: 'none' }}
-                      />
-                    </div>
-                  )}
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, marginBottom: '4px', color: '#334155' }}>
-                        Preferred Date
-                      </label>
-                      <input
-                        type="date"
-                        value={bookingForm.preferredDate}
-                        onChange={(e) => setBookingForm({ ...bookingForm, preferredDate: e.target.value })}
-                        className="lp-input"
-                        style={{ width: '100%', boxSizing: 'border-box' }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 600, marginBottom: '4px', color: '#334155' }}>
-                        Time Slot
-                      </label>
-                      <select
-                        value={bookingForm.preferredTime}
-                        onChange={(e) => setBookingForm({ ...bookingForm, preferredTime: e.target.value })}
-                        className="lp-input"
-                        style={{ width: '100%', boxSizing: 'border-box' }}
-                      >
-                        <option>Morning (07:00 AM - 10:00 AM)</option>
-                        <option>Mid-Day (10:00 AM - 01:00 PM)</option>
-                        <option>Afternoon (01:00 PM - 05:00 PM)</option>
-                        <option>Evening (05:00 PM - 08:00 PM)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {basket.length > 0 && (
-                    <div
-                      style={{
-                        background: '#f8fafc',
-                        padding: '10px 14px',
-                        borderRadius: '8px',
-                        border: '1px solid #e2e8f0',
-                        fontSize: '13px'
-                      }}
-                    >
-                      <span style={{ color: '#64748b' }}>Selected tests ({basket.length}): </span>
-                      <strong style={{ color: '#0f172a' }}>{basket.map((b) => b.name).join(', ')}</strong>
-                      <div style={{ marginTop: '4px', fontSize: '12px', color: '#059669', fontWeight: 600 }}>
-                        Doorstep sample pickup with vacuum collection tubes
-                      </div>
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={isSubmittingBooking}
-                    className="lp-btn-primary"
-                    style={{ width: '100%', justifyContent: 'center', padding: '12px', marginTop: '6px' }}
-                  >
-                    {isSubmittingBooking ? 'Submitting Request...' : 'Confirm Booking Request'}
-                  </button>
-                </form>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* --------------------------------------------------------------------
-          13. Verified Report PDF & Print Modal
-         -------------------------------------------------------------------- */}
-      {previewReport && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(15, 23, 42, 0.75)',
-            backdropFilter: 'blur(5px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '20px'
-          }}
-        >
-          <div
-            style={{
-              background: '#ffffff',
-              borderRadius: '16px',
-              maxWidth: '720px',
-              width: '100%',
-              maxHeight: '92vh',
-              overflowY: 'auto',
-              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.3)',
-              padding: '32px',
-              position: 'relative'
-            }}
-          >
-            <button
-              onClick={() => setPreviewReport(null)}
-              style={{
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#64748b'
-              }}
-            >
-              <X size={20} />
-            </button>
-
-            {/* Clinical Letterhead Preview */}
-            <div style={{ borderBottom: '2px solid #0284c7', paddingBottom: '16px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: '0 0 4px 0' }}>
-                    AASTHA POLYCLINIC & DIAGNOSTIC CENTRE
-                  </h2>
-                  <div style={{ fontSize: '12px', color: '#64748b' }}>
-                    Plot 42, Health City Enclave, Medical Square • Ph: +91 98765 43210
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#059669', fontWeight: 600, marginTop: '2px' }}>
-                    NABL ISO 15189:2022 ACCREDITED LABORATORY • ICMR REGISTERED
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    background: '#f1f5f9',
-                    padding: '6px 12px',
-                    borderRadius: '8px',
-                    textAlign: 'right',
-                    fontSize: '12px'
-                  }}
-                >
-                  <div style={{ fontWeight: 700, color: '#0f172a' }}>{previewReport.billNumber}</div>
-                  <div style={{ color: '#64748b' }}>{previewReport.date}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Patient Header Box */}
-            <div
-              style={{
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                padding: '14px',
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '8px',
-                fontSize: '13px',
-                marginBottom: '20px'
-              }}
-            >
-              <div><strong>Patient Name:</strong> {previewReport.patientName}</div>
-              <div><strong>UHID:</strong> {previewReport.uhid || 'UHID-2026-0001'}</div>
-              <div><strong>Referring Doctor:</strong> Dr. A. K. Sharma (MD)</div>
-              <div><strong>Status:</strong> <span style={{ color: '#059669', fontWeight: 700 }}>✓ Verified & Signed Off</span></div>
-            </div>
-
-            {/* Test Results Table */}
-            <div style={{ marginBottom: '24px' }}>
-              <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', margin: '0 0 10px 0', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px' }}>
-                DEPARTMENT OF HEMATOLOGY & CLINICAL PATHOLOGY
-              </h4>
-
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <thead>
-                  <tr style={{ background: '#f1f5f9', textAlign: 'left', borderBottom: '1px solid #cbd5e1' }}>
-                    <th style={{ padding: '8px 10px' }}>Investigation / Parameter</th>
-                    <th style={{ padding: '8px 10px' }}>Observed Value</th>
-                    <th style={{ padding: '8px 10px' }}>Unit</th>
-                    <th style={{ padding: '8px 10px' }}>Biological Reference Interval</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '8px 10px', fontWeight: 600 }}>Hemoglobin (Hb)</td>
-                    <td style={{ padding: '8px 10px', color: '#059669', fontWeight: 700 }}>14.2</td>
-                    <td style={{ padding: '8px 10px' }}>g/dL</td>
-                    <td style={{ padding: '8px 10px', color: '#64748b' }}>13.0 - 17.0 (Normal)</td>
-                  </tr>
-                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '8px 10px', fontWeight: 600 }}>Total Leucocyte Count (TLC)</td>
-                    <td style={{ padding: '8px 10px', color: '#059669', fontWeight: 700 }}>7,800</td>
-                    <td style={{ padding: '8px 10px' }}>/cumm</td>
-                    <td style={{ padding: '8px 10px', color: '#64748b' }}>4,000 - 11,000 (Normal)</td>
-                  </tr>
-                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '8px 10px', fontWeight: 600 }}>Platelet Count</td>
-                    <td style={{ padding: '8px 10px', color: '#059669', fontWeight: 700 }}>2.45</td>
-                    <td style={{ padding: '8px 10px' }}>lakhs/cumm</td>
-                    <td style={{ padding: '8px 10px', color: '#64748b' }}>1.50 - 4.50 (Adequate)</td>
-                  </tr>
-                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '8px 10px', fontWeight: 600 }}>Packed Cell Volume (PCV)</td>
-                    <td style={{ padding: '8px 10px', color: '#059669', fontWeight: 700 }}>42.5</td>
-                    <td style={{ padding: '8px 10px' }}>%</td>
-                    <td style={{ padding: '8px 10px', color: '#64748b' }}>40.0 - 50.0</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* Doctor Signatures */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '1px solid #e2e8f0', paddingTop: '16px', marginBottom: '24px' }}>
-              <div>
-                <div style={{ fontSize: '11px', color: '#94a3b8' }}>Verified Digitally via LIS Barcode</div>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: '#059669' }}>✓ End of Report</div>
-              </div>
-
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>Dr. A. K. Sharma</div>
-                <div style={{ fontSize: '11px', color: '#64748b' }}>MD (Pathology), Ex-AIIMS • Director</div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => window.print()}
-                className="lp-btn-outline"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-              >
-                <Printer size={15} /> Print Report
-              </button>
-              <button
-                onClick={() => {
-                  window.print();
-                }}
-                className="lp-btn-primary"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-              >
-                <Download size={15} /> Download PDF
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 7. Doctor-Written Health Guide / Article Modal */}
+      <BlogArticleModal
+        isOpen={!!selectedArticle}
+        onClose={() => setSelectedArticle(null)}
+        article={selectedArticle}
+        onBookTest={() => handleOpenTestBooking()}
+      />
     </div>
   );
 };

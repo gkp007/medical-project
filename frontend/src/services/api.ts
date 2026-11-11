@@ -392,6 +392,26 @@ export const mastersApi = {
     const params = new URLSearchParams(query).toString();
     return request<any>(`/masters/tests${params ? `?${params}` : ''}`);
   },
+  getTestById: (id: string) => request<any>(`/masters/tests/${id}`),
+  createTest: (data: any) =>
+    request<any>('/masters/tests', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateTest: (id: string, data: any) =>
+    request<any>(`/masters/tests/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  deleteTest: (id: string) =>
+    request<any>(`/masters/tests/${id}`, {
+      method: 'DELETE',
+    }),
+  updateNormalValues: (testId: string, data: any) =>
+    request<any>(`/masters/tests/${testId}/normal-values`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
   listPackages: () => request<any>('/masters/packages'),
   listPanels: () => request<any>('/masters/panels'),
   listCategories: () => request<any>('/masters/categories'),

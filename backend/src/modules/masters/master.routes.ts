@@ -11,6 +11,8 @@ router.use(authenticate);
 
 // Tests
 router.get('/tests', MasterController.listTests);
+router.get('/tests/:id', MasterController.getTestById);
+router.put('/tests/:id/normal-values', MasterController.updateNormalValues);
 router.post('/tests', MasterController.createTest);
 router.put('/tests/:id', MasterController.updateTest);
 router.delete('/tests/:id', MasterController.deleteTest);
