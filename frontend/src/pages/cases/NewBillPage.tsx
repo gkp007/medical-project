@@ -23,11 +23,18 @@ export const NewBillPage: React.FC<NewBillPageProps> = ({
   // Patient Demographics State
   const [prefix, setPrefix] = useState<NamePrefix>('Mr');
   const [patientName, setPatientName] = useState('Rahul Sharma');
+  const [ageYears, setAgeYears] = useState<number | string>(32);
+  const [ageMonths, setAgeMonths] = useState<number | string>(0);
+  const [ageDays, setAgeDays] = useState<number | string>(0);
   const [age, setAge] = useState<number>(32);
   const [ageUnit, setAgeUnit] = useState<AgeUnit>('Years');
   const [gender, setGender] = useState<Gender>('Male');
   const [mobile, setMobile] = useState('9876543210');
   const [uhid, setUhid] = useState('35375569');
+  const [aadhaar, setAadhaar] = useState('');
+  const [email, setEmail] = useState('');
+  const [address, setAddress] = useState('');
+  const [onlineReportRequested, setOnlineReportRequested] = useState(true);
 
   // Referral State
   const [doctorId, setDoctorId] = useState('doc-sharma');
@@ -210,14 +217,30 @@ export const NewBillPage: React.FC<NewBillPageProps> = ({
 
     setIsSaving(true);
     try {
+      const parsedYears = Number(ageYears) || 0;
+      const parsedMonths = Number(ageMonths) || 0;
+      const parsedDays = Number(ageDays) || 0;
+      let effectiveAge = Number(age) || 30;
+      let effectiveUnit = ageUnit;
+      if (parsedYears > 0) { effectiveAge = parsedYears; effectiveUnit = 'Years'; }
+      else if (parsedMonths > 0) { effectiveAge = parsedMonths; effectiveUnit = 'Months'; }
+      else if (parsedDays > 0) { effectiveAge = parsedDays; effectiveUnit = 'Days'; }
+
       const payload = {
         patient: {
           prefix,
           fullName: patientName.trim(),
-          age: Number(age) || 30,
-          ageUnit,
+          age: effectiveAge,
+          ageYears: parsedYears,
+          ageMonths: parsedMonths,
+          ageDays: parsedDays,
+          ageUnit: effectiveUnit,
           gender,
           mobile: mobile.trim() || '9876543210',
+          email: email.trim() || undefined,
+          address: address.trim() || undefined,
+          aadhaar: aadhaar.trim() || undefined,
+          onlineReportRequested,
         },
         doctorId: doctorId || 'doc-self',
         modality: modality || 'LAB',
@@ -416,22 +439,49 @@ export const NewBillPage: React.FC<NewBillPageProps> = ({
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '90px 110px 1fr', gap: 'var(--space-4)', marginBottom: 'var(--space-4)' }}>
+            {/* Age Triple-Field (Years, Months, Days) & Gender */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr) 1.5fr', gap: 'var(--space-3)', marginBottom: 'var(--space-4)', alignItems: 'start' }}>
               <Input
-                label="Age"
+                label="Age (Years)"
                 type="number"
-                value={age}
-                onChange={(e) => setAge(Number(e.target.value))}
+                placeholder="Years"
+                value={ageYears}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setAgeYears(val);
+                  if (Number(val) > 0) {
+                    setAge(Number(val));
+                    setAgeUnit('Years');
+                  }
+                }}
               />
-              <Select
-                label="Unit"
-                value={ageUnit}
-                onChange={(e) => setAgeUnit(e.target.value as AgeUnit)}
-                options={[
-                  { label: 'Years', value: 'Years' },
-                  { label: 'Months', value: 'Months' },
-                  { label: 'Days', value: 'Days' },
-                ]}
+              <Input
+                label="Months"
+                type="number"
+                placeholder="Months"
+                value={ageMonths}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setAgeMonths(val);
+                  if (Number(ageYears) === 0 && Number(val) > 0) {
+                    setAge(Number(val));
+                    setAgeUnit('Months');
+                  }
+                }}
+              />
+              <Input
+                label="Days"
+                type="number"
+                placeholder="Days"
+                value={ageDays}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setAgeDays(val);
+                  if (Number(ageYears) === 0 && Number(ageMonths) === 0 && Number(val) > 0) {
+                    setAge(Number(val));
+                    setAgeUnit('Days');
+                  }
+                }}
               />
               <div className="form-group">
                 <label className="form-label">Gender <span className="required">*</span></label>
@@ -447,21 +497,40 @@ export const NewBillPage: React.FC<NewBillPageProps> = ({
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
               <Input
                 label="Mobile Number"
                 value={mobile}
                 onChange={(e) => setMobile(e.target.value)}
                 placeholder="10-digit number"
-                helperText="SMS invoice link will be sent to this number."
+                helperText="SMS invoice link."
               />
               <Input
                 label="UHID / MRN"
                 value={uhid}
                 onChange={(e) => setUhid(e.target.value)}
                 placeholder="Auto-assigned"
-                helperText="Unique health ID for longitudinal medical records."
+                helperText="Unique health ID."
               />
+              <Input
+                label="Aadhaar / National ID"
+                value={aadhaar}
+                onChange={(e) => setAadhaar(e.target.value)}
+                placeholder="12-digit Aadhaar (optional)"
+              />
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: 'var(--space-2)' }}>
+              <input
+                type="checkbox"
+                id="onlineReport"
+                checked={onlineReportRequested}
+                onChange={(e) => setOnlineReportRequested(e.target.checked)}
+                style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+              />
+              <label htmlFor="onlineReport" style={{ fontSize: '13px', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
+                Online report requested (patient receives download link upon sign-off)
+              </label>
             </div>
           </Card>
 

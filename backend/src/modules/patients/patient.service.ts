@@ -96,17 +96,34 @@ export class PatientService {
 
     const uhid = await this.generateUHID();
 
+    const ageYears = data.ageYears !== undefined ? Number(data.ageYears) : (data.ageUnit === 'Years' ? Number(data.age) : 0);
+    const ageMonths = data.ageMonths !== undefined ? Number(data.ageMonths) : (data.ageUnit === 'Months' ? Number(data.age) : 0);
+    const ageDays = data.ageDays !== undefined ? Number(data.ageDays) : (data.ageUnit === 'Days' ? Number(data.age) : 0);
+    let primaryAge = Number(data.age) || 0;
+    let primaryUnit = data.ageUnit || 'Years';
+    if (!primaryAge) {
+      if (ageYears > 0) { primaryAge = ageYears; primaryUnit = 'Years'; }
+      else if (ageMonths > 0) { primaryAge = ageMonths; primaryUnit = 'Months'; }
+      else if (ageDays > 0) { primaryAge = ageDays; primaryUnit = 'Days'; }
+    }
+
     return prisma.patient.create({
       data: {
         uhid,
-        prefix: data.prefix,
+        prefix: data.prefix || 'Mr.',
         fullName: data.fullName,
-        age: data.age,
-        ageUnit: data.ageUnit || 'Years',
-        gender: data.gender,
+        age: primaryAge,
+        ageYears,
+        ageMonths,
+        ageDays,
+        ageUnit: primaryUnit,
+        gender: data.gender || 'Male',
         mobile: data.mobile,
         email: data.email || null,
         address: data.address || null,
+        aadhaar: data.aadhaar || null,
+        medicalHistory: data.medicalHistory || null,
+        onlineReportRequested: data.onlineReportRequested !== undefined ? Boolean(data.onlineReportRequested) : true,
         bloodGroup: data.bloodGroup || null,
         totalVisits: 1,
         lastVisitDate: new Date()

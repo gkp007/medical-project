@@ -8,28 +8,67 @@ export interface ReportViewerPageProps {
   caseId?: string;
 }
 
+interface ReportTestParam {
+  name: string;
+  isSubtest?: boolean;
+  isHeader?: boolean;
+  flag?: string; // 'L' | 'H' | ''
+  observed: string;
+  unit: string;
+  reference: string;
+  isAbnormal?: boolean;
+}
+
+interface ReportPanel {
+  panelName: string;
+  department: string;
+  parameters: ReportTestParam[];
+}
+
 export const ReportViewerPage: React.FC<ReportViewerPageProps> = ({ onBack, caseId }) => {
   const [activeCaseId] = useState<string>(() => caseId || localStorage.getItem('labsmart_active_case_id') || '');
   const [patientData, setPatientData] = useState({
-    name: 'MR. RAHUL SHARMA',
-    ageGender: '32 YRS / MALE',
-    doctor: 'DR. ANIL VERMA, MD',
-    billNumber: '#1001',
-    regDate: '18-Oct-2026 10:30 PM',
-    sampleDate: '18-Oct-2026 10:45 PM',
+    name: 'Niroj Mirdha',
+    ageSex: '12 YRS / M',
+    doctor: 'Mr. DRx Bimal Meher (Pharmacist )',
+    bpc: '3559',
+    regDate: '11/11/2026',
+    collectedDate: '11/11/2026',
+    receivedDate: '11/11/2026',
+    reportedDate: '11/11/2026',
   });
-  const [department, setDepartment] = useState('Department of Hematology');
-  const [testTitle, setTestTitle] = useState('COMPLETE BLOOD COUNT (CBC) REPORT');
   const [isAuthorized, setIsAuthorized] = useState(true);
-  const [interpretation, setInterpretation] = useState('');
-  const [parameters, setParameters] = useState<any[]>([
-    { name: 'Hemoglobin (Hb)', observed: '13.5', unit: 'g/dL', reference: '13.0 - 17.0', isAbnormal: false },
-    { name: 'Total RBC Count', observed: '4.5', unit: 'mil/cumm', reference: '4.5 - 5.5', isAbnormal: false },
-    { name: 'Packed Cell Volume (PCV)', observed: '40.5', unit: '%', reference: '40.0 - 50.0', isAbnormal: false },
-    { name: 'Mean Corpuscular Volume (MCV)', observed: '90.0', unit: 'fL', reference: '83.0 - 101.0', isAbnormal: false },
-    { name: 'Total Leucocyte Count (TLC)', observed: '11,500', unit: '/cumm', reference: '4,000 - 11,000', isAbnormal: true },
-    { name: 'Platelet Count', observed: '2.5', unit: 'lakhs/cumm', reference: '1.5 - 4.5', isAbnormal: false },
+  const [department, setDepartment] = useState('HAEMATOLOGY');
+  const [panels, setPanels] = useState<ReportPanel[]>([
+    {
+      panelName: 'COMPLETE BLOOD COUNT (CBC)',
+      department: 'HAEMATOLOGY',
+      parameters: [
+        { name: 'HEMOGLOBIN', flag: 'L', observed: '11.6', unit: 'g/dl', reference: '12-15', isAbnormal: true },
+        { name: 'TOTAL LEUKOCYTE COUNT', flag: 'H', observed: '14,500', unit: 'cumm', reference: '4,000 - 11,000', isAbnormal: true },
+        { name: 'DIFFERENTIAL LEUCOCYTE COUNT', isHeader: true, observed: '', unit: '', reference: '' },
+        { name: 'NEUTROPHILS', isSubtest: true, flag: 'H', observed: '91', unit: '%', reference: '40 - 70', isAbnormal: true },
+        { name: 'LYMPHOCYTE', isSubtest: true, flag: 'L', observed: '7', unit: '%', reference: '20 - 40', isAbnormal: true },
+        { name: 'EOSINOPHILS', isSubtest: true, flag: '', observed: '01', unit: '%', reference: '1 - 6' },
+        { name: 'MONOCYTES', isSubtest: true, flag: '', observed: '01', unit: '%', reference: '1 - 4' },
+        { name: 'BASOPHILS', isSubtest: true, flag: '', observed: '00', unit: '%', reference: '< 2' },
+        { name: 'PLATELET COUNT', flag: '', observed: '2,81,000', unit: 'lakhs/cumm', reference: '1,50,000 - 4,50,000' },
+        { name: 'TOTAL RBC COUNT', flag: 'H', observed: '5.98', unit: 'million/cumm', reference: '4.5 - 5.5', isAbnormal: true },
+        { name: 'HEMATOCRIT VALUE, HCT', flag: 'L', observed: '39.4', unit: '%', reference: '40 - 50', isAbnormal: true },
+        { name: 'MEAN CORPUSCULAR VOLUME, MCV', flag: 'L', observed: '65.9', unit: 'fL', reference: '83 - 101', isAbnormal: true },
+        { name: 'MEAN CELL HAEMOGLOBIN, MCH', flag: 'L', observed: '19.4', unit: 'Pg', reference: '20 - 32', isAbnormal: true },
+        { name: 'MEAN CELL HAEMOGLOBIN CON, MCHC', flag: '', observed: '29.4', unit: '%', reference: '20.5 - 34.5' },
+        { name: 'MEAN PLATELET VOLUME, MPV', flag: '', observed: '7.2', unit: 'fL', reference: '6.5 - 12' },
+        { name: 'R.D.W. - SD', flag: 'L', observed: '30.0', unit: 'fL', reference: '35 - 56', isAbnormal: true },
+        { name: 'R.D.W. - CV', flag: '', observed: '13.6', unit: '%', reference: '11.6 - 14' },
+        { name: 'PCT', flag: '', observed: '0.203', unit: '%', reference: '0.19 - 0.36' },
+        { name: 'P-LCR', flag: 'L', observed: '12.1', unit: '%', reference: '19.7 - 42.4', isAbnormal: true },
+        { name: 'PLCC', flag: '', observed: '34', unit: 'x10^3/μL', reference: '30 - 90' },
+        { name: 'P.D.W.', flag: 'H', observed: '15.7', unit: 'fL', reference: '9.6 - 15.2', isAbnormal: true },
+      ],
+    },
   ]);
+  const [interpretation, setInterpretation] = useState('');
 
   useEffect(() => {
     if (!activeCaseId) return;
@@ -43,36 +82,64 @@ export const ReportViewerPage: React.FC<ReportViewerPageProps> = ({ onBack, case
 
         if (caseRes.success && caseRes.data) {
           const c = caseRes.data;
+          const regDateStr = new Date(c.createdAt).toLocaleDateString();
           setPatientData({
-            name: c.patient?.fullName ? c.patient.fullName.toUpperCase() : 'WALK-IN PATIENT',
-            ageGender: `${c.patient?.age || 30} YRS / ${(c.patient?.gender || 'MALE').toUpperCase()}`,
-            doctor: c.doctor?.name ? `DR. ${c.doctor.name.toUpperCase()}` : 'SELF / WALK-IN',
-            billNumber: c.billNumber || c.dailyCode || '#1001',
-            regDate: new Date(c.createdAt).toLocaleString(),
-            sampleDate: new Date(c.createdAt).toLocaleString(),
+            name: c.patient?.fullName || 'Niroj Mirdha',
+            ageSex: `${c.patient?.age || c.patient?.ageYears || 12} ${c.patient?.ageUnit || 'YRS'} / ${(c.patient?.gender || 'M').charAt(0).toUpperCase()}`,
+            doctor: typeof c.doctor === 'object' ? c.doctor?.name : c.doctor || 'Self Referral',
+            bpc: c.billNumber || c.dailyCode || '3559',
+            regDate: regDateStr,
+            collectedDate: regDateStr,
+            receivedDate: regDateStr,
+            reportedDate: regDateStr,
           });
-          setIsAuthorized(c.status === 'Signed Off' || c.status === 'Final' || c.status === 'COMPLETED');
+          setIsAuthorized(c.reportStatus === 'Signed Off' || c.reportStatus === 'Finalized' || c.status === 'Signed Off');
         }
 
         if (paramsRes.success && paramsRes.data) {
           const pData = paramsRes.data;
           if (pData.tests && pData.tests.length > 0) {
-            const firstTest = pData.tests[0];
-            setTestTitle(`${firstTest.name.toUpperCase()} REPORT`);
-            setDepartment(firstTest.department ? `Department of ${firstTest.department}` : 'Department of Laboratory Medicine');
-            if (firstTest.parameters && firstTest.parameters.length > 0) {
-              const mapped = firstTest.parameters.map((p: any) => ({
-                name: p.name,
-                observed: p.currentValue || p.defaultValue || '—',
-                unit: p.unit || '',
-                reference: p.normalMin && p.normalMax ? `${p.normalMin} - ${p.normalMax}` : '—',
-                isAbnormal: p.flag === 'FLAG_HIGH' || p.flag === 'FLAG_LOW' || p.flag === 'CRITICAL_PANIC'
-              }));
-              setParameters(mapped);
-            }
+            setDepartment(pData.tests[0].department?.toUpperCase() || 'HAEMATOLOGY');
+            const loadedPanels: ReportPanel[] = pData.tests.map((t: any) => {
+              const mappedParams: ReportTestParam[] = [];
+              let addedDlcHeader = false;
+
+              (t.parameters || []).forEach((p: any) => {
+                const isDiff = ['NEUT', 'LYMPH', 'EOS', 'MONO', 'BASO'].includes(p.code?.toUpperCase());
+                if (isDiff && !addedDlcHeader) {
+                  mappedParams.push({
+                    name: 'DIFFERENTIAL LEUCOCYTE COUNT',
+                    isHeader: true,
+                    observed: '',
+                    unit: '',
+                    reference: '',
+                  });
+                  addedDlcHeader = true;
+                }
+
+                const flagStr = p.flag === 'FLAG_HIGH' || p.flag === 'HIGH' ? 'H' : p.flag === 'FLAG_LOW' || p.flag === 'LOW' ? 'L' : '';
+                mappedParams.push({
+                  name: p.name.toUpperCase(),
+                  isSubtest: isDiff,
+                  flag: flagStr,
+                  observed: p.value !== undefined && p.value !== null && p.value !== '' ? String(p.value) : p.currentValue || '—',
+                  unit: p.unit || '',
+                  reference: p.displayRange || p.referenceInterval || (p.normalMin && p.normalMax ? `${p.normalMin} - ${p.normalMax}` : '—'),
+                  isAbnormal: !!flagStr,
+                });
+              });
+
+              return {
+                panelName: t.testName?.toUpperCase() || t.name?.toUpperCase() || 'INVESTIGATION REPORT',
+                department: t.department?.toUpperCase() || 'HAEMATOLOGY',
+                parameters: mappedParams,
+              };
+            });
+            setPanels(loadedPanels);
           }
-          if (pData.interpretation?.text) {
-            setInterpretation(pData.interpretation.text);
+
+          if (pData.case?.interpretation || pData.interpretation?.text) {
+            setInterpretation(pData.case?.interpretation || pData.interpretation?.text);
           }
         }
       } catch (err) {
@@ -92,18 +159,18 @@ export const ReportViewerPage: React.FC<ReportViewerPageProps> = ({ onBack, case
   };
 
   return (
-    <div style={{ maxWidth: '860px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
       {/* Top Action Toolbar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-4)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }} className="no-print">
         <Button variant="secondary" size="sm" icon={<ArrowLeft size={16} />} onClick={onBack}>
-          Back to Results
+          Enter results
         </Button>
-        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
           <Button variant="secondary" size="sm" icon={<Download size={16} />} onClick={handleDownloadPdf}>
             Download PDF
           </Button>
-          <Button variant="primary" size="sm" icon={<Printer size={16} />} onClick={() => window.print()}>
-            Print Diagnostic Report
+          <Button variant="primary" size="sm" icon={<Printer size={16} />} onClick={() => window.print()} style={{ backgroundColor: '#2563eb' }}>
+            Browser print
           </Button>
         </div>
       </div>
@@ -113,155 +180,192 @@ export const ReportViewerPage: React.FC<ReportViewerPageProps> = ({ onBack, case
         id="official-report"
         style={{
           backgroundColor: '#ffffff',
-          padding: '40px 48px',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border-subtle)',
-          boxShadow: 'var(--shadow-md)',
+          padding: '36px 44px',
+          borderRadius: '4px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
           color: '#0f172a',
-          fontFamily: 'var(--font-family-sans)',
+          fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif",
+          minHeight: '1050px',
         }}
       >
-        {/* Lab Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '16px', borderBottom: '2px solid #1e293b' }}>
-          <div>
-            <h1 style={{ fontSize: '22px', fontWeight: 900, textTransform: 'uppercase', color: '#0f172a', letterSpacing: '-0.02em' }}>
-              Apex Diagnostics & Research Center
-            </h1>
-            <p style={{ fontSize: '11px', fontWeight: 600, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              ISO 15189:2012 Certified • NABL Accredited Laboratory
-            </p>
-            <p style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
-              104 Medical Enclave, Sector 14 • Helpline: +91 98765 43210
-            </p>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <span style={{
-              fontSize: '10px',
-              fontWeight: 700,
-              padding: '3px 8px',
-              backgroundColor: isAuthorized ? '#dcfce7' : '#fef3c7',
-              color: isAuthorized ? '#15803d' : '#b45309',
-              borderRadius: '4px',
-              textTransform: 'uppercase'
-            }}>
-              {isAuthorized ? 'Verified & Authorized' : 'Draft Report / Under Review'}
-            </span>
-          </div>
-        </div>
+        {/* Labsmart v2 Header Format */}
+        <div style={{ borderBottom: '2px solid #0f172a', paddingBottom: '14px', marginBottom: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1.2fr 0.8fr', gap: '12px', alignItems: 'start', fontSize: '13px' }}>
+            {/* Left: Patient Demographics */}
+            <div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>
+                {patientData.name}
+              </div>
+              <div style={{ display: 'flex', gap: '6px', marginBottom: '3px' }}>
+                <span style={{ color: '#475569', minWidth: '85px', fontWeight: 600 }}>Age / Sex</span>
+                <span style={{ fontWeight: 600 }}>: {patientData.ageSex}</span>
+              </div>
+              <div style={{ display: 'flex', gap: '6px', marginBottom: '3px' }}>
+                <span style={{ color: '#475569', minWidth: '85px', fontWeight: 600 }}>Referred by</span>
+                <span style={{ fontWeight: 600 }}>: {patientData.doctor}</span>
+              </div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <span style={{ color: '#475569', minWidth: '85px', fontWeight: 600 }}>BPC</span>
+                <span style={{ fontWeight: 700 }}>: {patientData.bpc}</span>
+              </div>
+            </div>
 
-        {/* Patient Demographics 4-Column Borderless Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '16px', margin: '16px 0', padding: '12px 0', borderBottom: '1px solid #cbd5e1', fontSize: '12px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div><strong style={{ color: '#64748b' }}>Patient Name:</strong> <span style={{ fontWeight: 700 }}>{patientData.name}</span></div>
-            <div><strong style={{ color: '#64748b' }}>Age / Gender:</strong> {patientData.ageGender}</div>
-            <div><strong style={{ color: '#64748b' }}>Referring Doctor:</strong> {patientData.doctor}</div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div><strong style={{ color: '#64748b' }}>Case / Bill No:</strong> <span style={{ fontWeight: 700, color: '#1565c0' }}>{patientData.billNumber}</span></div>
-            <div><strong style={{ color: '#64748b' }}>Registered Date:</strong> {patientData.regDate}</div>
-            <div><strong style={{ color: '#64748b' }}>Sample Collected:</strong> {patientData.sampleDate}</div>
-          </div>
-        </div>
-
-        {/* Department Title */}
-        <div style={{ textAlign: 'center', margin: '14px 0' }}>
-          <h2 style={{ fontSize: '14px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            {department}
-          </h2>
-          <span style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>
-            {testTitle}
-          </span>
-        </div>
-
-        {/* Observation Results Table */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', marginBottom: '20px' }}>
-          <thead>
-            <tr style={{ borderTop: '1px solid #0f172a', borderBottom: '1px solid #0f172a', backgroundColor: '#f8fafc', textAlign: 'left' }}>
-              <th style={{ padding: '8px' }}>Test Description</th>
-              <th style={{ padding: '8px' }}>Value Observed</th>
-              <th style={{ padding: '8px' }}>Units</th>
-              <th style={{ padding: '8px' }}>Biological Reference Interval</th>
-            </tr>
-          </thead>
-          <tbody>
-            {parameters.map((param, idx) => (
-              <tr
-                key={idx}
+            {/* Center: Barcode Graphic */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <div
                 style={{
-                  borderBottom: '1px solid #f1f5f9',
-                  backgroundColor: param.isAbnormal ? '#fef2f2' : 'transparent',
+                  height: '38px',
+                  width: '120px',
+                  backgroundColor: '#000000',
+                  maskImage: 'repeating-linear-gradient(to right, black 0px, black 2px, transparent 2px, transparent 4px, black 4px, black 7px, transparent 7px, transparent 9px)',
+                  WebkitMaskImage: 'repeating-linear-gradient(to right, black 0px, black 2px, transparent 2px, transparent 4px, black 4px, black 7px, transparent 7px, transparent 9px)',
+                  marginBottom: '2px',
                 }}
-              >
-                <td style={{ padding: '7px 8px', fontWeight: param.isAbnormal ? 700 : 600, color: param.isAbnormal ? '#b91c1c' : '#0f172a' }}>
-                  {param.name}
-                </td>
-                <td style={{ padding: '7px 8px', fontWeight: 700, color: param.isAbnormal ? '#b91c1c' : '#0f172a' }}>
-                  {param.observed} {param.isAbnormal ? ' *' : ''}
-                </td>
-                <td style={{ padding: '7px 8px' }}>{param.unit}</td>
-                <td style={{ padding: '7px 8px' }}>{param.reference}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              />
+              <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '2px' }}>
+                {patientData.bpc}
+              </span>
+            </div>
 
-        {/* Interpretation Clinical Notes (if available) */}
+            {/* Right: Specimen & Registration Dates */}
+            <div style={{ fontSize: '12px' }}>
+              <div style={{ display: 'flex', gap: '4px', marginBottom: '3px' }}>
+                <span style={{ color: '#475569', minWidth: '95px' }}>Registered on</span>
+                <span>: {patientData.regDate}</span>
+              </div>
+              <div style={{ display: 'flex', gap: '4px', marginBottom: '3px' }}>
+                <span style={{ color: '#475569', minWidth: '95px' }}>Collected on</span>
+                <span>: {patientData.collectedDate}</span>
+              </div>
+              <div style={{ display: 'flex', gap: '4px', marginBottom: '3px' }}>
+                <span style={{ color: '#475569', minWidth: '95px' }}>Received on</span>
+                <span>: {patientData.receivedDate}</span>
+              </div>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                <span style={{ color: '#475569', minWidth: '95px' }}>Reported on</span>
+                <span>: {patientData.reportedDate}</span>
+              </div>
+            </div>
+
+            {/* Far Right: QR Code for live report verification */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ padding: '4px', border: '1px solid #cbd5e1', borderRadius: '4px' }}>
+                <QrCode size={46} color="#0f172a" />
+              </div>
+              <span style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', textAlign: 'center' }}>
+                Scan to download
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Test Panels */}
+        {panels.map((panel, pIdx) => (
+          <div key={pIdx} style={{ marginBottom: '20px' }}>
+            {/* Category & Panel Headings */}
+            <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', letterSpacing: '0.05em', marginBottom: '2px' }}>
+              {panel.department}
+            </div>
+            <div style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', letterSpacing: '0.02em', marginBottom: '8px' }}>
+              {panel.panelName}
+            </div>
+
+            {/* Labsmart 5-Column Table */}
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', marginBottom: '14px' }}>
+              <thead>
+                <tr style={{ borderTop: '1px solid #0f172a', borderBottom: '1px solid #0f172a', backgroundColor: '#ffffff', textAlign: 'left' }}>
+                  <th style={{ padding: '6px 8px', fontWeight: 800, width: '40%' }}>TEST</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 800, width: '8%', textAlign: 'center' }}>FLAG</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 800, width: '20%' }}>VALUE</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 800, width: '14%' }}>UNIT</th>
+                  <th style={{ padding: '6px 8px', fontWeight: 800, width: '18%' }}>REFERENCE</th>
+                </tr>
+              </thead>
+              <tbody>
+                {panel.parameters.map((param, idx) => {
+                  if (param.isHeader) {
+                    return (
+                      <tr key={idx} style={{ backgroundColor: '#ffffff' }}>
+                        <td colSpan={5} style={{ padding: '8px 8px 4px 8px', fontWeight: 800, color: '#0f172a', fontSize: '12px' }}>
+                          {param.name}
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  return (
+                    <tr
+                      key={idx}
+                      style={{
+                        borderBottom: '1px solid #f1f5f9',
+                        backgroundColor: '#ffffff',
+                      }}
+                    >
+                      {/* Test Name */}
+                      <td style={{ padding: '5px 8px', paddingLeft: param.isSubtest ? '20px' : '8px', color: '#0f172a', fontWeight: param.isSubtest ? 500 : 700 }}>
+                        {param.name}
+                      </td>
+
+                      {/* FLAG (L or H) */}
+                      <td style={{ padding: '5px 8px', textAlign: 'center', fontWeight: 800, color: param.flag ? '#dc2626' : 'transparent' }}>
+                        {param.flag || ''}
+                      </td>
+
+                      {/* Observed Value */}
+                      <td style={{ padding: '5px 8px', fontWeight: 700, color: param.isAbnormal ? '#0f172a' : '#0f172a' }}>
+                        {param.observed}
+                      </td>
+
+                      {/* Unit */}
+                      <td style={{ padding: '5px 8px', color: '#334155' }}>
+                        {param.unit}
+                      </td>
+
+                      {/* Reference Interval (displayRange) */}
+                      <td style={{ padding: '5px 8px', color: '#334155', fontWeight: 500 }}>
+                        {param.reference}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ))}
+
+        {/* Clinical Notes & Interpretations if present */}
         {interpretation && (
-          <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '12px' }}>
-            <strong style={{ display: 'block', marginBottom: '4px', color: '#1e293b' }}>Clinical Interpretation:</strong>
-            <p style={{ margin: 0, color: '#475569', lineHeight: 1.5 }}>{interpretation}</p>
+          <div style={{ marginTop: '14px', padding: '10px 14px', backgroundColor: '#f8fafc', borderRadius: '4px', border: '1px solid #e2e8f0', fontSize: '11px', lineHeight: 1.5 }}>
+            <strong style={{ display: 'block', marginBottom: '2px', color: '#1e293b' }}>Clinical Interpretation:</strong>
+            <p style={{ margin: 0, color: '#334155' }}>{interpretation}</p>
           </div>
         )}
 
-
-        <p style={{ fontSize: '11px', color: '#64748b', fontStyle: 'italic', marginBottom: '14px' }}>
-          * Note: Observed values flagged with an asterisk (*) are outside biological reference interval.
-        </p>
-
-        {/* Clinical Impression Block */}
-        <div style={{ backgroundColor: '#f8fafc', padding: '12px 16px', borderRadius: '6px', borderLeft: '4px solid #1565c0', marginBottom: '24px' }}>
-          <strong style={{ fontSize: '12px', textTransform: 'uppercase', color: '#1565c0' }}>Clinical Impression:</strong>
-          <p style={{ fontSize: '12px', marginTop: '4px', color: '#334155' }}>
-            Mild leukocytosis with relative neutrophilia noted. Please correlate clinically with systemic infection or inflammatory focus.
-          </p>
+        {/* Labsmart Centered End Marker */}
+        <div style={{ textAlign: 'center', fontSize: '12px', fontWeight: 600, color: '#475569', margin: '28px 0 36px 0', letterSpacing: '0.05em' }}>
+          ~~~ End of report ~~~
         </div>
 
-        <div style={{ textAlign: 'center', fontSize: '11px', fontWeight: 700, color: '#94a3b8', margin: '20px 0', letterSpacing: '0.1em' }}>
-          *** END OF DIAGNOSTIC REPORT ***
-        </div>
-
-        {/* Signatures & Authentication Stamp */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '20px', borderTop: '1px solid #cbd5e1' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ padding: '6px', border: '1px solid #cbd5e1', borderRadius: '4px' }}>
-              <QrCode size={40} color="#1e293b" />
+        {/* Signatures Block */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '16px', borderTop: '1px solid #cbd5e1' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontFamily: 'cursive', color: '#0369a1', fontSize: '18px' }}>K. Sharma</span>
             </div>
-            <div style={{ fontSize: '10px', color: '#64748b' }}>
-              <strong>NABL Verified Record</strong><br />
-              Scan QR to download original<br />
-              tamper-proof digital certificate.
+            <div style={{ borderTop: '1px solid #475569', width: '160px', paddingTop: '4px' }}>
+              <strong style={{ fontSize: '11px', display: 'block' }}>K. Sharma, DMLT</strong>
+              <span style={{ fontSize: '10px', color: '#64748b' }}>Medical Technologist</span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '48px', textAlign: 'center' }}>
-            <div>
-              <div style={{ height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontFamily: 'cursive', color: '#0369a1', fontSize: '18px' }}>K. Sharma</span>
-              </div>
-              <div style={{ borderTop: '1px solid #334155', width: '150px', paddingTop: '4px' }}>
-                <strong style={{ fontSize: '11px', display: 'block' }}>K. Sharma, DMLT</strong>
-                <span style={{ fontSize: '10px', color: '#64748b' }}>Medical Technologist</span>
-              </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontFamily: 'cursive', color: '#1565c0', fontSize: '20px', fontWeight: 'bold' }}>Dr. S. K. Mukherjee</span>
             </div>
-
-            <div>
-              <div style={{ height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontFamily: 'cursive', color: '#1565c0', fontSize: '20px', fontWeight: 'bold' }}>Dr. S. K. Mukherjee</span>
-              </div>
-              <div style={{ borderTop: '1px solid #334155', width: '170px', paddingTop: '4px' }}>
-                <strong style={{ fontSize: '11px', display: 'block' }}>Dr. S. K. Mukherjee, MD</strong>
-                <span style={{ fontSize: '10px', color: '#64748b' }}>Consulting Pathologist (KMC 48192)</span>
-              </div>
+            <div style={{ borderTop: '1px solid #475569', width: '190px', paddingTop: '4px' }}>
+              <strong style={{ fontSize: '11px', display: 'block' }}>Dr. S. K. Mukherjee, MD</strong>
+              <span style={{ fontSize: '10px', color: '#64748b' }}>Consulting Pathologist (KMC 48192)</span>
             </div>
           </div>
         </div>

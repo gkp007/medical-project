@@ -37,6 +37,7 @@ import { PackagesPage } from './pages/manage/PackagesPage';
 import { TestPanelsPage } from './pages/manage/TestPanelsPage';
 import { TestCategoriesPage } from './pages/manage/TestCategoriesPage';
 import { TestMasterPage } from './pages/manage/TestMasterPage';
+import { RatelistPage } from './pages/manage/RatelistPage';
 import { InterpretationsPage } from './pages/lab/InterpretationsPage';
 import { InterpretationsLibraryPage } from './pages/lab/InterpretationsLibraryPage';
 import { TestCountsPage } from './pages/lab/TestCountsPage';
@@ -97,6 +98,8 @@ const pathToScreen: Record<string, string> = {
   '/manage/panels': 'test_panels',
   '/manage/categories': 'test_categories',
   '/manage/tests': 'test_master',
+  '/manage/ratelist': 'ratelist',
+  '/setup/ratelist': 'ratelist',
   '/lab/interpretations': 'interpretations',
   '/lab/interpretations/library': 'interpretations_library',
   '/lab/test-counts': 'test_counts',
@@ -144,6 +147,7 @@ const screenToPath: Record<string, string> = {
   test_panels: '/manage/panels',
   test_categories: '/manage/categories',
   test_master: '/manage/tests',
+  ratelist: '/manage/ratelist',
   interpretations: '/lab/interpretations',
   interpretations_library: '/lab/interpretations/library',
   test_counts: '/lab/test-counts',
@@ -442,6 +446,9 @@ export function App() {
 
       case 'test_master':
         return <TestMasterPage />;
+
+      case 'ratelist':
+        return <RatelistPage />;
 
       case 'interpretations':
         return <InterpretationsPage onNavigate={(screen) => setActiveScreen(screen)} />;

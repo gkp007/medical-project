@@ -33,15 +33,21 @@ export interface EnterResultsPageProps {
 
 interface TestParam {
   id: string;
+  testId?: string;
+  testName?: string;
+  department?: string;
+  code?: string;
   name: string;
   isSubtest?: boolean;
   value: string;
   unit: string;
   reference: string;
+  displayRange?: string;
   lower: number;
   upper: number;
   isOptional?: boolean;
   isCalculated?: boolean;
+  inputType?: 'number' | 'text';
 }
 
 export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
@@ -176,20 +182,34 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
             setDoctor(typeof doctorObj === 'object' ? doctorObj.name : doctorObj);
           }
 
-          if (tests?.[0]?.parameters?.length > 0) {
-            const mappedParams: TestParam[] = tests[0].parameters.map((p: any) => ({
-              id: p.id,
-              name: p.name,
-              value: p.value !== undefined && p.value !== null ? String(p.value) : p.currentValue || p.defaultValue || '',
-              unit: p.unit || '',
-              reference: p.referenceInterval || `${p.normalMin || ''} - ${p.normalMax || ''}`,
-              lower: Number(p.normalMin) || 0,
-              upper: Number(p.normalMax) || 100,
-              isCalculated: p.isCalculated,
-              isOptional: p.isOptional,
-              isSubtest: p.isSubtest,
-            }));
-            setParams(mappedParams);
+          if (tests && tests.length > 0) {
+            const allParams: TestParam[] = [];
+            tests.forEach((t: any) => {
+              (t.parameters || []).forEach((p: any) => {
+                const isDiff = ['NEUT', 'LYMPH', 'EOS', 'MONO', 'BASO'].includes(p.code?.toUpperCase());
+                allParams.push({
+                  id: p.id,
+                  testId: t.testId || t.id,
+                  testName: t.testName || t.name,
+                  department: t.department || 'Haematology',
+                  code: p.code,
+                  name: p.name,
+                  value: p.value !== undefined && p.value !== null ? String(p.value) : p.currentValue || p.defaultValue || '',
+                  unit: p.unit || '',
+                  reference: p.displayRange || p.referenceInterval || (p.normalMin && p.normalMax ? `${p.normalMin} - ${p.normalMax}` : ''),
+                  displayRange: p.displayRange || p.referenceInterval,
+                  lower: Number(p.normalMin) || Number(p.lowerBound) || 0,
+                  upper: Number(p.normalMax) || Number(p.upperBound) || 100,
+                  isCalculated: p.isCalculated,
+                  isOptional: p.isOptional,
+                  isSubtest: p.isSubtest || isDiff,
+                  inputType: p.selectType === 'text' || (!p.normalMin && !p.normalMax && p.referenceInterval) ? 'text' : 'number',
+                });
+              });
+            });
+            if (allParams.length > 0) {
+              setParams(allParams);
+            }
           }
           if (interpretation?.text || typeof interpretation === 'string') {
             setMoreDetails(typeof interpretation === 'string' ? interpretation : interpretation.text);
@@ -789,10 +809,11 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
             <table className="data-table" style={{ marginTop: '8px' }}>
               <thead>
                 <tr style={{ backgroundColor: '#f8fafc' }}>
-                  <th style={{ width: '40%' }}>TEST</th>
+                  <th style={{ width: '38%' }}>TEST</th>
+                  <th style={{ width: '8%', textAlign: 'center' }}>FLAG</th>
                   <th style={{ width: '22%' }}>VALUE</th>
-                  <th style={{ width: '15%' }}>UNIT</th>
-                  <th style={{ width: '23%' }}>REFERENCE</th>
+                  <th style={{ width: '14%' }}>UNIT</th>
+                  <th style={{ width: '18%' }}>REFERENCE</th>
                 </tr>
               </thead>
               <tbody>
@@ -808,16 +829,35 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
                         </div>
                       </td>
 
+                      {/* FLAG Column */}
+                      <td style={{ textAlign: 'center' }}>
+                        {isOutOfRange && (
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              fontWeight: 800,
+                              color: '#dc2626',
+                              backgroundColor: '#fee2e2',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                            }}
+                          >
+                            {numVal > p.upper ? 'H' : 'L'}
+                          </span>
+                        )}
+                      </td>
+
                       {/* Value Input */}
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <input
                             type="text"
                             value={p.value}
+                            placeholder={p.inputType === 'text' ? 'Enter finding...' : '0.00'}
                             onChange={(e) => handleParamChange(p.id, e.target.value)}
                             className="input-control"
                             style={{
-                              width: '100px',
+                              width: p.inputType === 'text' ? '150px' : '100px',
                               height: '30px',
                               fontSize: '13px',
                               fontWeight: isOutOfRange ? 700 : 500,
@@ -826,20 +866,6 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
                               backgroundColor: isOutOfRange ? '#fef2f2' : '#ffffff',
                             }}
                           />
-                          {isOutOfRange && (
-                            <span
-                              style={{
-                                fontSize: '10px',
-                                fontWeight: 700,
-                                padding: '2px 5px',
-                                borderRadius: '4px',
-                                backgroundColor: '#fee2e2',
-                                color: '#b91c1c',
-                              }}
-                            >
-                              {numVal > p.upper ? 'H' : 'L'}
-                            </span>
-                          )}
                         </div>
                       </td>
 
@@ -849,7 +875,7 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
                       {/* Reference Range + Edit Icon */}
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px' }}>
-                          <span style={{ color: '#334155' }}>{p.reference}</span>
+                          <span style={{ color: '#334155', fontWeight: 500 }}>{p.reference || '—'}</span>
                           <button
                             type="button"
                             className="btn-icon"

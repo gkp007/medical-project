@@ -206,6 +206,7 @@ export class PathologyService {
 
     const patientAge = caseRecord.patient.age || caseRecord.patient.ageYears || 30;
     const patientGender = caseRecord.patient.gender || 'Male';
+    const patientAgeUnit = caseRecord.patient.ageUnit || 'Years';
 
     // Structure tests with parameters, ranges and 90-day delta check
     const structuredTests = caseRecord.items.map(item => {
@@ -229,21 +230,47 @@ export class PathologyService {
           }
         }
 
-        // Find reference interval for patient demographics
-        const evalResult = BiologicalRangeEvaluator.evaluate(
-          currentValue,
-          param.ranges.map(r => ({
+        // Map demographic ranges & extract JSON metadata
+        const mappedRanges = param.ranges.map(r => {
+          let displayRange: string | undefined;
+          let minAgeUnit: string | undefined;
+          let maxAgeUnit: string | undefined;
+          let selectType: string | undefined;
+          let rawTextual = r.textualNormal;
+          if (r.textualNormal && r.textualNormal.startsWith('{')) {
+            try {
+              const meta = JSON.parse(r.textualNormal);
+              displayRange = meta.displayRange;
+              minAgeUnit = meta.minAgeUnit;
+              maxAgeUnit = meta.maxAgeUnit;
+              selectType = meta.selectType;
+              rawTextual = meta.textualNormal;
+            } catch {}
+          }
+          return {
+            id: r.id,
             minAge: r.minAge,
+            minAgeUnit,
             maxAge: r.maxAge,
+            maxAgeUnit,
             gender: r.gender,
             lowerBound: r.lowerBound,
             upperBound: r.upperBound,
+            displayRange,
             criticalLow: r.panicLower || undefined,
             criticalHigh: r.panicUpper || undefined,
-            textualNormal: r.textualNormal || undefined
-          })),
+            textualNormal: rawTextual || undefined,
+            selectType
+          };
+        });
+
+        // Find reference interval for patient demographics
+        const evalResult = BiologicalRangeEvaluator.evaluate(
+          currentValue,
+          mappedRanges,
           patientAge,
-          patientGender
+          patientGender,
+          patientAgeUnit
         );
 
         return {
@@ -260,8 +287,10 @@ export class PathologyService {
           deltaPercentage,
           deltaAlert,
           flag: evalResult.flag,
+          displayRange: evalResult.referenceIntervalText,
           referenceInterval: evalResult.referenceIntervalText,
-          ranges: param.ranges
+          selectType: mappedRanges[0]?.selectType || 'numeric_range',
+          ranges: mappedRanges
         };
       });
 
@@ -359,20 +388,44 @@ export class PathologyService {
         }
       }
 
-      const evalResult = BiologicalRangeEvaluator.evaluate(
-        finalValue,
-        param.ranges.map((r: any) => ({
+      const mappedRanges = (param.ranges || []).map((r: any) => {
+        let displayRange = r.displayRange;
+        let minAgeUnit = r.minAgeUnit;
+        let maxAgeUnit = r.maxAgeUnit;
+        let selectType = r.selectType;
+        let rawTextual = r.textualNormal;
+        if (r.textualNormal && typeof r.textualNormal === 'string' && r.textualNormal.startsWith('{')) {
+          try {
+            const meta = JSON.parse(r.textualNormal);
+            displayRange = meta.displayRange || displayRange;
+            minAgeUnit = meta.minAgeUnit || minAgeUnit;
+            maxAgeUnit = meta.maxAgeUnit || maxAgeUnit;
+            selectType = meta.selectType || selectType;
+            rawTextual = meta.textualNormal || rawTextual;
+          } catch {}
+        }
+        return {
           minAge: r.minAge,
+          minAgeUnit,
           maxAge: r.maxAge,
+          maxAgeUnit,
           gender: r.gender,
           lowerBound: r.lowerBound,
           upperBound: r.upperBound,
-          criticalLow: r.panicLower || undefined,
-          criticalHigh: r.panicUpper || undefined,
-          textualNormal: r.textualNormal || undefined
-        })),
+          displayRange,
+          criticalLow: r.panicLower || r.criticalLow || undefined,
+          criticalHigh: r.panicUpper || r.criticalHigh || undefined,
+          textualNormal: rawTextual || undefined,
+          selectType
+        };
+      });
+
+      const evalResult = BiologicalRangeEvaluator.evaluate(
+        finalValue,
+        mappedRanges,
         worksheet.patient.age,
-        worksheet.patient.gender
+        worksheet.patient.gender,
+        worksheet.patient.ageUnit || 'Years'
       );
 
       evaluatedParametersMap.set(param.id, {
@@ -389,6 +442,7 @@ export class PathologyService {
         deltaWarning: deltaAlert ? `Delta alert: ${deltaPercentage}% variance from previous result within 90 days. Please verify specimen integrity.` : null,
         flag: evalResult.flag,
         referenceInterval: evalResult.referenceIntervalText,
+        displayRange: evalResult.referenceIntervalText,
         isAbnormal: evalResult.isAbnormal,
         isPanicCritical: evalResult.isPanicCritical
       });

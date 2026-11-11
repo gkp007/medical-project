@@ -29,7 +29,8 @@ import {
   PieChart,
   Shield,
   UserPlus,
-  Cpu
+  Cpu,
+  DollarSign
 } from 'lucide-react';
 
 export interface LeftSidebarProps {
@@ -330,6 +331,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ activeScreen, onNaviga
               { id: 'test_panels', label: 'Test panels', icon: <FolderTree size={16} /> },
               { id: 'test_categories', label: 'Test categories', icon: <FolderTree size={16} /> },
               { id: 'test_master', label: 'Test database', icon: <Database size={16} /> },
+              { id: 'ratelist', label: 'Ratelist', icon: <DollarSign size={16} /> },
               { id: 'interpretations', label: 'Interpretations', icon: <BookOpen size={16} /> },
               { id: 'test_counts', label: 'Test counts', icon: <PieChart size={16} /> },
               { id: 'analyzers', label: 'Analyzer interfacing', icon: <Cpu size={16} /> },
