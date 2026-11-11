@@ -15,9 +15,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-img, picture, video, canvas, svg {
+img, picture, video, canvas {
   display: block;
   max-width: 100%;
+}
+
+svg {
+  display: inline-block;
+  vertical-align: middle;
 }
 
 input, button, textarea, select {
@@ -35,6 +40,10 @@ a {
 
 button {
   cursor: pointer;
+}
+
+/* Only strip default OS bevels from unstyled buttons */
+button:not([class*="bg-"]):not([class*="border"]):not([class*="btn"]):not([style*="background"]) {
   background: none;
   border: none;
 }

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './nd-styles.css';
-import './LandingPage.css';
 import {
   Phone,
   FlaskConical,
@@ -283,7 +282,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-6 gap-y-1.5">
             <div className="flex items-center gap-1.5 text-sky-400 font-medium">
               <Phone className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden xs:inline">Clinic Booking:</span>
+              <span className="hidden sm:inline text-slate-400">Clinic Booking:</span>
               <a
                 href={`tel:${CLINIC_INFO.phonePrimary}`}
                 className="text-white hover:text-sky-300 font-bold tracking-wide transition-colors"
@@ -294,7 +293,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             <div className="hidden sm:flex items-center gap-1.5 text-teal-400 font-medium">
               <FlaskConical className="w-3.5 h-3.5 shrink-0" />
-              <span>Laboratory:</span>
+              <span className="text-slate-400">Laboratory:</span>
               <a
                 href={`tel:${CLINIC_INFO.phoneLab}`}
                 className="text-white hover:text-teal-300 font-semibold tracking-wide transition-colors"
@@ -305,7 +304,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             <div className="hidden xl:flex items-center gap-1.5 text-cyan-400 font-medium">
               <Microscope className="w-3.5 h-3.5 shrink-0" />
-              <span>Histopathology:</span>
+              <span className="text-slate-400">Histopathology:</span>
               <a
                 href={`tel:${CLINIC_INFO.phoneHistopath}`}
                 className="text-white hover:text-cyan-300 font-semibold tracking-wide transition-colors"
@@ -402,7 +401,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <span className="text-[10px] font-sans font-black text-amber-300 ml-0.5 uppercase tracking-normal">
                   {currentTime.ampm}
                 </span>
-                <span className="text-[9px] font-sans font-bold text-slate-400 hidden xs:inline ml-0.5">
+                <span className="text-[9px] font-sans font-bold text-slate-400 hidden sm:inline ml-0.5">
                   IST
                 </span>
               </div>
@@ -414,12 +413,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* Marquee Announcement Ticker */}
       <div className="bg-gradient-to-r from-sky-950 via-slate-900 to-teal-950 text-white border-b border-sky-500/20 py-2 overflow-hidden relative shadow-xs select-none">
         <div className="flex items-center">
-          <div className="shrink-0 flex items-center gap-1.5 bg-sky-900/90 text-sky-200 border border-sky-400/40 px-2.5 sm:px-3.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold mx-2 sm:mx-4 z-10 shadow-sm backdrop-blur-md">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
-            <span className="uppercase tracking-wider whitespace-nowrap">Welcome</span>
+          <div className="shrink-0 flex items-center bg-slate-950/95 pl-2 sm:pl-4 pr-3 py-0.5 z-10 border-r border-slate-800/80 shadow-md">
+            <div className="flex items-center gap-1.5 bg-sky-900/90 text-sky-200 border border-sky-400/40 px-2.5 sm:px-3.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold shadow-sm backdrop-blur-md">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="uppercase tracking-wider whitespace-nowrap">Welcome</span>
+            </div>
           </div>
 
           <div className="relative w-full overflow-hidden whitespace-nowrap">
@@ -663,6 +664,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="hidden lg:flex items-center gap-2 xl:gap-2.5 shrink-0">
               <button
                 onClick={() => setIsTrackBookingOpen(true)}
+                style={{ backgroundColor: 'rgba(236, 253, 245, 0.9)', borderColor: 'rgba(110, 231, 183, 0.8)', color: '#065f46' }}
                 className="px-3 py-2 text-xs font-bold rounded-xl border border-emerald-300/80 bg-emerald-50/80 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-400 flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
                 title="Track Request Status & Make Payment"
               >
@@ -672,6 +674,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
               <button
                 onClick={() => handleOpenDoctorBooking()}
+                style={{ background: 'linear-gradient(to right, #0284c7, #0d9488)', color: '#ffffff' }}
                 className="px-3.5 xl:px-4 py-2 text-xs xl:text-sm font-bold text-white bg-gradient-to-r from-sky-600 to-teal-600 hover:from-sky-700 hover:to-teal-700 shadow-md shadow-sky-600/20 rounded-xl flex items-center gap-1.5 transition-all hover:shadow-lg active:scale-98 cursor-pointer shrink-0"
               >
                 <Calendar className="w-4 h-4" />
@@ -683,6 +686,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="flex items-center gap-1.5 sm:gap-2 lg:hidden shrink-0">
               <button
                 onClick={() => handleOpenDoctorBooking()}
+                style={{ background: 'linear-gradient(to right, #0284c7, #0d9488)', color: '#ffffff' }}
                 className="px-2.5 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-sky-600 to-teal-600 hover:from-sky-700 hover:to-teal-700 rounded-lg flex items-center gap-1 shadow-xs cursor-pointer"
               >
                 <Calendar className="w-3.5 h-3.5" />
@@ -800,9 +804,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           {/* Watermark Logo Accent in Background */}
           <div
-            className="pointer-events-none select-none absolute w-[600px] h-[600px] -right-32 -top-20 opacity-[0.04]"
+            className="pointer-events-none select-none absolute w-[600px] h-[600px] -right-32 -top-20"
+            style={{ opacity: 0.04 }}
           >
-            <img src="/aastha-icon.svg" alt="" className="w-full h-full object-contain" />
+            <img src="/aastha-icon.svg" alt="" className="w-full h-full object-contain select-none" />
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -834,6 +839,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2">
                   <button
                     onClick={() => handleOpenDoctorBooking()}
+                    style={{ background: 'linear-gradient(to right, #0284c7, #0369a1)', color: '#ffffff' }}
                     className="w-full sm:w-auto px-7 py-3.5 bg-gradient-to-r from-sky-600 to-sky-700 hover:from-sky-700 hover:to-sky-800 text-white font-bold text-sm rounded-xl shadow-lg shadow-sky-600/30 transition-all hover:shadow-sky-600/50 hover:scale-[1.02] active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Calendar className="w-4 h-4" />
@@ -842,6 +848,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
                   <button
                     onClick={() => handleOpenTestBooking()}
+                    style={{ backgroundColor: 'rgba(13, 148, 136, 0.2)', borderColor: 'rgba(20, 184, 166, 0.4)', color: '#5eead4' }}
                     className="w-full sm:w-auto px-7 py-3.5 bg-teal-600/20 hover:bg-teal-600/30 text-teal-300 border border-teal-500/40 font-bold text-sm rounded-xl shadow-xs transition-all hover:border-teal-400 flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <FlaskConical className="w-4 h-4 text-teal-400" />
