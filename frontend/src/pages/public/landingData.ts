@@ -115,16 +115,16 @@ export interface Testimonial {
 }
 
 export const CLINIC_INFO = {
-  name: "Aastha Polyclinic & Diagnostic Centre",
-  shortName: "Aastha Diagnostics",
+  name: "Aastha Multispeciality Polyclinic",
+  shortName: "Aastha Multispeciality Polyclinic",
   tagline: "Serve Respect Love",
   subTagline: "Multi-Specialty OPD Consultations & Automated Pathology",
   domain: "aasthamspolyclinic.com",
-  phonePrimary: "+919827493536",
-  phoneLab: "+918249769121",
-  phoneHistopath: "+918917469121",
-  whatsapp: "918249769121",
-  email: "aasthapolyclinic@gmail.com",
+  phonePrimary: "+919559955899",
+  phoneLab: "+919559955899",
+  phoneHistopath: "+919559955899",
+  whatsapp: "919559955899",
+  email: "aasthamspolyclinic@gmail.com",
   addressLine1: "Aastha Healthcare Complex, Medical Square, Main Hospital Road",
   city: "Bargarh",
   state: "Odisha",
