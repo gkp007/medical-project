@@ -126,7 +126,7 @@ export const CLINIC_INFO = {
   whatsapp: "919559955899",
   email: "aasthamspolyclinic@gmail.com",
   addressLine1: "Aastha Healthcare Complex, Medical Square, Main Hospital Road",
-  city: "Bargarh",
+  city: "Padamour",
   state: "Odisha",
   pincode: "768028",
   hoursOpd: "07:00 AM - 09:30 PM Daily",
@@ -2718,7 +2718,7 @@ export const TESTIMONIALS_DATA: Testimonial[] = [
   {
     "id": "testi-1",
     "patientName": "Prasanna Kumar Sahu",
-    "location": "Bargarh Town",
+    "location": "Padamour Town",
     "rating": 5,
     "date": "August 2026",
     "serviceUsed": "Home Sample Collection & Comprehensive Package",

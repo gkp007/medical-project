@@ -218,8 +218,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const displayedTests = testSearchQuery
     ? filteredTests
     : filteredTests.slice(testOffset, testOffset + 9).length >= 6
-    ? filteredTests.slice(testOffset, testOffset + 9)
-    : filteredTests.slice(0, 9);
+      ? filteredTests.slice(testOffset, testOffset + 9)
+      : filteredTests.slice(0, 9);
 
   // FAQ State
   const [faqCategory, setFaqCategory] = useState('All');
@@ -285,12 +285,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* =========================================================================
           1. TOP MICRO-BAR: Helplines, Social Icons, IST Clock & Live Marquee Ticker
           ========================================================================= */}
-      <div className="bg-slate-950 text-slate-200 text-xs border-b border-slate-800/80 select-none">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-slate-950 text-slate-200 text-[11px] sm:text-xs border-b border-slate-800/80 select-none">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-1.5 sm:py-2 flex items-center justify-between gap-2 sm:gap-4 flex-nowrap overflow-x-auto">
           {/* Left Helplines */}
-          <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-6 gap-y-1.5">
-            <div className="flex items-center gap-1.5 text-sky-400 font-medium">
-              <Phone className="w-3.5 h-3.5 shrink-0" />
+          <div className="flex items-center gap-x-3 sm:gap-x-4 shrink-0 flex-nowrap">
+            <div className="flex items-center gap-1 text-sky-400 font-medium whitespace-nowrap">
+              <Phone className="w-3 h-3 shrink-0" />
               <span className="hidden sm:inline text-slate-400">Clinic Booking:</span>
               <a
                 href={`tel:${CLINIC_INFO.phonePrimary}`}
@@ -300,9 +300,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </a>
             </div>
 
-            <div className="hidden sm:flex items-center gap-1.5 text-teal-400 font-medium">
-              <FlaskConical className="w-3.5 h-3.5 shrink-0" />
-              <span className="text-slate-400">Laboratory:</span>
+            <div className="hidden sm:flex items-center gap-1 text-teal-400 font-medium whitespace-nowrap">
+              <FlaskConical className="w-3 h-3 shrink-0" />
+              <span className="text-slate-400">Lab:</span>
               <a
                 href={`tel:${CLINIC_INFO.phoneLab}`}
                 className="text-white hover:text-teal-300 font-semibold tracking-wide transition-colors"
@@ -311,8 +311,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </a>
             </div>
 
-            <div className="hidden xl:flex items-center gap-1.5 text-cyan-400 font-medium">
-              <Microscope className="w-3.5 h-3.5 shrink-0" />
+            <div className="hidden xl:flex items-center gap-1 text-cyan-400 font-medium whitespace-nowrap">
+              <Microscope className="w-3 h-3 shrink-0" />
               <span className="text-slate-400">Histopathology:</span>
               <a
                 href={`tel:${CLINIC_INFO.phoneHistopath}`}
@@ -322,8 +322,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </a>
             </div>
 
-            <div className="hidden md:flex items-center gap-1.5 text-slate-400">
-              <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <div className="hidden md:flex items-center gap-1 text-slate-400 whitespace-nowrap">
+              <Mail className="w-3 h-3 text-slate-400 shrink-0" />
               <a
                 href={`mailto:${CLINIC_INFO.email}`}
                 className="text-slate-300 hover:text-white transition-colors"
@@ -334,28 +334,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           {/* Right: Social Icons & Live Real-Time IST Clock */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 flex-nowrap">
             <div className="hidden lg:flex items-center pr-2 border-r border-slate-800">
-              <div className="inline-flex items-center gap-1.5 p-1 bg-slate-900/80 rounded-2xl border border-slate-700/60 backdrop-blur-md">
+              <div className="inline-flex items-center gap-1 p-0.5 bg-slate-900/80 rounded-xl border border-slate-700/60 backdrop-blur-md">
                 <a
                   href={`https://wa.me/${CLINIC_INFO.whatsapp}?text=Hello%20Aastha%20Diagnostics%2C%20I%20would%20like%20to%20inquire%20about%20booking%20and%20reports`}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Connect with Aastha Diagnostics on WhatsApp"
-                  className="p-2 rounded-xl text-slate-300 hover:text-white transition-all duration-150 hover:scale-105 bg-emerald-600 hover:bg-emerald-500"
+                  className="p-1.5 rounded-lg text-slate-300 hover:text-white transition-all duration-150 hover:scale-105 bg-emerald-600 hover:bg-emerald-500"
                   title="WhatsApp: Chat Live"
                 >
-                  <MessageCircle className="w-3.5 h-3.5" />
+                  <MessageCircle className="w-3 h-3" />
                 </a>
                 <a
                   href="https://facebook.com/aasthapolyclinic"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Visit Facebook Page"
-                  className="p-2 rounded-xl text-slate-300 hover:text-white transition-all duration-150 hover:scale-105 bg-blue-600 hover:bg-blue-500"
+                  className="p-1.5 rounded-lg text-slate-300 hover:text-white transition-all duration-150 hover:scale-105 bg-blue-600 hover:bg-blue-500"
                   title="Facebook: Official Page"
                 >
-                  <svg className="w-3.5 h-3.5 fill-currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3 fill-currentColor" viewBox="0 0 24 24">
                     <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
                   </svg>
                 </a>
@@ -364,10 +364,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Follow on Instagram"
-                  className="p-2 rounded-xl text-slate-300 hover:text-white transition-all duration-150 hover:scale-105 bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 hover:opacity-90"
+                  className="p-1.5 rounded-lg text-slate-300 hover:text-white transition-all duration-150 hover:scale-105 bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 hover:opacity-90"
                   title="Instagram: Health Tips"
                 >
-                  <svg className="w-3.5 h-3.5 stroke-currentColor fill-none" viewBox="0 0 24 24" strokeWidth="2">
+                  <svg className="w-3 h-3 stroke-currentColor fill-none" viewBox="0 0 24 24" strokeWidth="2">
                     <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
                     <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
                     <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
@@ -378,39 +378,39 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Read and Write Google Reviews"
-                  className="p-2 rounded-xl text-slate-300 hover:text-white transition-all duration-150 hover:scale-105 bg-amber-500 hover:bg-amber-400"
+                  className="p-1.5 rounded-lg text-slate-300 hover:text-white transition-all duration-150 hover:scale-105 bg-amber-500 hover:bg-amber-400"
                   title="Google Review: 5.0 ★ Rating"
                 >
-                  <Star className="w-3.5 h-3.5 fill-white text-white" />
+                  <Star className="w-3 h-3 fill-white text-white" />
                 </a>
               </div>
             </div>
 
             {/* Live IST Clock with pulsing green dot */}
             <div
-              className="inline-flex items-center gap-2 bg-slate-900/90 text-slate-100 border border-slate-700/80 px-2.5 sm:px-3 py-1 rounded-xl shadow-xs backdrop-blur-md select-none font-mono"
+              className="inline-flex items-center gap-1.5 bg-slate-900/90 text-slate-100 border border-slate-700/80 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-xl shadow-xs backdrop-blur-md select-none font-mono text-[10px] sm:text-[11px]"
               title="Clinic Real-Time Indian Standard Time (IST)"
             >
-              <div className="flex items-center gap-1.5 text-teal-400">
-                <span className="relative flex h-2 w-2">
+              <div className="flex items-center gap-1 text-teal-400">
+                <span className="relative flex h-1.5 w-1.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
                 </span>
-                <Clock className="w-3.5 h-3.5 text-teal-300 shrink-0" />
+                <Clock className="w-3 h-3 text-teal-300 shrink-0" />
               </div>
-              <span className="hidden sm:inline-block text-[11px] font-sans font-medium text-slate-300 border-r border-slate-700/80 pr-2">
+              <span className="hidden sm:inline-block text-[10px] sm:text-[11px] font-sans font-medium text-slate-300 border-r border-slate-700/80 pr-1.5">
                 {currentTime.day}, {currentTime.dateStr}
               </span>
-              <div className="flex items-baseline gap-1 text-xs sm:text-sm font-bold tracking-wider text-white">
+              <div className="flex items-baseline gap-0.5 sm:gap-1 text-[11px] sm:text-xs font-bold tracking-wider text-white">
                 <span className="text-teal-300 font-extrabold">{currentTime.hours}</span>
                 <span className="text-teal-400/80 animate-pulse">:</span>
                 <span className="text-teal-300 font-extrabold">{currentTime.minutes}</span>
                 <span className="text-teal-400/80 animate-pulse">:</span>
-                <span className="text-sky-300 text-xs font-semibold">{currentTime.seconds}</span>
-                <span className="text-[10px] font-sans font-black text-amber-300 ml-0.5 uppercase tracking-normal">
+                <span className="text-sky-300 font-semibold">{currentTime.seconds}</span>
+                <span className="text-[9px] font-sans font-black text-amber-300 ml-0.5 uppercase tracking-normal">
                   {currentTime.ampm}
                 </span>
-                <span className="text-[9px] font-sans font-bold text-slate-400 hidden sm:inline ml-0.5">
+                <span className="text-[8px] font-sans font-bold text-slate-400 hidden sm:inline ml-0.5">
                   IST
                 </span>
               </div>
@@ -514,9 +514,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <Stethoscope className="w-3.5 h-3.5 text-sky-600" />
                   <span>Clinical Care</span>
                   <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform duration-200 text-slate-400 ${
-                      activeDropdown === 'clinical' ? 'rotate-180' : ''
-                    }`}
+                    className={`w-3.5 h-3.5 transition-transform duration-200 text-slate-400 ${activeDropdown === 'clinical' ? 'rotate-180' : ''
+                      }`}
                   />
                 </button>
 
@@ -560,9 +559,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <FlaskConical className="w-3.5 h-3.5 text-teal-600" />
                   <span>Diagnostics & Lab</span>
                   <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform duration-200 text-slate-400 ${
-                      activeDropdown === 'diagnostics' ? 'rotate-180' : ''
-                    }`}
+                    className={`w-3.5 h-3.5 transition-transform duration-200 text-slate-400 ${activeDropdown === 'diagnostics' ? 'rotate-180' : ''
+                      }`}
                   />
                 </button>
 
@@ -617,9 +615,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <Sparkles className="w-3.5 h-3.5 text-sky-600" />
                   <span>About & Info</span>
                   <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform duration-200 text-slate-400 ${
-                      activeDropdown === 'about' ? 'rotate-180' : ''
-                    }`}
+                    className={`w-3.5 h-3.5 transition-transform duration-200 text-slate-400 ${activeDropdown === 'about' ? 'rotate-180' : ''
+                      }`}
                   />
                 </button>
 
@@ -1112,11 +1109,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                             key={idx}
                             onClick={() => setSpotlightDoctorIndex(idx)}
                             aria-label={`Jump to Doctor ${idx + 1}`}
-                            className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                              idx === (spotlightDoctorIndex % DOCTORS_DATA.length)
+                            className={`h-1.5 rounded-full transition-all cursor-pointer ${idx === (spotlightDoctorIndex % DOCTORS_DATA.length)
                                 ? 'w-5 bg-sky-400'
                                 : 'w-1.5 bg-slate-700 hover:bg-slate-500'
-                            }`}
+                              }`}
                           />
                         ))}
                       </div>
@@ -1250,11 +1246,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                             key={idx}
                             onClick={() => setSpotlightTestIndex(idx)}
                             aria-label={`Jump to Test ${idx + 1}`}
-                            className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                              idx === (spotlightTestIndex % 10)
+                            className={`h-1.5 rounded-full transition-all cursor-pointer ${idx === (spotlightTestIndex % 10)
                                 ? 'w-5 bg-teal-400'
                                 : 'w-1.5 bg-slate-700 hover:bg-slate-500'
-                            }`}
+                              }`}
                           />
                         ))}
                       </div>
@@ -1386,33 +1381,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                             key={idx}
                             onClick={() => setSpotlightArticleIndex(idx)}
                             aria-label={`Jump to Article ${idx + 1}`}
-                            className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                              idx === (spotlightArticleIndex % BLOGS_DATA.length)
+                            className={`h-1.5 rounded-full transition-all cursor-pointer ${idx === (spotlightArticleIndex % BLOGS_DATA.length)
                                 ? 'w-5 bg-violet-400'
                                 : 'w-1.5 bg-slate-700 hover:bg-slate-500'
-                            }`}
+                              }`}
                           />
                         ))}
                       </div>
                     </div>
                   );
                 })()}
-              </div>
-
-              {/* Jump Dots */}
-              <div className="flex items-center justify-center gap-1.5 mt-4">
-                {[0, 1, 2, 3, 4].map(idx => (
-                  <button
-                    key={idx}
-                    onClick={() => setSpotlightIndex(idx)}
-                    className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                      spotlightIndex % 5 === idx
-                        ? 'w-6 bg-sky-400'
-                        : 'w-2 bg-slate-700 hover:bg-slate-600'
-                    }`}
-                    aria-label={`Jump to slide ${idx + 1}`}
-                  />
-                ))}
               </div>
             </div>
           </div>
@@ -1736,11 +1714,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
-                    className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                      selectedCategory === cat
+                    className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${selectedCategory === cat
                         ? 'bg-teal-600 text-white shadow-xs'
                         : 'bg-white/80 backdrop-blur-xs text-slate-700 hover:bg-white border border-white/80'
-                    }`}
+                      }`}
                   >
                     {cat}
                   </button>
@@ -1856,6 +1833,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="text-center mt-10">
               <button
                 onClick={() => handleOpenTestBooking()}
+                style={{ paddingLeft: '36px', paddingRight: '36px', paddingTop: '16px', paddingBottom: '16px' }}
                 className="px-10 py-4 bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm rounded-full shadow-lg shadow-teal-600/25 transition-all hover:scale-105 cursor-pointer inline-flex items-center justify-center gap-3 whitespace-nowrap"
               >
                 <FlaskConical className="w-4 h-4 shrink-0" />
@@ -2288,11 +2266,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <button
                   key={cat}
                   onClick={() => setFaqCategory(cat)}
-                  className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-colors cursor-pointer ${
-                    faqCategory === cat
+                  className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-colors cursor-pointer ${faqCategory === cat
                       ? 'bg-sky-600 text-white shadow-xs'
                       : 'bg-white/70 backdrop-blur-xs text-slate-700 hover:bg-white border border-white/80'
-                  }`}
+                    }`}
                 >
                   {cat}
                 </button>
@@ -2314,9 +2291,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     >
                       <span className="text-sm font-bold text-slate-900">{faq.question}</span>
                       <div
-                        className={`w-6 h-6 rounded-full bg-white/90 shadow-2xs flex items-center justify-center text-slate-500 shrink-0 transition-transform ${
-                          isExpanded ? 'rotate-180 bg-sky-100 text-sky-700' : ''
-                        }`}
+                        className={`w-6 h-6 rounded-full bg-white/90 shadow-2xs flex items-center justify-center text-slate-500 shrink-0 transition-transform ${isExpanded ? 'rotate-180 bg-sky-100 text-sky-700' : ''
+                          }`}
                       >
                         <ChevronDown className="w-4 h-4" />
                       </div>
@@ -2519,7 +2495,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <div className="rounded-2xl overflow-hidden border border-white/80 shadow-md relative h-64 sm:h-72 bg-slate-100/80">
                   <iframe
                     title={`${CLINIC_INFO.name} Location`}
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d118949.62312674913!2d83.5516089764516!3d21.332306786221775!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a213e4b09c5d003%3A0xe54e3895e63eb077!2sBargarh%2C%20Odisha!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d118949.62312674913!2d83.5516089764516!3d21.332306786221775!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a213e4b09c5d003%3A0xe54e3895e63eb077!2sPadamour%2C%20Odisha!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
                     className="w-full h-full border-0"
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"

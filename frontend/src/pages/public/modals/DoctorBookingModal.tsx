@@ -47,7 +47,7 @@ export const DoctorBookingModal: React.FC<DoctorBookingModalProps> = ({
     phone: '',
     age: '',
     gender: 'Male',
-    city: 'Bargarh',
+    city: 'Padamour',
     symptoms: '',
   });
 
@@ -65,10 +65,10 @@ export const DoctorBookingModal: React.FC<DoctorBookingModalProps> = ({
 
   const filteredDoctors = selectedSpecialty
     ? DOCTORS_DATA.filter(
-        d =>
-          d.specialty.toLowerCase().includes(selectedSpecialty.toLowerCase()) ||
-          selectedSpecialty.toLowerCase().includes(d.specialty.toLowerCase())
-      )
+      d =>
+        d.specialty.toLowerCase().includes(selectedSpecialty.toLowerCase()) ||
+        selectedSpecialty.toLowerCase().includes(d.specialty.toLowerCase())
+    )
     : DOCTORS_DATA;
 
   const selectedDoctor =
@@ -287,11 +287,10 @@ export const DoctorBookingModal: React.FC<DoctorBookingModalProps> = ({
                           <div
                             key={doc.id}
                             onClick={() => setSelectedDoctorId(doc.id)}
-                            className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between gap-3 ${
-                              isSelected
+                            className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between gap-3 ${isSelected
                                 ? 'border-sky-500 bg-sky-50/90 shadow-sm ring-1 ring-sky-500'
                                 : 'border-white/80 bg-white/60 hover:bg-white/90 hover:border-slate-300'
-                            }`}
+                              }`}
                           >
                             <div className="flex items-center gap-3">
                               <img
@@ -376,11 +375,10 @@ export const DoctorBookingModal: React.FC<DoctorBookingModalProps> = ({
                           type="button"
                           key={slot}
                           onClick={() => setTimeSlot(slot)}
-                          className={`p-3 rounded-xl border text-left text-xs font-medium transition-all cursor-pointer flex items-center justify-between ${
-                            timeSlot === slot
+                          className={`p-3 rounded-xl border text-left text-xs font-medium transition-all cursor-pointer flex items-center justify-between ${timeSlot === slot
                               ? 'border-sky-500 bg-sky-50 text-sky-900 font-bold ring-1 ring-sky-500'
                               : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                          }`}
+                            }`}
                         >
                           <div className="flex items-center gap-2">
                             <Clock className="w-3.5 h-3.5 text-sky-600" />
@@ -461,7 +459,7 @@ export const DoctorBookingModal: React.FC<DoctorBookingModalProps> = ({
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. Bargarh"
+                        placeholder="e.g. Padamour"
                         value={formData.city}
                         onChange={e => setFormData({ ...formData, city: e.target.value })}
                         className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-sky-500 shadow-2xs"
