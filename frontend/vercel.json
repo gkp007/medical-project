@@ -1,9 +1,16 @@
 {
   "rewrites": [
     {
+      "source": "/api/v1/:path*",
+      "destination": "https://medicalproject-backend.onrender.com/api/v1/:path*"
+    },
+    {
+      "source": "/health",
+      "destination": "https://medicalproject-backend.onrender.com/health"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
 }
-
