@@ -22,9 +22,8 @@ import {
   Edit2,
   Plus,
   Loader2,
-  Cpu,
 } from 'lucide-react';
-import { pathologyApi, analyzerApi } from '../../services/api';
+import { pathologyApi } from '../../services/api';
 
 export interface EnterResultsPageProps {
   onBack: () => void;
@@ -230,8 +229,6 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
   const [interpretationTemplates, setInterpretationTemplates] = useState<any[]>([]);
   const [isLoadingInterpretations, setIsLoadingInterpretations] = useState(false);
 
-  // Machine Analyzer Integration State
-  const [analyzerPending, setAnalyzerPending] = useState<any>(null);
 
   // Load live case metadata and parameters from backend
   useEffect(() => {
@@ -372,11 +369,6 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
           setParams(getFallbackParamsForCase(caseId, regNo));
         }
 
-        // Check if automated analyzer data is available for this case/specimen
-        const analyzerRes = await analyzerApi.getPendingResultsForCase(caseId);
-        if (analyzerRes.success && analyzerRes.data?.hasResults) {
-          setAnalyzerPending(analyzerRes.data);
-        }
       } catch (err) {
         console.error('Failed to load parameters from backend:', err);
         setParams(getFallbackParamsForCase(caseId, regNo));
@@ -385,34 +377,6 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
 
     loadCaseParams();
   }, [caseId]);
-
-  const handleApplyAnalyzerResults = () => {
-    if (!analyzerPending) return;
-    const transmission = analyzerPending.transmissions?.[0];
-    const incomingResults =
-      transmission?.results || analyzerPending.currentResult?.parameterValues || [];
-    if (!incomingResults.length) return;
-
-    setParams((prev) =>
-      prev.map((param) => {
-        const matched = incomingResults.find(
-          (r: any) =>
-            r.parameterName?.toLowerCase() === param.name.toLowerCase() ||
-            r.code?.toLowerCase() === param.name.toLowerCase() ||
-            param.name.toLowerCase().includes(r.code?.toLowerCase() || '') ||
-            (param.name.toLowerCase().includes('hemoglobin') && r.code === 'HGB') ||
-            (param.name.toLowerCase().includes('leukocyte') && r.code === 'WBC') ||
-            (param.name.toLowerCase().includes('platelet') && r.code === 'PLT') ||
-            (param.name.toLowerCase().includes('rbc') && r.code === 'RBC')
-        );
-        if (matched && matched.value) {
-          return { ...param, value: String(matched.value) };
-        }
-        return param;
-      })
-    );
-    showToast(`Observations loaded from ${transmission?.analyzerName || 'Analyzer Machine'}`);
-  };
 
   // Left Sidebar Drawer State
   const [leftTab, setLeftTab] = useState<'patient' | 'doctor' | 'history' | 'audit' | null>(null);
@@ -905,41 +869,6 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
               </label>
             </div>
 
-            {/* Analyzer Ingestion Banner if data available */}
-            {analyzerPending && (
-              <div
-                style={{
-                  backgroundColor: '#eff6ff',
-                  border: '1.5px solid #93c5fd',
-                  borderRadius: '8px',
-                  padding: '12px 16px',
-                  marginBottom: '14px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Cpu size={20} color="#2563eb" />
-                  <div>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e40af' }}>
-                      LIS Machine Data Available: {analyzerPending.transmissions?.[0]?.analyzerName || 'Mindray BC-5000'}
-                    </div>
-                    <div style={{ fontSize: '11px', color: '#3b82f6' }}>
-                      Specimen Barcode: <strong>{analyzerPending.transmissions?.[0]?.sampleBarcode || regNo}</strong> • {analyzerPending.transmissions?.[0]?.results?.length || 0} observations ready
-                    </div>
-                  </div>
-                </div>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={handleApplyAnalyzerResults}
-                  style={{ backgroundColor: '#2563eb', fontSize: '12px' }}
-                >
-                  Auto-Fill Machine Values
-                </Button>
-              </div>
-            )}
 
             {testGroups.map((group) => {
               const printSettings = getTestPrintSettings(group.id);

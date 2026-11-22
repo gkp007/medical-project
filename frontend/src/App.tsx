@@ -44,7 +44,6 @@ import { LabTestsLibraryPage } from './pages/manage/LabTestsLibraryPage';
 import { LabTestViewPage } from './pages/lab/LabTestViewPage';
 import { LabTestEditPage } from './pages/lab/LabTestEditPage';
 import { TestCountsPage } from './pages/lab/TestCountsPage';
-import { AnalyzersPage } from './pages/lab/AnalyzersPage';
 
 // USG Pages
 import { USGWorklistPage } from './pages/lab/USGWorklistPage';
@@ -108,7 +107,7 @@ const pathToScreen: Record<string, string> = {
   '/lab/interpretations': 'interpretations',
   '/lab/interpretations/library': 'interpretations_library',
   '/lab/test-counts': 'test_counts',
-  '/lab/analyzers': 'analyzers',
+  '/lab/analyzers': 'today_reports',
   '/usg/today': 'usg_today',
   '/usg/search': 'usg_reports',
   '/usg/templates': 'usg_templates',
@@ -159,7 +158,6 @@ const screenToPath: Record<string, string> = {
   interpretations: '/lab/interpretations',
   interpretations_library: '/lab/interpretations/library',
   test_counts: '/lab/test-counts',
-  analyzers: '/lab/analyzers',
   usg_today: '/usg/today',
   usg_reports: '/usg/search',
   usg_templates: '/usg/templates',
@@ -617,9 +615,6 @@ export function App() {
 
       case 'test_counts':
         return <TestCountsPage />;
-
-      case 'analyzers':
-        return <AnalyzersPage />;
 
       // 5. USG GROUP
       case 'usg_today':

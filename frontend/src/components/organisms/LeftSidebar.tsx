@@ -55,7 +55,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ activeScreen, onNaviga
       setOpenSections((prev) => ({ ...prev, business: true }));
     } else if (['cases_ledger', 'outsource', 'ct_scan', 'patients', 'transactions', 'doctors', 'agents'].includes(activeScreen)) {
       setOpenSections((prev) => ({ ...prev, cases: true }));
-    } else if (['today_reports', 'search_reports', 'packages', 'test_panels', 'test_categories', 'test_master', 'interpretations', 'interpretations_library', 'test_counts', 'analyzers'].includes(activeScreen)) {
+    } else if (['today_reports', 'search_reports', 'packages', 'test_panels', 'test_categories', 'test_master', 'ratelist', 'interpretations', 'interpretations_library', 'test_counts'].includes(activeScreen)) {
       setOpenSections((prev) => ({ ...prev, lab: true }));
     } else if (['usg_today', 'usg_reports', 'usg_templates', 'usg_signatures'].includes(activeScreen)) {
       setOpenSections((prev) => ({ ...prev, usg: true }));
@@ -335,7 +335,6 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ activeScreen, onNaviga
               { id: 'interpretations', label: 'Interpretations', icon: <BookOpen size={16} /> },
               { id: 'interpretations_library', label: 'Interpretations library', badge: 'BETA', icon: <BookOpen size={16} /> },
               { id: 'test_counts', label: 'Test counts', icon: <PieChart size={16} /> },
-              { id: 'analyzers', label: 'Analyzer interfacing', icon: <Cpu size={16} /> },
             ].map((sub: any) => {
               const isActive = activeScreen === sub.id;
               return (
