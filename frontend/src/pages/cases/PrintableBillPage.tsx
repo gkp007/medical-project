@@ -49,6 +49,7 @@ export interface PrintableBillPageProps {
   onBack: () => void;
   onNavigateModifyBill?: () => void;
   onNavigateEnterResults?: () => void;
+  onNavigateViewLabReport?: () => void;
   caseId?: string;
 }
 
@@ -56,6 +57,7 @@ export const PrintableBillPage: React.FC<PrintableBillPageProps> = ({
   onBack,
   onNavigateModifyBill,
   onNavigateEnterResults,
+  onNavigateViewLabReport,
   caseId,
 }) => {
   // Subview State: 'bill' | 'update_patient' | 'edit_referrer' | 'patient_profile'
@@ -125,6 +127,7 @@ export const PrintableBillPage: React.FC<PrintableBillPageProps> = ({
   });
 
   const [billNumber, setBillNumber] = useState('3391');
+  const [caseModality, setCaseModality] = useState('LAB');
   const [billDate, setBillDate] = useState('28/10/2026');
   const [billItems, setBillItems] = useState<{ id: string; name: string; rate: number }[]>([
     { id: '1', name: 'Complete Blood Count (CBC)', rate: 200 }
@@ -137,16 +140,19 @@ export const PrintableBillPage: React.FC<PrintableBillPageProps> = ({
     due: 0
   });
 
+  const [activeCaseId, setActiveCaseId] = useState<string>(() => caseId || localStorage.getItem('labsmart_active_case_id') || '');
+
   useEffect(() => {
-    const activeCaseId = caseId || localStorage.getItem('labsmart_active_case_id');
-    if (!activeCaseId) return;
+    const targetCaseId = activeCaseId || caseId || localStorage.getItem('labsmart_active_case_id');
+    if (!targetCaseId) return;
 
     const loadCase = async () => {
       try {
-        const res = await casesApi.getCaseById(activeCaseId);
+        const res = await casesApi.getCaseById(targetCaseId);
         if (res.success && res.data) {
           const c = res.data;
           setBillNumber(c.billNumber || c.dailyCode || '1001');
+          setCaseModality((c.modality || 'LAB').toUpperCase());
           setBillDate(new Date(c.createdAt).toLocaleDateString());
           
           if (c.patient) {
@@ -740,7 +746,7 @@ export const PrintableBillPage: React.FC<PrintableBillPageProps> = ({
 
           {/* Bottom Action Toolbar (Matches user's screenshot) */}
           <div className="no-print" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '14px' }}>
-            {/* Row 1: Print split button, Modify, Enter results */}
+            {/* Row 1: Print split button, Modify, View report, Enter results */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
               {/* Blue Split Print Button */}
               <div style={{ position: 'relative', display: 'inline-flex' }}>
@@ -932,6 +938,38 @@ export const PrintableBillPage: React.FC<PrintableBillPageProps> = ({
               >
                 <Edit2 size={15} color="#2563eb" />
                 <span>Modify</span>
+              </button>
+
+              {/* View Lab Report Button (Always accessible) */}
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.setItem('labsmart_report_return_to', 'printable_bill');
+                  localStorage.setItem('labsmart_active_case_id', activeCaseId);
+                  localStorage.setItem('labsmart_active_bill_number', billNumber);
+                  if (onNavigateViewLabReport) {
+                    onNavigateViewLabReport();
+                  } else {
+                    showToast('Opening lab report...');
+                  }
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 16px',
+                  backgroundColor: '#ffffff',
+                  color: '#2563eb',
+                  border: '1px solid #93c5fd',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                }}
+              >
+                <Eye size={15} color="#2563eb" />
+                <span>View lab report</span>
               </button>
 
               {/* Enter Results Button */}
@@ -1618,8 +1656,40 @@ export const PrintableBillPage: React.FC<PrintableBillPageProps> = ({
                   </span>
                 </div>
 
-                <div style={{ textAlign: 'center', padding: '16px 8px', color: '#64748b', fontSize: '12px' }}>
-                  <p style={{ margin: '0 0 12px 0', lineHeight: '1.5' }}>
+                <div style={{ textAlign: 'center', padding: '12px 8px', color: '#64748b', fontSize: '12px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      localStorage.setItem('labsmart_report_return_to', 'printable_bill');
+                      localStorage.setItem('labsmart_active_case_id', activeCaseId);
+                      localStorage.setItem('labsmart_active_bill_number', billNumber);
+                      if (onNavigateViewLabReport) {
+                        onNavigateViewLabReport();
+                      } else {
+                        showToast('Opening lab report...');
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      backgroundColor: '#2563eb',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '8px 14px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      marginBottom: '10px'
+                    }}
+                  >
+                    <Eye size={14} />
+                    <span>View current report</span>
+                  </button>
+                  <p style={{ margin: '0 0 10px 0', lineHeight: '1.4', fontSize: '11px', color: '#94a3b8' }}>
                     To view previous reports upgrade your plan to premium.
                   </p>
                   <button
@@ -1630,8 +1700,8 @@ export const PrintableBillPage: React.FC<PrintableBillPageProps> = ({
                       color: '#334155',
                       border: '1px solid #cbd5e1',
                       borderRadius: '6px',
-                      padding: '6px 14px',
-                      fontSize: '12px',
+                      padding: '5px 12px',
+                      fontSize: '11px',
                       fontWeight: 600,
                       cursor: 'pointer',
                     }}

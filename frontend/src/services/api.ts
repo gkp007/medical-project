@@ -243,6 +243,23 @@ export const pathologyApi = {
     return request<any>(`/pathology/interpretations${params ? `?${params}` : ''}`);
   },
 
+  createInterpretation: (data: any) =>
+    request<any>('/pathology/interpretations', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateInterpretation: (id: string, data: any) =>
+    request<any>(`/pathology/interpretations/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deleteInterpretation: (id: string) =>
+    request<any>(`/pathology/interpretations/${id}`, {
+      method: 'DELETE',
+    }),
+
   getTestCounts: (query: any = {}) => {
     const params = new URLSearchParams(query).toString();
     return request<any>(`/pathology/test-counts${params ? `?${params}` : ''}`);
@@ -412,8 +429,27 @@ export const mastersApi = {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
+  linkRatelist: (testId: string, ratelist: string) =>
+    request<any>(`/masters/tests/${testId}/link-ratelist`, {
+      method: 'POST',
+      body: JSON.stringify({ ratelist }),
+    }),
   listPackages: () => request<any>('/masters/packages'),
   listPanels: () => request<any>('/masters/panels'),
+  createPanel: (data: any) =>
+    request<any>('/masters/panels', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updatePanel: (id: string, data: any) =>
+    request<any>(`/masters/panels/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  deletePanel: (id: string) =>
+    request<any>(`/masters/panels/${id}`, {
+      method: 'DELETE',
+    }),
   listCategories: () => request<any>('/masters/categories'),
   listAgents: () => request<any>('/masters/agents'),
 };

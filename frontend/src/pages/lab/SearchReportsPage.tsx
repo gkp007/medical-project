@@ -28,8 +28,8 @@ export interface HistoricalReportItem {
 }
 
 interface SearchReportsPageProps {
-  onNavigateViewReport?: () => void;
-  onNavigateEnterResults?: () => void;
+  onNavigateViewReport?: (caseId?: string, regNo?: string) => void;
+  onNavigateEnterResults?: (caseId?: string, regNo?: string) => void;
 }
 
 export const SearchReportsPage: React.FC<SearchReportsPageProps> = ({
@@ -51,10 +51,10 @@ export const SearchReportsPage: React.FC<SearchReportsPageProps> = ({
   const [selectedTest, setSelectedTest] = useState('');
   const [collectionCentre, setCollectionCentre] = useState('');
 
-  // Sample Reports Data
+  // Sample Reports Data with real backend integrated IDs
   const [reports] = useState<HistoricalReportItem[]>([
     {
-      id: '30583846',
+      id: 'case-1001',
       regNo: '1001',
       dailyCode: 'L1',
       dateTime: '18/10/2026 07:26 PM',
@@ -69,7 +69,7 @@ export const SearchReportsPage: React.FC<SearchReportsPageProps> = ({
       uhid: '35375569',
     },
     {
-      id: '30583840',
+      id: 'case-1000',
       regNo: '1000',
       dailyCode: 'L1',
       dateTime: '17/10/2026 05:14 PM',
@@ -84,7 +84,7 @@ export const SearchReportsPage: React.FC<SearchReportsPageProps> = ({
       uhid: '35375560',
     },
     {
-      id: '30583835',
+      id: 'case-995',
       regNo: '995',
       dailyCode: 'L2',
       dateTime: '16/10/2026 11:30 AM',
@@ -99,7 +99,7 @@ export const SearchReportsPage: React.FC<SearchReportsPageProps> = ({
       uhid: '35375545',
     },
     {
-      id: '30583820',
+      id: 'case-988',
       regNo: '988',
       dailyCode: 'L1',
       dateTime: '15/10/2026 03:45 PM',
@@ -112,6 +112,36 @@ export const SearchReportsPage: React.FC<SearchReportsPageProps> = ({
       collectionCentre: 'Main',
       status: 'Final',
       uhid: '35375530',
+    },
+    {
+      id: 'case-3660',
+      regNo: '3660',
+      dailyCode: 'L1',
+      dateTime: '22/11/2026 09:30 AM',
+      patientName: 'Gouri Kumbhar',
+      ageGender: '39 YRS/F',
+      phone: '9866778899',
+      referredBy: 'Dr. SUBHENDU KUMAR MEHER ((o&g))',
+      referredDegree: '',
+      tests: ['Complete Blood Count (CBC)'],
+      collectionCentre: 'Main',
+      status: 'Final',
+      uhid: '35373660',
+    },
+    {
+      id: 'case-3656',
+      regNo: '3656',
+      dailyCode: 'L8',
+      dateTime: '21/11/2026 10:15 AM',
+      patientName: 'Mrs. Khiramati Patel',
+      ageGender: '28 YRS/F',
+      phone: '9855667788',
+      referredBy: 'Dr. Drx. Pramod Ku.Pradhani (Pharmacist)',
+      referredDegree: '',
+      tests: ['Urine Routine Examination'],
+      collectionCentre: 'Main',
+      status: 'Signed off',
+      uhid: '35373656',
     },
   ]);
 
@@ -618,7 +648,12 @@ export const SearchReportsPage: React.FC<SearchReportsPageProps> = ({
                         {isSigned ? (
                           <button
                             type="button"
-                            onClick={onNavigateViewReport}
+                            onClick={() => {
+                              localStorage.setItem('labsmart_active_case_id', r.id);
+                              localStorage.setItem('labsmart_active_bill_number', r.regNo);
+                              localStorage.setItem('labsmart_report_return_to', 'search_reports');
+                              onNavigateViewReport?.(r.id, r.regNo);
+                            }}
                             className="btn btn-secondary"
                             style={{ padding: '4px 10px', fontSize: '12px' }}
                           >
@@ -627,7 +662,12 @@ export const SearchReportsPage: React.FC<SearchReportsPageProps> = ({
                         ) : (
                           <button
                             type="button"
-                            onClick={onNavigateEnterResults}
+                            onClick={() => {
+                              localStorage.setItem('labsmart_active_case_id', r.id);
+                              localStorage.setItem('labsmart_active_bill_number', r.regNo);
+                              localStorage.setItem('labsmart_report_return_to', 'search_reports');
+                              onNavigateEnterResults?.(r.id, r.regNo);
+                            }}
                             className="btn btn-primary"
                             style={{ padding: '4px 10px', fontSize: '12px' }}
                           >
@@ -678,7 +718,10 @@ export const SearchReportsPage: React.FC<SearchReportsPageProps> = ({
                                 }}
                                 onClick={() => {
                                   setActiveMenuId(null);
-                                  onNavigateEnterResults?.();
+                                  localStorage.setItem('labsmart_active_case_id', r.id);
+                                  localStorage.setItem('labsmart_active_bill_number', r.regNo);
+                                  localStorage.setItem('labsmart_report_return_to', 'search_reports');
+                                  onNavigateEnterResults?.(r.id, r.regNo);
                                 }}
                               >
                                 Edit / Results
@@ -696,7 +739,10 @@ export const SearchReportsPage: React.FC<SearchReportsPageProps> = ({
                                 }}
                                 onClick={() => {
                                   setActiveMenuId(null);
-                                  onNavigateViewReport?.();
+                                  localStorage.setItem('labsmart_active_case_id', r.id);
+                                  localStorage.setItem('labsmart_active_bill_number', r.regNo);
+                                  localStorage.setItem('labsmart_report_return_to', 'search_reports');
+                                  onNavigateViewReport?.(r.id, r.regNo);
                                 }}
                               >
                                 Print PDF

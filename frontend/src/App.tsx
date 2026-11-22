@@ -40,6 +40,9 @@ import { TestMasterPage } from './pages/manage/TestMasterPage';
 import { RatelistPage } from './pages/manage/RatelistPage';
 import { InterpretationsPage } from './pages/lab/InterpretationsPage';
 import { InterpretationsLibraryPage } from './pages/lab/InterpretationsLibraryPage';
+import { LabTestsLibraryPage } from './pages/manage/LabTestsLibraryPage';
+import { LabTestViewPage } from './pages/lab/LabTestViewPage';
+import { LabTestEditPage } from './pages/lab/LabTestEditPage';
 import { TestCountsPage } from './pages/lab/TestCountsPage';
 import { AnalyzersPage } from './pages/lab/AnalyzersPage';
 
@@ -98,6 +101,8 @@ const pathToScreen: Record<string, string> = {
   '/manage/panels': 'test_panels',
   '/manage/categories': 'test_categories',
   '/manage/tests': 'test_master',
+  '/manage/tests/library': 'lab_tests_library',
+  '/lab_tests_library': 'lab_tests_library',
   '/manage/ratelist': 'ratelist',
   '/setup/ratelist': 'ratelist',
   '/lab/interpretations': 'interpretations',
@@ -147,6 +152,9 @@ const screenToPath: Record<string, string> = {
   test_panels: '/manage/panels',
   test_categories: '/manage/categories',
   test_master: '/manage/tests',
+  lab_tests_library: '/lab_tests_library',
+  view_lab_test: '/lab_tests',
+  edit_lab_test: '/lab_tests/edit',
   ratelist: '/manage/ratelist',
   interpretations: '/lab/interpretations',
   interpretations_library: '/lab/interpretations/library',
@@ -169,24 +177,109 @@ const screenToPath: Record<string, string> = {
   settings: '/settings',
 };
 
+// Path mapping helper for exact and dynamic LIS routes
+const resolvePathToScreen = (rawPath: string): { screen: string; caseId?: string } => {
+  const path = rawPath.replace(/\/$/, '') || '/';
+
+  // Match Labsmart interpretations routes: /:orgId/interpretations_library or /interpretations_library
+  if (path.match(/(?:\/\d+)?\/interpretations_library/i)) {
+    return { screen: 'interpretations_library' };
+  }
+  if (path.match(/(?:\/\d+)?\/interpretations/i)) {
+    return { screen: 'interpretations' };
+  }
+
+  // Match Labsmart test panels routes: /:orgId/lab_test_panels or /lab_test_panels
+  if (path.match(/(?:\/\d+)?\/lab_test_panels$/i)) {
+    return { screen: 'test_panels' };
+  }
+
+  // Match Labsmart test library routes: /:orgId/lab_tests_library or /lab_tests_library
+  if (path.match(/(?:\/\d+)?\/lab_tests_library/i)) {
+    return { screen: 'lab_tests_library' };
+  }
+  // Match Labsmart test routes: /:orgId/lab_tests or /lab_tests
+  if (path.match(/(?:\/\d+)?\/lab_tests$/i)) {
+    return { screen: 'test_master' };
+  }
+
+  // Match Labsmart test routes: /:orgId/lab_tests/:id/edit or /lab_tests/:id/edit
+  const testEditMatch = path.match(/(?:\/\d+)?\/lab_tests\/([^/]+)\/edit/i);
+  if (testEditMatch) {
+    if (testEditMatch[1]) {
+      localStorage.setItem('labsmart_active_test_id', testEditMatch[1]);
+    }
+    return { screen: 'edit_lab_test' };
+  }
+  // Match Labsmart test routes: /:orgId/lab_tests/:id or /lab_tests/:id
+  const testViewMatch = path.match(/(?:\/\d+)?\/lab_tests\/([^/]+)/i);
+  if (testViewMatch) {
+    if (testViewMatch[1]) {
+      localStorage.setItem('labsmart_active_test_id', testViewMatch[1]);
+    }
+    return { screen: 'view_lab_test' };
+  }
+
+  // 1. Match Labsmart v2 report routes:
+  // /lab_reports/:id/v2 or /:orgId/lab_reports/:id/v2 or /lab_reports/:id or /:orgId/lab_reports/:id
+  const reportMatch = path.match(/(?:\/\d+)?\/lab_reports\/([^/]+)(?:\/v2)?/i);
+  if (reportMatch) {
+    const reportCaseId = reportMatch[1];
+    if (reportCaseId) {
+      localStorage.setItem('labsmart_active_case_id', reportCaseId);
+    }
+    return { screen: 'report_viewer', caseId: reportCaseId };
+  }
+
+  // 2. Match exact routes
+  const matched = pathToScreen[path];
+  if (matched) return { screen: matched };
+
+  return { screen: 'landing' };
+};
+
 export function App() {
   const [activeScreen, setActiveScreenState] = useState<string>(() => {
-    const path = window.location.pathname.replace(/\/$/, '') || '/';
-    return pathToScreen[path] || 'landing';
+    const { screen } = resolvePathToScreen(window.location.pathname);
+    return screen;
   });
+
+  const [activeCaseId, setActiveCaseId] = useState<string>(() => localStorage.getItem('labsmart_active_case_id') || 'case-995');
 
   const setActiveScreen = (screen: string) => {
     setActiveScreenState(screen);
-    const targetPath = screenToPath[screen] || '/';
+    const activeTestId = localStorage.getItem('labsmart_active_test_id') || '6228737';
+    let targetPath = screenToPath[screen] || '/';
+    if (screen === 'view_lab_test') {
+      targetPath = `/37749971/lab_tests/${activeTestId}`;
+    } else if (screen === 'edit_lab_test') {
+      targetPath = `/37749971/lab_tests/${activeTestId}/edit`;
+    }
     if (window.location.pathname !== targetPath) {
       window.history.pushState({}, '', targetPath);
     }
   };
 
+  const handleReportBack = () => {
+    const returnTo = localStorage.getItem('labsmart_report_return_to');
+    localStorage.removeItem('labsmart_report_return_to');
+    if (returnTo === 'printable_bill') {
+      setActiveScreen('printable_bill');
+    } else if (returnTo === 'cases_ledger') {
+      setActiveScreen('cases_ledger');
+    } else if (returnTo === 'today_reports') {
+      setActiveScreen('today_reports');
+    } else if (returnTo === 'search_reports') {
+      setActiveScreen('search_reports');
+    } else {
+      setActiveScreen('search_reports');
+    }
+  };
+
   useEffect(() => {
     const handlePopState = () => {
-      const path = window.location.pathname.replace(/\/$/, '') || '/';
-      setActiveScreenState(pathToScreen[path] || 'landing');
+      const { screen } = resolvePathToScreen(window.location.pathname);
+      setActiveScreenState(screen);
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -419,8 +512,24 @@ export function App() {
       case 'today_reports':
         return (
           <TodayReportsPage
-            onNavigateEnterResults={() => setActiveScreen('enter_results')}
-            onNavigateViewReport={() => setActiveScreen('report_viewer')}
+            onNavigateEnterResults={(cId?: string, reg?: string) => {
+              const targetId = cId || localStorage.getItem('labsmart_active_case_id') || 'case-995';
+              const targetReg = reg || localStorage.getItem('labsmart_active_bill_number') || '995';
+              setActiveCaseId(targetId);
+              localStorage.setItem('labsmart_active_case_id', targetId);
+              if (targetReg) localStorage.setItem('labsmart_active_bill_number', targetReg);
+              localStorage.setItem('labsmart_report_return_to', 'today_reports');
+              setActiveScreen('enter_results');
+            }}
+            onNavigateViewReport={(cId?: string, reg?: string) => {
+              const targetId = cId || localStorage.getItem('labsmart_active_case_id') || 'case-995';
+              const targetReg = reg || localStorage.getItem('labsmart_active_bill_number') || '995';
+              setActiveCaseId(targetId);
+              localStorage.setItem('labsmart_active_case_id', targetId);
+              if (targetReg) localStorage.setItem('labsmart_active_bill_number', targetReg);
+              localStorage.setItem('labsmart_report_return_to', 'today_reports');
+              setActiveScreen('report_viewer');
+            }}
             onNavigateNewBill={() => setActiveScreen('new_bill')}
             onNavigateSearchReports={() => setActiveScreen('search_reports')}
             onNavigateTestCounts={() => setActiveScreen('test_counts')}
@@ -430,8 +539,24 @@ export function App() {
       case 'search_reports':
         return (
           <SearchReportsPage
-            onNavigateViewReport={() => setActiveScreen('report_viewer')}
-            onNavigateEnterResults={() => setActiveScreen('enter_results')}
+            onNavigateViewReport={(cId?: string, reg?: string) => {
+              if (cId) {
+                setActiveCaseId(cId);
+                localStorage.setItem('labsmart_active_case_id', cId);
+              }
+              if (reg) localStorage.setItem('labsmart_active_bill_number', reg);
+              localStorage.setItem('labsmart_report_return_to', 'search_reports');
+              setActiveScreen('report_viewer');
+            }}
+            onNavigateEnterResults={(cId?: string, reg?: string) => {
+              if (cId) {
+                setActiveCaseId(cId);
+                localStorage.setItem('labsmart_active_case_id', cId);
+              }
+              if (reg) localStorage.setItem('labsmart_active_bill_number', reg);
+              localStorage.setItem('labsmart_report_return_to', 'search_reports');
+              setActiveScreen('enter_results');
+            }}
           />
         );
 
@@ -445,7 +570,15 @@ export function App() {
         return <TestCategoriesPage />;
 
       case 'test_master':
-        return <TestMasterPage />;
+        return <TestMasterPage onNavigate={(screen) => setActiveScreen(screen)} />;
+
+      case 'lab_tests_library':
+        return (
+          <LabTestsLibraryPage
+            onNavigate={(screen) => setActiveScreen(screen)}
+            onBack={() => setActiveScreen('test_master')}
+          />
+        );
 
       case 'ratelist':
         return <RatelistPage />;
@@ -458,6 +591,27 @@ export function App() {
           <InterpretationsLibraryPage
             onNavigate={(screen) => setActiveScreen(screen)}
             onBack={() => setActiveScreen('interpretations')}
+          />
+        );
+
+      case 'view_lab_test':
+        return (
+          <LabTestViewPage
+            testId={localStorage.getItem('labsmart_active_test_id') || '6228737'}
+            onNavigate={(screen) => setActiveScreen(screen)}
+            onEdit={(id) => {
+              if (id) localStorage.setItem('labsmart_active_test_id', id);
+              setActiveScreen('edit_lab_test');
+            }}
+          />
+        );
+
+      case 'edit_lab_test':
+        return (
+          <LabTestEditPage
+            testId={localStorage.getItem('labsmart_active_test_id') || '6228737'}
+            onNavigate={(screen) => setActiveScreen(screen)}
+            onSaved={() => setActiveScreen('view_lab_test')}
           />
         );
 
@@ -513,6 +667,7 @@ export function App() {
             onBack={() => setActiveScreen('new_bill')}
             onNavigateModifyBill={() => setActiveScreen('new_bill')}
             onNavigateEnterResults={() => setActiveScreen('enter_results')}
+            onNavigateViewLabReport={() => setActiveScreen('report_viewer')}
           />
         );
 
@@ -530,13 +685,20 @@ export function App() {
       case 'enter_results':
         return (
           <EnterResultsPage
-            onBack={() => setActiveScreen('cases_ledger')}
+            caseId={activeCaseId}
+            onBack={handleReportBack}
             onViewReport={() => setActiveScreen('report_viewer')}
           />
         );
 
       case 'report_viewer':
-        return <ReportViewerPage onBack={() => setActiveScreen('enter_results')} />;
+        return (
+          <ReportViewerPage
+            caseId={activeCaseId}
+            onBack={handleReportBack}
+            onNavigateEditResults={() => setActiveScreen('enter_results')}
+          />
+        );
 
       default:
         return (

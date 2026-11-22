@@ -44,7 +44,8 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleToggleOption = (val: string) => {
+  const handleToggleOption = (e: React.MouseEvent, val: string) => {
+    e.stopPropagation();
     if (selectedValues.includes(val)) {
       onChange(selectedValues.filter((v) => v !== val));
     } else {
@@ -211,7 +212,7 @@ export const MultiSelectCombobox: React.FC<MultiSelectComboboxProps> = ({
                 return (
                   <div
                     key={opt.value}
-                    onClick={() => handleToggleOption(opt.value)}
+                    onClick={(e) => handleToggleOption(e, opt.value)}
                     style={{
                       padding: '8px 12px',
                       fontSize: '13px',

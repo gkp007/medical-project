@@ -333,19 +333,18 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ activeScreen, onNaviga
               { id: 'test_master', label: 'Test database', icon: <Database size={16} /> },
               { id: 'ratelist', label: 'Ratelist', icon: <DollarSign size={16} /> },
               { id: 'interpretations', label: 'Interpretations', icon: <BookOpen size={16} /> },
+              { id: 'interpretations_library', label: 'Interpretations library', badge: 'BETA', icon: <BookOpen size={16} /> },
               { id: 'test_counts', label: 'Test counts', icon: <PieChart size={16} /> },
               { id: 'analyzers', label: 'Analyzer interfacing', icon: <Cpu size={16} /> },
-            ].map((sub) => {
-              const isActive =
-                activeScreen === sub.id ||
-                (sub.id === 'interpretations' && activeScreen === 'interpretations_library');
+            ].map((sub: any) => {
+              const isActive = activeScreen === sub.id;
               return (
                 <div
                   key={sub.id}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '10px',
+                    justifyContent: 'space-between',
                     padding: '8px 10px',
                     borderRadius: '6px',
                     cursor: 'pointer',
@@ -356,8 +355,25 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ activeScreen, onNaviga
                   }}
                   onClick={() => onNavigate(sub.id)}
                 >
-                  <span style={{ color: isActive ? '#2563eb' : '#64748b' }}>{sub.icon}</span>
-                  <span>{sub.label}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ color: isActive ? '#2563eb' : '#64748b' }}>{sub.icon}</span>
+                    <span>{sub.label}</span>
+                  </div>
+                  {sub.badge && (
+                    <span
+                      style={{
+                        backgroundColor: '#fce7f3',
+                        color: '#db2777',
+                        fontSize: '9px',
+                        fontWeight: 700,
+                        padding: '1px 5px',
+                        borderRadius: '8px',
+                        letterSpacing: '0.04em',
+                      }}
+                    >
+                      {sub.badge}
+                    </span>
+                  )}
                 </div>
               );
             })}

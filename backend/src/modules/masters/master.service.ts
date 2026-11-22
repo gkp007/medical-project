@@ -28,7 +28,7 @@ export class MasterService {
   }
 
   static async getTestById(id: string) {
-    const test = await prisma.investigation.findUnique({
+    let test = await prisma.investigation.findUnique({
       where: { id },
       include: {
         parameters: {
@@ -37,6 +37,24 @@ export class MasterService {
         }
       }
     });
+
+    if (!test) {
+      test = await prisma.investigation.findFirst({
+        where: {
+          OR: [
+            { code: id },
+            { name: { contains: id } }
+          ]
+        },
+        include: {
+          parameters: {
+            include: { ranges: true },
+            orderBy: { sortOrder: 'asc' }
+          }
+        }
+      });
+    }
+
     if (!test) throw new NotFoundError('Test investigation not found');
 
     const allPanels = await prisma.testPanel.findMany();
@@ -44,12 +62,33 @@ export class MasterService {
       .filter((p) => {
         try {
           const ids = JSON.parse(p.testIds || '[]');
-          return ids.includes(test.id) || ids.includes(test.code);
+          return ids.includes(test!.id) || ids.includes(test!.code);
         } catch {
           return false;
         }
       })
       .map((p) => ({ name: p.name, id: p.id }));
+
+    const allPackages = await prisma.healthPackage.findMany();
+    const ratelistsIncluded = allPackages
+      .filter((p) => {
+        try {
+          const ids = JSON.parse(p.testsIncluded || '[]');
+          return ids.includes(test!.id) || ids.includes(test!.code);
+        } catch {
+          return false;
+        }
+      })
+      .map((p, idx) => ({ sNo: idx + 1, id: p.id, name: p.name, code: p.code }));
+
+    const interp = await prisma.clinicalInterpretation.findFirst({
+      where: {
+        OR: [
+          { testCode: test.code },
+          { title: test.name }
+        ]
+      }
+    });
 
     const enrichedParameters = test.parameters.map((param) => ({
       ...param,
@@ -85,7 +124,9 @@ export class MasterService {
     return {
       ...test,
       parameters: enrichedParameters,
-      panelsIncluded
+      panelsIncluded,
+      ratelistsIncluded,
+      interpretation: interp ? interp.content : ''
     };
   }
 
@@ -178,13 +219,109 @@ export class MasterService {
   }
 
   static async updateTest(id: string, data: any) {
-    const test = await prisma.investigation.findUnique({ where: { id } });
+    let test = await prisma.investigation.findUnique({ where: { id } });
+    if (!test) {
+      test = await prisma.investigation.findFirst({ where: { code: id } });
+    }
     if (!test) throw new NotFoundError('Test investigation not found');
 
-    return prisma.investigation.update({
-      where: { id },
-      data
+    const updatePayload: any = {};
+    if (data.name !== undefined) updatePayload.name = data.name;
+    if (data.department !== undefined) updatePayload.department = data.department;
+    if (data.specimen !== undefined) updatePayload.specimen = data.specimen;
+    if (data.container !== undefined) updatePayload.container = data.container;
+    if (data.rate !== undefined) updatePayload.rate = Number(data.rate);
+    if (data.b2bRate !== undefined) updatePayload.b2bRate = data.b2bRate ? Number(data.b2bRate) : null;
+    if (data.tatHours !== undefined) updatePayload.tatHours = Number(data.tatHours);
+
+    if (Object.keys(updatePayload).length > 0) {
+      await prisma.investigation.update({
+        where: { id: test.id },
+        data: updatePayload
+      });
+    }
+
+    if (data.unit) {
+      const firstParam = await prisma.testParameter.findFirst({
+        where: { investigationId: test.id }
+      });
+      if (firstParam) {
+        await prisma.testParameter.update({
+          where: { id: firstParam.id },
+          data: { unit: data.unit }
+        });
+      }
+    }
+
+    if (data.interpretation) {
+      const existingInterp = await prisma.clinicalInterpretation.findFirst({
+        where: {
+          OR: [
+            { testCode: test.code },
+            { title: test.name }
+          ]
+        }
+      });
+      if (existingInterp) {
+        await prisma.clinicalInterpretation.update({
+          where: { id: existingInterp.id },
+          data: { content: data.interpretation, title: data.name || test.name }
+        });
+      } else {
+        await prisma.clinicalInterpretation.create({
+          data: {
+            title: data.name || test.name,
+            testCode: test.code,
+            department: data.department || test.department,
+            content: data.interpretation
+          }
+        });
+      }
+    }
+
+    return this.getTestById(test.id);
+  }
+
+  static async linkRatelist(testId: string, ratelistNameOrId: string) {
+    let test = await prisma.investigation.findUnique({ where: { id: testId } });
+    if (!test) test = await prisma.investigation.findFirst({ where: { code: testId } });
+    if (!test) throw new NotFoundError('Test investigation not found');
+
+    let pkg = await prisma.healthPackage.findFirst({
+      where: {
+        OR: [
+          { id: ratelistNameOrId },
+          { name: ratelistNameOrId }
+        ]
+      }
     });
+
+    if (!pkg) {
+      pkg = await prisma.healthPackage.create({
+        data: {
+          code: `PKG-${Date.now()}`,
+          name: ratelistNameOrId,
+          testsIncluded: JSON.stringify([test.code]),
+          retailPrice: 1500,
+          packagePrice: 1200,
+          discountPct: 20
+        }
+      });
+    } else {
+      let currentTests: string[] = [];
+      try {
+        currentTests = JSON.parse(pkg.testsIncluded || '[]');
+      } catch {}
+      if (!currentTests.includes(test.code) && !currentTests.includes(test.id)) {
+        currentTests.push(test.code);
+        await prisma.healthPackage.update({
+          where: { id: pkg.id },
+          data: { testsIncluded: JSON.stringify(currentTests) }
+        });
+      }
+    }
+
+    return this.getTestById(test.id);
   }
 
   static async deleteTest(id: string) {

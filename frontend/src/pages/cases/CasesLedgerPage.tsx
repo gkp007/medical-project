@@ -17,7 +17,8 @@ import {
   Calendar,
   Building,
   User,
-  FlaskConical
+  FlaskConical,
+  Eye
 } from 'lucide-react';
 import { AcceptDueModal } from '../../components/organisms/modals/AcceptDueModal';
 import { CancelBillModal } from '../../components/organisms/modals/CancelBillModal';
@@ -498,6 +499,18 @@ export const CasesLedgerPage: React.FC<CasesLedgerPageProps> = ({
                             View bill
                           </button>
 
+                          <button
+                            onClick={() => {
+                              localStorage.setItem('labsmart_active_case_id', c.id);
+                              localStorage.setItem('labsmart_active_bill_number', c.regNo);
+                              localStorage.setItem('labsmart_report_return_to', 'cases_ledger');
+                              onNavigateViewReport();
+                            }}
+                            style={{ background: 'none', border: 'none', color: '#16a34a', fontWeight: 600, cursor: 'pointer', fontSize: '13px' }}
+                          >
+                            Lab report
+                          </button>
+
                           {/* Meatball menu trigger */}
                           <button
                             onClick={() => setActiveMenuId(activeMenuId === c.id ? null : c.id)}
@@ -527,11 +540,24 @@ export const CasesLedgerPage: React.FC<CasesLedgerPageProps> = ({
                                 border: '1px solid #cbd5e1',
                                 borderRadius: '6px',
                                 boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                                minWidth: '150px',
+                                minWidth: '160px',
                                 padding: '4px 0',
                                 textAlign: 'left'
                               }}
                             >
+                              <button
+                                onClick={() => {
+                                  setActiveMenuId(null);
+                                  localStorage.setItem('labsmart_active_case_id', c.id);
+                                  localStorage.setItem('labsmart_active_bill_number', c.regNo);
+                                  localStorage.setItem('labsmart_report_return_to', 'cases_ledger');
+                                  onNavigateViewReport();
+                                }}
+                                style={{ width: '100%', padding: '8px 14px', border: 'none', background: 'none', textAlign: 'left', fontSize: '13px', cursor: 'pointer', color: '#16a34a', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}
+                              >
+                                <Eye size={13} />
+                                View Lab Report
+                              </button>
                               <button
                                 onClick={() => {
                                   setActiveMenuId(null);

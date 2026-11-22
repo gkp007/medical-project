@@ -36,7 +36,9 @@ import {
   CreditCard,
   UserCheck,
   Check,
-  BookOpen
+  BookOpen,
+  UserRound,
+  LayoutDashboard
 } from 'lucide-react';
 
 import {
@@ -665,8 +667,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </div>
             </nav>
 
-            {/* Action Buttons: Track & Pay, Book Appointment */}
+            {/* Account and booking actions */}
             <div className="hidden lg:flex items-center gap-2 xl:gap-2.5 shrink-0">
+              <button
+                onClick={() => {
+                  if (currentUser && onOpenDashboard) {
+                    onOpenDashboard();
+                  } else {
+                    onOpenLogin();
+                  }
+                }}
+                className="px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                title={currentUser ? 'Open your dashboard' : 'Log in or create an account'}
+              >
+                {currentUser ? <LayoutDashboard className="w-3.5 h-3.5" /> : <UserRound className="w-3.5 h-3.5" />}
+                <span>{currentUser ? 'Dashboard' : 'Login / Sign up'}</span>
+              </button>
+
               <button
                 onClick={() => setIsTrackBookingOpen(true)}
                 style={{ backgroundColor: 'rgba(236, 253, 245, 0.9)', borderColor: 'rgba(110, 231, 183, 0.8)', color: '#065f46' }}
@@ -713,6 +730,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         {isMobileMenuOpen && (
           <div className="lg:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-3 shadow-xl animate-in slide-in-from-top-4 duration-200">
             <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  if (currentUser && onOpenDashboard) {
+                    onOpenDashboard();
+                  } else {
+                    onOpenLogin();
+                  }
+                  setIsMobileMenuOpen(false);
+                }}
+                className="p-2.5 rounded-xl border border-sky-200 bg-sky-50 text-sky-800 text-xs font-bold flex items-center justify-center gap-1.5"
+              >
+                {currentUser ? <LayoutDashboard className="w-3.5 h-3.5" /> : <UserRound className="w-3.5 h-3.5" />}
+                <span>{currentUser ? 'Dashboard' : 'Login / Sign up'}</span>
+              </button>
               <button
                 onClick={() => {
                   setIsTrackBookingOpen(true);
@@ -1498,72 +1529,72 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         {/* =========================================================================
             5. STATS COUNTER BAR (Single-Line 4-Metric Grid)
             ========================================================================= */}
-        <section className="py-12 bg-white/40 backdrop-blur-md border-y border-white/60 my-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              <div className="text-center sm:text-left flex flex-col sm:flex-row items-center sm:items-start gap-3.5 p-4 rounded-2xl bg-white/60 backdrop-blur-md border border-white/80 shadow-xs hover:bg-white/80 transition-all duration-200">
-                <div className="w-12 h-12 rounded-xl bg-white/90 shadow-2xs border border-white/90 flex items-center justify-center shrink-0">
-                  <Users className="w-6 h-6 text-sky-600" />
+        <section className="py-8 sm:py-10 bg-white/40 backdrop-blur-md border-y border-white/60 my-6">
+          <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-4 gap-2 sm:gap-4 w-full">
+              <div className="text-center sm:text-left flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3 p-2.5 sm:p-3.5 rounded-xl bg-white/70 backdrop-blur-md border border-white/80 shadow-xs hover:bg-white/90 transition-all duration-200">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-white/90 shadow-2xs border border-white/90 flex items-center justify-center shrink-0">
+                  <Users className="w-4 h-4 sm:w-5 sm:h-5 text-sky-600" />
                 </div>
-                <div>
-                  <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight block">
+                <div className="min-w-0">
+                  <span className="text-base sm:text-2xl font-black text-slate-900 tracking-tight block">
                     90,000+
                   </span>
-                  <span className="text-xs font-bold text-slate-800 block mt-0.5">
+                  <span className="text-[10px] sm:text-xs font-bold text-slate-800 block mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
                     Patients Treated
                   </span>
-                  <span className="text-[11px] text-slate-500 block">
+                  <span className="text-[9px] sm:text-[10px] text-slate-500 block whitespace-nowrap overflow-hidden text-ellipsis">
                     With Trusted Clinical Care
                   </span>
                 </div>
               </div>
 
-              <div className="text-center sm:text-left flex flex-col sm:flex-row items-center sm:items-start gap-3.5 p-4 rounded-2xl bg-white/60 backdrop-blur-md border border-white/80 shadow-xs hover:bg-white/80 transition-all duration-200">
-                <div className="w-12 h-12 rounded-xl bg-white/90 shadow-2xs border border-white/90 flex items-center justify-center shrink-0">
-                  <Stethoscope className="w-6 h-6 text-teal-600" />
+              <div className="text-center sm:text-left flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3 p-2.5 sm:p-3.5 rounded-xl bg-white/70 backdrop-blur-md border border-white/80 shadow-xs hover:bg-white/90 transition-all duration-200">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-white/90 shadow-2xs border border-white/90 flex items-center justify-center shrink-0">
+                  <Stethoscope className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600" />
                 </div>
-                <div>
-                  <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight block">
+                <div className="min-w-0">
+                  <span className="text-base sm:text-2xl font-black text-slate-900 tracking-tight block">
                     10+
                   </span>
-                  <span className="text-xs font-bold text-slate-800 block mt-0.5">
+                  <span className="text-[10px] sm:text-xs font-bold text-slate-800 block mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
                     Specialist Doctors
                   </span>
-                  <span className="text-[11px] text-slate-500 block">
-                    Experienced Medical Consultants
+                  <span className="text-[9px] sm:text-[10px] text-slate-500 block whitespace-nowrap overflow-hidden text-ellipsis">
+                    Experienced Consultants
                   </span>
                 </div>
               </div>
 
-              <div className="text-center sm:text-left flex flex-col sm:flex-row items-center sm:items-start gap-3.5 p-4 rounded-2xl bg-white/60 backdrop-blur-md border border-white/80 shadow-xs hover:bg-white/80 transition-all duration-200">
-                <div className="w-12 h-12 rounded-xl bg-white/90 shadow-2xs border border-white/90 flex items-center justify-center shrink-0">
-                  <FlaskConical className="w-6 h-6 text-cyan-600" />
+              <div className="text-center sm:text-left flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3 p-2.5 sm:p-3.5 rounded-xl bg-white/70 backdrop-blur-md border border-white/80 shadow-xs hover:bg-white/90 transition-all duration-200">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-white/90 shadow-2xs border border-white/90 flex items-center justify-center shrink-0">
+                  <FlaskConical className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-600" />
                 </div>
-                <div>
-                  <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight block">
+                <div className="min-w-0">
+                  <span className="text-base sm:text-2xl font-black text-slate-900 tracking-tight block">
                     829+
                   </span>
-                  <span className="text-xs font-bold text-slate-800 block mt-0.5">
-                    Diagnostic Lab Tests
+                  <span className="text-[10px] sm:text-xs font-bold text-slate-800 block mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                    Diagnostic Tests
                   </span>
-                  <span className="text-[11px] text-slate-500 block">
-                    Automated Analyzers & Imaging
+                  <span className="text-[9px] sm:text-[10px] text-slate-500 block whitespace-nowrap overflow-hidden text-ellipsis">
+                    Automated Analyzers
                   </span>
                 </div>
               </div>
 
-              <div className="text-center sm:text-left flex flex-col sm:flex-row items-center sm:items-start gap-3.5 p-4 rounded-2xl bg-white/60 backdrop-blur-md border border-white/80 shadow-xs hover:bg-white/80 transition-all duration-200">
-                <div className="w-12 h-12 rounded-xl bg-white/90 shadow-2xs border border-white/90 flex items-center justify-center shrink-0">
-                  <Clock className="w-6 h-6 text-emerald-600" />
+              <div className="text-center sm:text-left flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3 p-2.5 sm:p-3.5 rounded-xl bg-white/70 backdrop-blur-md border border-white/80 shadow-xs hover:bg-white/90 transition-all duration-200">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-white/90 shadow-2xs border border-white/90 flex items-center justify-center shrink-0">
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
                 </div>
-                <div>
-                  <span className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight block">
+                <div className="min-w-0">
+                  <span className="text-base sm:text-2xl font-black text-slate-900 tracking-tight block">
                     24/7
                   </span>
-                  <span className="text-xs font-bold text-slate-800 block mt-0.5">
-                    Emergency Lab & Digital Access
+                  <span className="text-[10px] sm:text-xs font-bold text-slate-800 block mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                    Emergency Lab &amp; Access
                   </span>
-                  <span className="text-[11px] text-slate-500 block">
+                  <span className="text-[9px] sm:text-[10px] text-slate-500 block whitespace-nowrap overflow-hidden text-ellipsis">
                     Same-Day Report Delivery
                   </span>
                 </div>
@@ -1833,10 +1864,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="text-center mt-10">
               <button
                 onClick={() => handleOpenTestBooking()}
-                style={{ paddingLeft: '36px', paddingRight: '36px', paddingTop: '16px', paddingBottom: '16px' }}
-                className="px-10 py-4 bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm rounded-full shadow-lg shadow-teal-600/25 transition-all hover:scale-105 cursor-pointer inline-flex items-center justify-center gap-3 whitespace-nowrap"
+                className="px-8 sm:px-14 py-4 bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm sm:text-base rounded-full shadow-lg shadow-teal-600/25 transition-all hover:scale-105 cursor-pointer inline-flex items-center justify-center gap-3 whitespace-nowrap overflow-visible"
               >
-                <FlaskConical className="w-4 h-4 shrink-0" />
+                <FlaskConical className="w-5 h-5 shrink-0" />
                 <span className="tracking-wide">Explore All 829+ Diagnostic Tests &amp; Imaging</span>
               </button>
             </div>
@@ -1905,19 +1935,40 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       </span>
                     </div>
 
-                    {/* Parameter category list with green checkmarks */}
+                    {/* Detailed parameter checklist with green circular checkmarks */}
                     <div className="space-y-2.5 border-t border-white/10 pt-4 text-xs">
-                      {pkg.testsIncluded?.map((item, idx) => (
-                        <div key={idx} className="flex items-start gap-2 text-slate-300">
-                          <div className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-500/30">
-                            <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      {pkg.testsIncluded && pkg.testsIncluded.length > 0 ? (
+                        pkg.testsIncluded.map((item, idx) => (
+                          <div key={idx} className="flex items-start gap-2.5 text-slate-200">
+                            <div className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-500/40">
+                              <Check className="w-2.5 h-2.5 stroke-[3]" />
+                            </div>
+                            <span className="leading-snug">
+                              <strong className="text-white font-bold">{item.category}:</strong>{' '}
+                              <span className="text-slate-300">
+                                {Array.isArray(item.tests) ? item.tests.join(', ') : item.tests}
+                              </span>
+                            </span>
                           </div>
-                          <span className="line-clamp-1">
-                            <strong className="text-white">{item.category}:</strong>{' '}
-                            {Array.isArray(item.tests) ? item.tests.join(', ') : item.tests}
-                          </span>
-                        </div>
-                      ))}
+                        ))
+                      ) : (
+                        [
+                          'Complete Blood Count (CBC - 24 Vital Parameters)',
+                          'Fasting Blood Sugar (FBS) & Diabetes Screen',
+                          'Kidney Profile (Creatinine, Blood Urea, Uric Acid)',
+                          'Lipid Profile (Cholesterol, Triglycerides, HDL, LDL)',
+                          'Liver Screen (SGOT, SGPT, Bilirubin, Protein)',
+                          'Urine Routine & Microscopic Examination (15 Params)',
+                          'Complimentary Pathologist Summary Consultation'
+                        ].map((point, idx) => (
+                          <div key={idx} className="flex items-start gap-2.5 text-slate-200">
+                            <div className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-500/40">
+                              <Check className="w-2.5 h-2.5 stroke-[3]" />
+                            </div>
+                            <span className="leading-snug text-slate-300">{point}</span>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
 
@@ -2407,118 +2458,117 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-              {/* Left Column: 4 Contact Cards + Google Map underneath */}
-              <div className="lg:col-span-7 space-y-6 flex flex-col justify-between">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Card 1: Doctor OPD Booking */}
-                  <div className="p-4 rounded-2xl bg-white/65 backdrop-blur-md border border-white/80 flex items-start gap-3 shadow-xs">
-                    <div className="w-10 h-10 rounded-xl bg-sky-100/90 text-sky-700 flex items-center justify-center shrink-0">
-                      <Phone className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-bold uppercase text-slate-500">
-                        Doctor OPD Booking
-                      </span>
-                      <a
-                        href={`tel:${CLINIC_INFO.phonePrimary}`}
-                        className="text-sm font-bold text-slate-900 hover:text-sky-700 block mt-0.5"
-                      >
-                        {CLINIC_INFO.phonePrimary}
-                      </a>
-                      <span className="text-[11px] text-slate-500">{CLINIC_INFO.hoursOpd}</span>
-                    </div>
-                  </div>
-
-                  {/* Card 2: Laboratory & Histopathology */}
-                  <div className="p-4 rounded-2xl bg-white/65 backdrop-blur-md border border-white/80 flex items-start gap-3 shadow-xs">
-                    <div className="w-10 h-10 rounded-xl bg-teal-100/90 text-teal-700 flex items-center justify-center shrink-0">
-                      <FlaskConical className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-bold uppercase text-slate-500">
-                        Laboratory &amp; Histopathology
-                      </span>
-                      <a
-                        href={`tel:${CLINIC_INFO.phoneLab}`}
-                        className="text-sm font-bold text-slate-900 hover:text-teal-700 block mt-0.5"
-                      >
-                        {CLINIC_INFO.phoneLab}
-                      </a>
-                      <span className="text-[11px] text-slate-500">
-                        Histopath: {CLINIC_INFO.phoneHistopath}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Card 3: Official Email */}
-                  <div className="p-4 rounded-2xl bg-white/65 backdrop-blur-md border border-white/80 flex items-start gap-3 shadow-xs">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-100/90 text-emerald-700 flex items-center justify-center shrink-0">
-                      <Mail className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-bold uppercase text-slate-500">
-                        Official Email
-                      </span>
-                      <a
-                        href={`mailto:${CLINIC_INFO.email}`}
-                        className="text-sm font-bold text-slate-900 hover:text-emerald-700 block mt-0.5 truncate max-w-[200px]"
-                      >
-                        {CLINIC_INFO.email}
-                      </a>
-                      <span className="text-[11px] text-slate-500">
-                        Corporate &amp; Clinical Enquiries
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Card 4: Operational Hours */}
-                  <div className="p-4 rounded-2xl bg-white/65 backdrop-blur-md border border-white/80 flex items-start gap-3 shadow-xs">
-                    <div className="w-10 h-10 rounded-xl bg-amber-100/90 text-amber-700 flex items-center justify-center shrink-0">
-                      <Clock className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-bold uppercase text-slate-500">
-                        Operational Hours
-                      </span>
-                      <span className="text-sm font-bold text-slate-900 block mt-0.5">
-                        {CLINIC_INFO.hoursLab}
-                      </span>
-                      <span className="text-[11px] text-slate-500">
-                        Walk in &amp; Emergency Service
-                      </span>
-                    </div>
-                  </div>
+            {/* 4 Contact Info Cards at Top */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              {/* Card 1: Doctor OPD Booking */}
+              <div className="p-4 rounded-2xl bg-white/75 backdrop-blur-md border border-white/80 flex items-start gap-3 shadow-xs">
+                <div className="w-10 h-10 rounded-xl bg-sky-100/90 text-sky-700 flex items-center justify-center shrink-0">
+                  <Phone className="w-5 h-5" />
                 </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-slate-500">
+                    Doctor OPD Booking
+                  </span>
+                  <a
+                    href={`tel:${CLINIC_INFO.phonePrimary}`}
+                    className="text-sm font-bold text-slate-900 hover:text-sky-700 block mt-0.5"
+                  >
+                    {CLINIC_INFO.phonePrimary}
+                  </a>
+                  <span className="text-[11px] text-slate-500">{CLINIC_INFO.hoursOpd}</span>
+                </div>
+              </div>
 
-                {/* Google Map Container with Directions Overlay */}
-                <div className="rounded-2xl overflow-hidden border border-white/80 shadow-md relative h-64 sm:h-72 bg-slate-100/80">
-                  <iframe
-                    title={`${CLINIC_INFO.name} Location`}
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d118949.62312674913!2d83.5516089764516!3d21.332306786221775!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a213e4b09c5d003%3A0xe54e3895e63eb077!2sPadamour%2C%20Odisha!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
-                    className="w-full h-full border-0"
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                  />
-                  <div className="absolute bottom-3 left-3 right-3 bg-white/90 backdrop-blur-md p-3 rounded-xl shadow-lg border border-white/80 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-rose-600 shrink-0" />
-                      <p className="text-xs font-semibold text-slate-800 line-clamp-1">
-                        {CLINIC_INFO.addressLine1}, {CLINIC_INFO.city} - {CLINIC_INFO.pincode}
-                      </p>
-                    </div>
-                    <a
-                      href={`https://maps.google.com/?q=${encodeURIComponent(
-                        CLINIC_INFO.name + ' ' + CLINIC_INFO.city
-                      )}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs font-bold text-sky-700 hover:text-sky-900 flex items-center gap-1 shrink-0 bg-sky-50/90 px-2.5 py-1 rounded-md border border-sky-200/50 shadow-2xs"
-                    >
-                      <span>Directions</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
+              {/* Card 2: Laboratory & Histopathology */}
+              <div className="p-4 rounded-2xl bg-white/75 backdrop-blur-md border border-white/80 flex items-start gap-3 shadow-xs">
+                <div className="w-10 h-10 rounded-xl bg-teal-100/90 text-teal-700 flex items-center justify-center shrink-0">
+                  <FlaskConical className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-slate-500">
+                    Laboratory &amp; Histopathology
+                  </span>
+                  <a
+                    href={`tel:${CLINIC_INFO.phoneLab}`}
+                    className="text-sm font-bold text-slate-900 hover:text-teal-700 block mt-0.5"
+                  >
+                    {CLINIC_INFO.phoneLab}
+                  </a>
+                  <span className="text-[11px] text-slate-500">
+                    Histopath: {CLINIC_INFO.phoneHistopath}
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 3: Official Email */}
+              <div className="p-4 rounded-2xl bg-white/75 backdrop-blur-md border border-white/80 flex items-start gap-3 shadow-xs">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100/90 text-emerald-700 flex items-center justify-center shrink-0">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-slate-500">
+                    Official Email
+                  </span>
+                  <a
+                    href={`mailto:${CLINIC_INFO.email}`}
+                    className="text-sm font-bold text-slate-900 hover:text-emerald-700 block mt-0.5 truncate max-w-[200px]"
+                  >
+                    {CLINIC_INFO.email}
+                  </a>
+                  <span className="text-[11px] text-slate-500">
+                    Corporate &amp; Clinical Enquiries
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 4: Operational Hours */}
+              <div className="p-4 rounded-2xl bg-white/75 backdrop-blur-md border border-white/80 flex items-start gap-3 shadow-xs">
+                <div className="w-10 h-10 rounded-xl bg-amber-100/90 text-amber-700 flex items-center justify-center shrink-0">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-slate-500">
+                    Operational Hours
+                  </span>
+                  <span className="text-sm font-bold text-slate-900 block mt-0.5">
+                    {CLINIC_INFO.hoursLab}
+                  </span>
+                  <span className="text-[11px] text-slate-500">
+                    Walk in &amp; Emergency Service
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Side-by-Side: Map (Left 7) and Callback Enquiry Form (Right 5) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+              {/* Left Column: Full-Height Interactive Google Map */}
+              <div className="lg:col-span-7 rounded-3xl overflow-hidden border border-white/80 shadow-md relative h-80 sm:h-96 lg:h-auto min-h-[360px] bg-slate-100/80">
+                <iframe
+                  title={`${CLINIC_INFO.name} Location`}
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d118949.62312674913!2d83.5516089764516!3d21.332306786221775!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a213e4b09c5d003%3A0xe54e3895e63eb077!2sPadamour%2C%20Odisha!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
+                  className="w-full h-full border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+                <div className="absolute bottom-3 left-3 right-3 bg-white/95 backdrop-blur-md p-3 rounded-xl shadow-lg border border-white/80 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-rose-600 shrink-0" />
+                    <p className="text-xs font-semibold text-slate-800 line-clamp-1">
+                      {CLINIC_INFO.addressLine1}, {CLINIC_INFO.city} - {CLINIC_INFO.pincode}
+                    </p>
                   </div>
+                  <a
+                    href={`https://maps.google.com/?q=${encodeURIComponent(
+                      CLINIC_INFO.name + ' ' + CLINIC_INFO.city
+                    )}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs font-bold text-sky-700 hover:text-sky-900 flex items-center gap-1 shrink-0 bg-sky-50/90 px-2.5 py-1 rounded-md border border-sky-200/50 shadow-2xs"
+                  >
+                    <span>Directions</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
                 </div>
               </div>
 

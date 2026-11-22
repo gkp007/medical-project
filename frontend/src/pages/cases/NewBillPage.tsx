@@ -22,15 +22,15 @@ export const NewBillPage: React.FC<NewBillPageProps> = ({
 }) => {
   // Patient Demographics State
   const [prefix, setPrefix] = useState<NamePrefix>('Mr');
-  const [patientName, setPatientName] = useState('Rahul Sharma');
-  const [ageYears, setAgeYears] = useState<number | string>(32);
+  const [patientName, setPatientName] = useState('');
+  const [ageYears, setAgeYears] = useState<number | string>('');
   const [ageMonths, setAgeMonths] = useState<number | string>(0);
   const [ageDays, setAgeDays] = useState<number | string>(0);
-  const [age, setAge] = useState<number>(32);
+  const [age, setAge] = useState<number>(0);
   const [ageUnit, setAgeUnit] = useState<AgeUnit>('Years');
   const [gender, setGender] = useState<Gender>('Male');
-  const [mobile, setMobile] = useState('9876543210');
-  const [uhid, setUhid] = useState('35375569');
+  const [mobile, setMobile] = useState('');
+  const [uhid, setUhid] = useState('');
   const [aadhaar, setAadhaar] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
@@ -45,6 +45,7 @@ export const NewBillPage: React.FC<NewBillPageProps> = ({
     { label: 'Self Referral / Walk-in Patient', value: 'doc-self' },
   ]);
   const [modality, setModality] = useState<string>('LAB');
+  const [branchId, setBranchId] = useState('main');
   const [collectionAgent, setCollectionAgent] = useState('');
   const [agentsList, setAgentsList] = useState<{ label: string; value: string }[]>([
     { label: 'None / Direct Walk-in', value: '' },
@@ -88,26 +89,14 @@ export const NewBillPage: React.FC<NewBillPageProps> = ({
   ].map((p) => ({ label: p, value: p }));
 
   // Selected Investigations List
-  const [selectedTests, setSelectedTests] = useState<SelectedInvestigation[]>([
-    {
-      testId: 'CBC',
-      code: 'CBC',
-      name: 'Complete Blood Count (CBC)',
-      department: 'Hematology',
-      specimen: 'EDTA Whole Blood',
-      rate: 400,
-      discount: 0,
-      netAmount: 400,
-      deliveryTime: 'Today, 11:30 PM',
-    },
-  ]);
+  const [selectedTests, setSelectedTests] = useState<SelectedInvestigation[]>([]);
 
   // Financial Calculations State
   const [discountType, setDiscountType] = useState<'₹' | '%'>('₹');
   const [discountValue, setDiscountValue] = useState<number>(0);
   const [discountReason, setDiscountReason] = useState('None');
-  const [paidAmount, setPaidAmount] = useState<number>(400);
-  const [paymentMode, setPaymentMode] = useState<'Cash' | 'UPI' | 'Card' | 'Cheque'>('Cash');
+  const [paidAmount, setPaidAmount] = useState<number>(0);
+  const [paymentMode, setPaymentMode] = useState<'Cash' | 'UPI' | 'Card' | 'Cheque' | 'NEFT'>('Cash');
 
   // Modals & Feedback
   const [isDoctorModalOpen, setIsDoctorModalOpen] = useState(false);
@@ -210,6 +199,10 @@ export const NewBillPage: React.FC<NewBillPageProps> = ({
       showToast('Please enter patient name');
       return;
     }
+    if (!/^\d{10}$/.test(mobile.trim())) {
+      showToast('Please enter a valid 10-digit mobile number');
+      return;
+    }
     if (balanceDue > 0 && !allowDue) {
       showToast('Please check Accept Due or collect full payment');
       return;
@@ -236,14 +229,18 @@ export const NewBillPage: React.FC<NewBillPageProps> = ({
           ageDays: parsedDays,
           ageUnit: effectiveUnit,
           gender,
-          mobile: mobile.trim() || '9876543210',
+          mobile: mobile.trim(),
           email: email.trim() || undefined,
           address: address.trim() || undefined,
           aadhaar: aadhaar.trim() || undefined,
           onlineReportRequested,
         },
         doctorId: doctorId || 'doc-self',
+        agentId: collectionAgent || null,
+        branchId,
         modality: modality || 'LAB',
+        isUrgent,
+        collectionTime,
         investigations: selectedTests.map((t) => ({
           testId: t.code || t.testId,
           discount: t.discount || 0,
@@ -253,6 +250,7 @@ export const NewBillPage: React.FC<NewBillPageProps> = ({
         discountReason: discountReason !== 'None' ? discountReason : undefined,
         paidAmount: Number(paidAmount) || 0,
         paymentMode,
+        allowDue,
       };
 
       const res = await casesApi.createCase(payload);
@@ -270,14 +268,10 @@ export const NewBillPage: React.FC<NewBillPageProps> = ({
         }, 600);
       } else {
         showToast(res.message || 'Error generating bill');
-        if (nextAction === 'enter_results') onSaveAndEnterResults();
-        else onSaveAndPrintBill();
       }
     } catch (err: any) {
       console.error('Failed to create case:', err);
-      showToast('Bill saved. Proceeding...');
-      if (nextAction === 'enter_results') onSaveAndEnterResults();
-      else onSaveAndPrintBill();
+      showToast(err?.message || 'Could not create the bill. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -326,12 +320,31 @@ export const NewBillPage: React.FC<NewBillPageProps> = ({
   };
 
   const handleConfirmReset = () => {
+    setPrefix('Mr');
     setPatientName('');
+    setAgeYears('');
+    setAgeMonths(0);
+    setAgeDays(0);
+    setAge(0);
+    setAgeUnit('Years');
+    setGender('Male');
     setMobile('');
     setUhid('');
+    setAadhaar('');
+    setEmail('');
+    setAddress('');
+    setOnlineReportRequested(true);
+    setDoctorId('doc-self');
+    setModality('LAB');
+    setBranchId('main');
+    setCollectionAgent('');
+    setIsUrgent(false);
+    setAllowDue(false);
     setSelectedTests([]);
     setDiscountValue(0);
+    setDiscountReason('None');
     setPaidAmount(0);
+    setPaymentMode('Cash');
     setIsResetConfirmOpen(false);
     showToast('New bill form cleared');
   };
@@ -378,6 +391,45 @@ export const NewBillPage: React.FC<NewBillPageProps> = ({
 
   const allCatalogs = { ...INVESTIGATION_CATALOG, ...dbTestCatalog };
 
+  const isInvestigationForModality = (item: { code: string; name: string; department: string }, activeModality: string) => {
+    const searchable = `${item.code} ${item.name} ${item.department}`.toUpperCase();
+    const matches = (pattern: RegExp) => pattern.test(searchable);
+
+    switch (activeModality) {
+      case 'LAB':
+        return !matches(/USG|ULTRASOUND|SONOGRAPHY|XRAY|X-RAY|RADIOGRAPH|CT SCAN|\bCT\b|\bMRI\b|\bECG\b|ELECTROCARDIOGRAM|\bEEG\b|MAMMOGRAPH|\bOPG\b|ORTHOPANTOMOGRAM/);
+      case 'USG':
+        return matches(/USG|ULTRASOUND|SONOGRAPHY/);
+      case 'DIGITAL XRAY':
+      case 'XRAY':
+        return matches(/XRAY|X-RAY|RADIOGRAPH/);
+      case 'OUTSOURCE LAB':
+        return matches(/OUTSOURCE|EXTERNAL|SEND.?OUT/);
+      case 'ECG':
+        return matches(/\bECG\b|ELECTROCARDIOGRAM/);
+      case 'CT SCAN':
+        return matches(/CT SCAN|\bCT\b|COMPUTED TOMOGRAPH/);
+      case 'MRI':
+        return matches(/\bMRI\b|MAGNETIC RESONANCE/);
+      case 'EPS':
+        return matches(/\bEPS\b|ELECTROPHYSIOLOG/);
+      case 'OPG':
+        return matches(/\bOPG\b|ORTHOPANTOMOGRAM/);
+      case 'CARDIOLOGY':
+        return matches(/CARDIOLOGY|ECHOCARDIO|\bTMT\b|HOLTER/);
+      case 'EEG':
+        return matches(/\bEEG\b|ELECTROENCEPHALOGRAM/);
+      case 'MAMMOGRAPHY':
+        return matches(/MAMMOGRAPH|\bMAMMO\b/);
+      default:
+        return false;
+    }
+  };
+
+  const filteredCatalogs = Object.entries(allCatalogs).filter(([, item]) =>
+    isInvestigationForModality(item, modality)
+  );
+
   const handleAddTest = (code: string) => {
     const item = allCatalogs[code];
     if (item && !selectedTests.some((t) => t.code === item.code)) {
@@ -406,13 +458,25 @@ export const NewBillPage: React.FC<NewBillPageProps> = ({
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
       {/* Page Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-5)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-3)' }}>
         <div>
-          <h2 className="h1-title">New Patient Bill & Registration</h2>
+          <h2 className="h1-title">New bill</h2>
           <p className="text-muted" style={{ marginTop: '2px' }}>
-            Enter patient demographics, select investigations, and collect cash till receipts.
+            Register a patient, add investigations, and collect payment in one workflow.
           </p>
         </div>
+      </div>
+
+      <div
+        style={{
+          display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap',
+          marginBottom: 'var(--space-5)', padding: '10px 12px', borderRadius: '8px',
+          background: '#f0f9ff', border: '1px solid #bae6fd', color: '#075985', fontSize: '12px',
+        }}
+      >
+        <span style={{ display: 'inline-flex', width: '8px', height: '8px', borderRadius: '999px', background: '#22c55e' }} />
+        <strong>Billing terminal ready</strong>
+        <span style={{ color: '#64748b' }}>Patient and investigation details are saved only when you confirm the bill.</span>
       </div>
 
       {/* 2-Column Responsive Layout */}
@@ -500,6 +564,10 @@ export const NewBillPage: React.FC<NewBillPageProps> = ({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
               <Input
                 label="Mobile Number"
+                required
+                type="tel"
+                inputMode="numeric"
+                maxLength={10}
                 value={mobile}
                 onChange={(e) => setMobile(e.target.value)}
                 placeholder="10-digit number"
@@ -564,6 +632,8 @@ export const NewBillPage: React.FC<NewBillPageProps> = ({
 
               <Select
                 label="Collection Center / Franchise"
+                value={branchId}
+                onChange={(e) => setBranchId(e.target.value)}
                 options={[
                   { label: 'Main Laboratory Branch', value: 'main' },
                   { label: 'City Care Collection Center (AG-102)', value: 'ag102' },
@@ -651,13 +721,18 @@ export const NewBillPage: React.FC<NewBillPageProps> = ({
                   }}
                 >
                   <option value="" disabled>Search or select investigation to add...</option>
-                  {Object.entries(allCatalogs).map(([code, item]) => (
+                  {filteredCatalogs.map(([code, item]) => (
                     <option key={code} value={code}>
                       {item.code} — {item.name} — ₹{item.rate}.00 ({item.department})
                     </option>
                   ))}
                 </select>
               </div>
+              {filteredCatalogs.length === 0 && (
+                <p className="text-caption" style={{ marginTop: '6px' }}>
+                  No investigations are configured for {modality}. Add them in Test Master to make them available here.
+                </p>
+              )}
             </div>
 
             {/* Selected Investigations Table */}

@@ -110,7 +110,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         backgroundColor: '#ffffff',
         borderBottom: '1px solid #e2e8f0',
         zIndex: 50,
-        padding: '0 20px',
+        padding: '0 18px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -121,7 +121,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
       {/* ------------------------------------------------------------- */}
       {/* 1. Left Section: Branding & Center Selector                   */}
       {/* ------------------------------------------------------------- */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0, flexShrink: 0 }}>
         {/* Lab Brand & Logo */}
         <div
           style={{
@@ -288,7 +288,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
-          width: '360px',
+          width: '300px',
           height: '38px',
           padding: '0 14px',
           backgroundColor: '#f8fafc',
@@ -333,7 +333,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
       {/* ------------------------------------------------------------- */}
       {/* 3. Right Section: CTA Button, Utilities & Profile            */}
       {/* ------------------------------------------------------------- */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
         {/* + New Bill CTA Button (Alt+N) */}
         <button
           type="button"
@@ -341,9 +341,9 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: '6px',
             height: '36px',
-            padding: '0 14px',
+            padding: '0 12px',
             backgroundColor: '#1d4ed8',
             color: '#ffffff',
             border: 'none',
@@ -360,18 +360,6 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         >
           <PlusCircle size={15} />
           <span>New Bill</span>
-          <span
-            style={{
-              fontSize: '10px',
-              fontWeight: 700,
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              padding: '1px 5px',
-              borderRadius: '4px',
-              letterSpacing: '0.02em',
-            }}
-          >
-            Alt+N
-          </span>
         </button>
 
         {/* SMS Credits Status Badge */}
@@ -383,9 +371,9 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
+            gap: '5px',
             height: '32px',
-            padding: '0 10px',
+            padding: '0 9px',
             backgroundColor: smsColor.bg,
             border: `1px solid ${smsColor.border}`,
             color: smsColor.text,
@@ -400,7 +388,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           title="SMS & WhatsApp Notification Balance - Click to Recharge"
         >
           <MessageSquare size={13} />
-          <span>SMS: {smsBalance}</span>
+          <span>{smsBalance} SMS</span>
         </button>
 
         {/* Refer & Earn Bonus Button */}
@@ -412,9 +400,9 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
+            gap: '5px',
             height: '32px',
-            padding: '0 10px',
+            padding: '0 9px',
             backgroundColor: '#fffbeb',
             border: '1px solid #fde68a',
             color: '#b45309',
@@ -426,7 +414,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           title="Refer another laboratory and get ₹1000 credit bonus"
         >
           <Gift size={14} color="#d97706" />
-          <span>Refer Lab</span>
+          <span>Refer</span>
         </button>
 
         {/* Help & Support ▾ */}
@@ -437,9 +425,10 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-              height: '32px',
-              padding: '0 10px',
+            height: '34px',
+            width: '34px',
+            justifyContent: 'center',
+            padding: 0,
               backgroundColor: '#eff6ff',
               border: '1px solid #bfdbfe',
               borderRadius: '9999px',
@@ -448,10 +437,9 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
               fontWeight: 600,
               cursor: 'pointer',
             }}
+          title="Help & support"
           >
-            <Headphones size={13} />
-            <span>Help</span>
-            <ChevronDown size={13} />
+            <Headphones size={15} />
           </button>
 
           {isHelpOpen && (
@@ -597,8 +585,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              padding: '4px 8px 4px 4px',
+            gap: '7px',
+            padding: '4px 7px 4px 4px',
               borderRadius: '9999px',
               border: '1px solid #e2e8f0',
               backgroundColor: '#f8fafc',
@@ -622,8 +610,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             >
               {userName.split(' ').map((n) => n[0]).slice(0, 2).join('')}
             </div>
-            <div style={{ textAlign: 'left', lineHeight: 1.1 }}>
-              <div style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>{userName}</div>
+            <div style={{ textAlign: 'left', lineHeight: 1.1, maxWidth: '124px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userName}</div>
               <div style={{ fontSize: '10px', color: '#64748b' }}>{userRole}</div>
             </div>
             <ChevronDown size={12} color="#94a3b8" />

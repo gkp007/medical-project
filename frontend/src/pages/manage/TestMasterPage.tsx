@@ -25,6 +25,7 @@ import {
   Save,
   X,
 } from 'lucide-react';
+import { ALL_LABSMART_TESTS, LabTestDetail } from './allLabsmartTestsData';
 
 export type AgeUnit = 'Years' | 'Days' | 'Months';
 export type RangeSex = 'Any' | 'Male' | 'Female' | 'Other';
@@ -58,32 +59,7 @@ export interface TestSubParameter {
   normalValues: NormalValueConfig;
 }
 
-export interface LabTestDetail {
-  id: string;
-  order: number;
-  name: string;
-  shortName: string;
-  category: string;
-  testType: 'Single parameter' | 'Multi parameter' | 'Multiple nested parameters' | 'Document' | 'Formula';
-  unit?: string;
-  price?: number;
-  description?: string;
-  increasedIn?: string[];
-  decreasedIn?: string[];
-  cellCauses?: Array<{ cell: string; increasedIn: string; decreasedIn: string }>;
-  comments?: string;
-  method?: string;
-  instrument?: string;
-  interpretation?: string;
-  notes?: string;
-  isAlwaysBold?: boolean;
-  printLineAfter?: boolean;
-  defaultResultText?: string;
-  ratelistEntries?: Array<{ name: string; fee: number }>;
-  panelsIncluded?: Array<{ name: string }>;
-  parameters?: TestSubParameter[];
-  normalValues?: NormalValueConfig;
-}
+
 
 const CATEGORIES = [
   'All',
@@ -99,847 +75,13 @@ const CATEGORIES = [
   'Miscellaneous',
 ];
 
-const INITIAL_TESTS: LabTestDetail[] = [
-  {
-    id: '6228737',
-    order: 1,
-    name: 'Hemoglobin',
-    shortName: 'Hb',
-    category: 'Haematology',
-    testType: 'Single parameter',
-    unit: 'g/dl',
-    price: 50,
-    description:
-      'Hemoglobin is the major protein of erythrocytes that transports oxygen from the lungs to peripheral tissues. It is measured by spectrophotometry on automated instruments after lysis of red cells and conversion of all hemoglobin to cyanmethemoglobin.',
-    increasedIn: [
-      '1. Hemoconcentration (as in dehydration, Burns, vomiting)',
-      '2. Polycythemia (erythrocytosis)',
-      '3. Extreme physical exercise.',
-    ],
-    decreasedIn: [
-      '1. Macrocytic anemia (liver disease, hypothyroidism, vitamin B 12 deficiency, folate deficiency, myelodysplasia)',
-      '2. Normocytic anemia (early iron deficiency, anemia of chronic disease, hemolytic anemia, acute hemorrhage, bone marrow infiltration)',
-      '3. Microcytic anemia (iron deficiency, thalassemia)',
-      'Hemodilution',
-    ],
-    comments:
-      'The cyanmethemoglobin technique is the method of choice selected by the International Committee for Standardization in Hematology. The method measures all hemoglobin derivatives except sulfhemoglobin by hemolyzing the specimen and adding a reducing agent. As such, this method does not distinguish between intracellular versus extracellular hemoglobin (hemolysis). Hypertriglyceridemia and very high white blood cell counts can cause false elevations of Hb.',
-    ratelistEntries: [
-      { name: 'Hb', fee: 50 },
-      { name: 'HB, TLC, DLC', fee: 150 },
-      { name: 'HB, TLC, DLC, ESR', fee: 230 },
-      { name: 'Pregnancy Profile', fee: 100 },
-    ],
-    panelsIncluded: [
-      { name: 'CBC with ESR' },
-      { name: 'CBC (with absolute counts)' },
-      { name: 'Complete Blood Count (CBC)' },
-    ],
-    normalValues: {
-      selectType: 'numeric_range',
-      ranges: [
-        {
-          id: '6125428',
-          gender: 'Any',
-          minAge: 0,
-          minAgeUnit: 'Years',
-          maxAge: 21,
-          maxAgeUnit: 'Days',
-          lowerValue: 17,
-          upperValue: 23,
-          displayRange: '17 - 23',
-        },
-        {
-          id: '6125429',
-          gender: 'Any',
-          minAge: 21,
-          minAgeUnit: 'Days',
-          maxAge: 10,
-          maxAgeUnit: 'Years',
-          lowerValue: 11.2,
-          upperValue: 16.5,
-          displayRange: '11.2 - 16.5',
-        },
-        {
-          id: '6125431',
-          gender: 'Female',
-          minAge: 10,
-          minAgeUnit: 'Years',
-          maxAge: 120,
-          maxAgeUnit: 'Years',
-          lowerValue: 12,
-          upperValue: 15,
-          displayRange: '12 - 15',
-        },
-        {
-          id: '6125430',
-          gender: 'Male',
-          minAge: 10,
-          minAgeUnit: 'Years',
-          maxAge: 120,
-          maxAgeUnit: 'Years',
-          lowerValue: 13,
-          upperValue: 17,
-          displayRange: '13 - 17',
-        },
-      ],
-    },
-  },
-  {
-    id: '6228738',
-    order: 2,
-    name: 'Total Leukocyte Count',
-    shortName: 'TLC',
-    category: 'Haematology',
-    testType: 'Single parameter',
-    unit: 'cumm',
-    price: 50,
-    description:
-      'Total Leukocyte Count measures total circulating white blood cells responsible for immune response against infectious agents and inflammatory processes.',
-    increasedIn: [
-      '1. Bacterial and pyogenic infections, acute sepsis',
-      '2. Inflammatory disorders, tissue necrosis, severe burns',
-      '3. Leukemias, myeloproliferative disorders, leukemoid reactions',
-    ],
-    decreasedIn: [
-      '1. Viral infections (influenza, dengue, typhoid, viral hepatitis)',
-      '2. Bone marrow depression (chemotherapy, radiation, aplastic anemia)',
-      '3. Autoimmune destruction and hypersplenism',
-    ],
-    comments:
-      'Total count is enumerated by automated electrical impedance and light scattering. High nucleated red cells or unlysed platelets can trigger false elevations.',
-    ratelistEntries: [
-      { name: 'TLC', fee: 50 },
-      { name: 'HB, TLC, DLC', fee: 150 },
-      { name: 'HB, TLC, DLC, ESR', fee: 230 },
-      { name: 'TLC DLC ESR', fee: 180 },
-    ],
-    panelsIncluded: [
-      { name: 'CBC with ESR' },
-      { name: 'CBC (with absolute counts)' },
-      { name: 'Complete Blood Count (CBC)' },
-    ],
-    normalValues: {
-      selectType: 'numeric_range',
-      ranges: [
-        {
-          id: '6125432',
-          gender: 'Any',
-          minAge: 0,
-          minAgeUnit: 'Years',
-          maxAge: 120,
-          maxAgeUnit: 'Years',
-          lowerValue: 4000,
-          upperValue: 11000,
-          displayRange: '4,000 - 11,000',
-        },
-      ],
-    },
-  },
-  {
-    id: '6228739',
-    order: 3,
-    name: 'Differential Leucocyte Count',
-    shortName: 'DLC',
-    category: 'Haematology',
-    testType: 'Multi parameter',
-    price: 50,
-    cellCauses: [
-      {
-        cell: 'Neutrophils',
-        increasedIn:
-          'Infection (bacterial or early viral), acute stress, acute and chronic inflammation, tumors, drugs (eg, G-CSF), diabetic ketoacidosis, leukemia (rare).',
-        decreasedIn:
-          'Aplastic anemia, drug-induced neutropenia, chemotherapy, folate or B12 deficiency, myelodysplasia, marrow infiltration, cyclic neutropenia, autoimmune or isoimmune neutropenia, Felty syndrome, hypersplenism, sepsis, viral marrow suppression, bone marrow failure syndromes.',
-      },
-      {
-        cell: 'Lymphocytes',
-        increasedIn:
-          'Viral infection (especially infectious mononucleosis, pertussis), thyrotoxicosis, adrenal insufficiency, lymphoid leukemia/lymphoma, chronic infection, drug and allergic reactions, autoimmune diseases',
-        decreasedIn: 'Immune deficiency syndromes (eg, HIV), idiopathic drugs.',
-      },
-      {
-        cell: 'Monocytes',
-        increasedIn:
-          'Inflammation, infection, malignancy, tuberculosis, myeloproliferative disorders (eg, CMML)',
-        decreasedIn: 'Depleted in overwhelming bacterial infection, hairy cell leukemia.',
-      },
-      {
-        cell: 'Eosinophils',
-        increasedIn:
-          'Allergic states, asthma, drug sensitivity reactions, skin disorders, parasitic and certain fungal infections, Churg- Strauss syndrome, polyarteritis nodosa, response to malignancy (eg, Hodgkin disease, T-cell lymphoma, adenocarcinoma), eosinophilic pneumonia, hyper-eosinophilic syndrome, leukemia (eg, chronic eosinophilic leukemia), myeloid or lymphoid neoplasm with abnormalities of PDGF receptor (alpha or beta) or FGF receptor, mastocytosis',
-        decreasedIn: 'Depleted in overwhelming bacterial infection, hairy cell leukemia',
-      },
-      {
-        cell: 'Basophils',
-        increasedIn:
-          'Hypersensitivity reactions, drugs, myeloproliferative disorders (eg, CML), basophilic or mast cell variant of acute or chronic leukemia, inflammatory reaction, certain infections, hypothyroidism',
-        decreasedIn: 'Not applicable.',
-      },
-    ],
-    parameters: [
-      {
-        id: '9446441',
-        order: 1,
-        name: 'Neutrophils',
-        unit: '%',
-        isOptional: false,
-        normalValues: {
-          selectType: 'numeric_range',
-          ranges: [
-            {
-              id: 'r1',
-              gender: 'Any',
-              minAge: 0,
-              minAgeUnit: 'Years',
-              maxAge: 120,
-              maxAgeUnit: 'Years',
-              lowerValue: 40,
-              upperValue: 70,
-              displayRange: '40 - 70',
-            },
-          ],
-        },
-      },
-      {
-        id: '9446442',
-        order: 2,
-        name: 'Lymphocyte',
-        unit: '%',
-        isOptional: false,
-        normalValues: {
-          selectType: 'numeric_range',
-          ranges: [
-            {
-              id: 'r2',
-              gender: 'Any',
-              minAge: 0,
-              minAgeUnit: 'Years',
-              maxAge: 120,
-              maxAgeUnit: 'Years',
-              lowerValue: 20,
-              upperValue: 40,
-              displayRange: '20 - 40',
-            },
-          ],
-        },
-      },
-      {
-        id: '9446443',
-        order: 3,
-        name: 'Eosinophils',
-        unit: '%',
-        isOptional: false,
-        normalValues: {
-          selectType: 'numeric_range',
-          ranges: [
-            {
-              id: 'r3',
-              gender: 'Any',
-              minAge: 0,
-              minAgeUnit: 'Years',
-              maxAge: 120,
-              maxAgeUnit: 'Years',
-              lowerValue: 1,
-              upperValue: 6,
-              displayRange: '1 - 6',
-            },
-          ],
-        },
-      },
-      {
-        id: '9446444',
-        order: 4,
-        name: 'Monocytes',
-        unit: '%',
-        isOptional: false,
-        normalValues: {
-          selectType: 'numeric_range',
-          ranges: [
-            {
-              id: 'r4',
-              gender: 'Any',
-              minAge: 0,
-              minAgeUnit: 'Years',
-              maxAge: 120,
-              maxAgeUnit: 'Years',
-              lowerValue: 1,
-              upperValue: 4,
-              displayRange: '1 - 4',
-            },
-          ],
-        },
-      },
-      {
-        id: '9446445',
-        order: 5,
-        name: 'Basophils',
-        unit: '%',
-        isOptional: false,
-        normalValues: {
-          selectType: 'numeric_range',
-          ranges: [
-            {
-              id: 'r5',
-              gender: 'Any',
-              minAge: 0,
-              minAgeUnit: 'Years',
-              maxAge: 120,
-              maxAgeUnit: 'Years',
-              lowerValue: 0,
-              upperValue: 2,
-              displayRange: '< 2',
-            },
-          ],
-        },
-      },
-    ],
-    ratelistEntries: [
-      { name: 'DLC', fee: 50 },
-      { name: 'HB, TLC, DLC', fee: 150 },
-      { name: 'HB, TLC, DLC, ESR', fee: 230 },
-      { name: 'TLC DLC ESR', fee: 180 },
-    ],
-    panelsIncluded: [
-      { name: 'CBC with Morphology' },
-      { name: 'CBC with ESR' },
-      { name: 'CBC (with absolute counts)' },
-      { name: 'Complete Blood Count (CBC)' },
-    ],
-  },
-  {
-    id: '6228740',
-    order: 4,
-    name: 'Differential Leukocyte Count (Absolute count)',
-    shortName: 'DLC (Abs)',
-    category: 'Haematology',
-    testType: 'Multi parameter',
-    price: 80,
-    parameters: [
-      {
-        id: 'p_anc',
-        order: 1,
-        name: 'Absolute Neutrophil Count (ANC)',
-        unit: '/cumm',
-        isOptional: false,
-        normalValues: {
-          selectType: 'numeric_range',
-          ranges: [
-            {
-              id: 'anc_1',
-              gender: 'Any',
-              minAge: 0,
-              minAgeUnit: 'Years',
-              maxAge: 120,
-              maxAgeUnit: 'Years',
-              lowerValue: 2000,
-              upperValue: 7000,
-              displayRange: '2,000 - 7,000',
-            },
-          ],
-        },
-      },
-      {
-        id: 'p_alc',
-        order: 2,
-        name: 'Absolute Lymphocyte Count (ALC)',
-        unit: '/cumm',
-        isOptional: false,
-        normalValues: {
-          selectType: 'numeric_range',
-          ranges: [
-            {
-              id: 'alc_1',
-              gender: 'Any',
-              minAge: 0,
-              minAgeUnit: 'Years',
-              maxAge: 120,
-              maxAgeUnit: 'Years',
-              lowerValue: 1000,
-              upperValue: 3000,
-              displayRange: '1,000 - 3,000',
-            },
-          ],
-        },
-      },
-      {
-        id: 'p_amc',
-        order: 3,
-        name: 'Absolute Monocyte Count',
-        unit: '/cumm',
-        isOptional: false,
-        normalValues: {
-          selectType: 'numeric_range',
-          ranges: [
-            {
-              id: 'amc_1',
-              gender: 'Any',
-              minAge: 0,
-              minAgeUnit: 'Years',
-              maxAge: 120,
-              maxAgeUnit: 'Years',
-              lowerValue: 200,
-              upperValue: 1000,
-              displayRange: '200 - 1,000',
-            },
-          ],
-        },
-      },
-      {
-        id: 'p_aec',
-        order: 4,
-        name: 'Absolute Eosinophil Count',
-        unit: '/cumm',
-        isOptional: false,
-        normalValues: {
-          selectType: 'numeric_range',
-          ranges: [
-            {
-              id: 'aec_1',
-              gender: 'Any',
-              minAge: 0,
-              minAgeUnit: 'Years',
-              maxAge: 120,
-              maxAgeUnit: 'Years',
-              lowerValue: 20,
-              upperValue: 500,
-              displayRange: '20 - 500',
-            },
-          ],
-        },
-      },
-      {
-        id: 'p_abc',
-        order: 5,
-        name: 'Absolute Basophil Count',
-        unit: '/cumm',
-        isOptional: false,
-        normalValues: {
-          selectType: 'numeric_range',
-          ranges: [
-            {
-              id: 'abc_1',
-              gender: 'Any',
-              minAge: 0,
-              minAgeUnit: 'Years',
-              maxAge: 120,
-              maxAgeUnit: 'Years',
-              lowerValue: 0,
-              upperValue: 100,
-              displayRange: '0 - 100',
-            },
-          ],
-        },
-      },
-    ],
-    ratelistEntries: [{ name: 'CBC (with absolute counts)', fee: 250 }],
-    panelsIncluded: [{ name: 'CBC (with absolute counts)' }],
-  },
-  {
-    id: '6228741',
-    order: 5,
-    name: 'Erythrocyte sedimentation rate (Westergren)',
-    shortName: 'ESR (Westergren)',
-    category: 'Haematology',
-    testType: 'Single parameter',
-    unit: 'mm for 1st hour',
-    price: 80,
-    description:
-      'The erythrocyte sedimentation rate (ESR) is a simple non-specific indicator of systemic inflammation, infection, autoimmune conditions, and tissue damage.',
-    normalValues: {
-      selectType: 'numeric_range',
-      ranges: [
-        {
-          id: 'esr_m1',
-          gender: 'Male',
-          minAge: 0,
-          minAgeUnit: 'Years',
-          maxAge: 50,
-          maxAgeUnit: 'Years',
-          lowerValue: 0,
-          upperValue: 15,
-          displayRange: '0 - 15',
-        },
-        {
-          id: 'esr_m2',
-          gender: 'Male',
-          minAge: 50,
-          minAgeUnit: 'Years',
-          maxAge: 120,
-          maxAgeUnit: 'Years',
-          lowerValue: 0,
-          upperValue: 20,
-          displayRange: '0 - 20',
-        },
-        {
-          id: 'esr_f1',
-          gender: 'Female',
-          minAge: 0,
-          minAgeUnit: 'Years',
-          maxAge: 50,
-          maxAgeUnit: 'Years',
-          lowerValue: 0,
-          upperValue: 20,
-          displayRange: '0 - 20',
-        },
-        {
-          id: 'esr_f2',
-          gender: 'Female',
-          minAge: 50,
-          minAgeUnit: 'Years',
-          maxAge: 120,
-          maxAgeUnit: 'Years',
-          lowerValue: 0,
-          upperValue: 30,
-          displayRange: '0 - 30',
-        },
-      ],
-    },
-    ratelistEntries: [
-      { name: 'ESR (Westergren)', fee: 80 },
-      { name: 'CBC with ESR', fee: 280 },
-      { name: 'HB, TLC, DLC, ESR', fee: 230 },
-    ],
-    panelsIncluded: [{ name: 'CBC with ESR' }],
-  },
-  {
-    id: '6228746',
-    order: 6,
-    name: 'Platelet Count',
-    shortName: 'PLT',
-    category: 'Haematology',
-    testType: 'Single parameter',
-    unit: 'lakhs/cumm',
-    price: 60,
-    normalValues: {
-      selectType: 'numeric_range',
-      ranges: [
-        {
-          id: 'plt_1',
-          gender: 'Any',
-          minAge: 0,
-          minAgeUnit: 'Years',
-          maxAge: 120,
-          maxAgeUnit: 'Years',
-          lowerValue: 1.5,
-          upperValue: 4.5,
-          displayRange: '1,50,000 - 4,50,000',
-        },
-      ],
-    },
-    ratelistEntries: [{ name: 'Platelet Count', fee: 60 }],
-    panelsIncluded: [{ name: 'Complete Blood Count (CBC)' }, { name: 'Dengue Comprehensive' }],
-  },
-  {
-    id: '6228748',
-    order: 7,
-    name: 'Blood Group & Rh.',
-    shortName: 'BG',
-    category: 'Haematology',
-    testType: 'Multi parameter',
-    price: 50,
-    description:
-      'The ABO antigen and antibodies remain the most significant for transfusion practice. Routine ABO typing includes forward cell typing and reverse serum grouping.',
-    parameters: [
-      {
-        id: '9446459',
-        order: 1,
-        name: 'ABO Group',
-        unit: '',
-        isOptional: false,
-        normalValues: {
-          selectType: 'text',
-          textualNormal: 'A / B / AB / O Group',
-          ranges: [],
-        },
-      },
-      {
-        id: '9446460',
-        order: 2,
-        name: 'Rh (ANTI -D)',
-        unit: '',
-        isOptional: false,
-        normalValues: {
-          selectType: 'text',
-          textualNormal: 'Positive / Negative',
-          ranges: [],
-        },
-      },
-    ],
-    ratelistEntries: [
-      { name: 'Blood Group & Rh.', fee: 50 },
-      { name: 'Pregnancy Profile', fee: 100 },
-      { name: 'Preoperative Screening', fee: 250 },
-    ],
-    panelsIncluded: [{ name: 'Antenatal Profile' }, { name: 'Preoperative Profile' }],
-  },
-  {
-    id: '6228751',
-    order: 8,
-    name: 'Peripheral Blood Smear',
-    shortName: 'PBS / GBP',
-    category: 'Haematology',
-    testType: 'Document',
-    price: 150,
-    description:
-      'Microscopic examination of Leishman-stained blood smear to assess red cell morphology, white cell differential, and platelet adequacy.',
-    defaultResultText: `RBC MORPHOLOGY: Predominantly normocytic and normochromic. No significant anisopoikilocytosis.\nWBC MORPHOLOGY: Mature neutrophils, lymphocytes, and monocytes present in normal proportions. No blast cells or atypical mononuclear cells seen.\nPLATELETS: Adequate on smear with normal granularity and size.\nPARASITES: No malaria parasites or microfilariae identified in screened fields.\nIMPRESSION: Within normal biological limits.`,
-    ratelistEntries: [{ name: 'Peripheral Blood Smear', fee: 150 }],
-    panelsIncluded: [{ name: 'CBC with GBP' }],
-  },
-  {
-    id: '6228774',
-    order: 9,
-    name: 'Fasting Blood Sugar',
-    shortName: 'FBS',
-    category: 'Biochemistry',
-    testType: 'Single parameter',
-    unit: 'mg/dl',
-    price: 50,
-    description:
-      'Measures plasma glucose levels after an overnight fast (minimum 8-10 hours) for diagnosing diabetes mellitus and impaired fasting glycemia.',
-    normalValues: {
-      selectType: 'numeric_range',
-      ranges: [
-        {
-          id: 'fbs_1',
-          gender: 'Any',
-          minAge: 0,
-          minAgeUnit: 'Years',
-          maxAge: 120,
-          maxAgeUnit: 'Years',
-          lowerValue: 70,
-          upperValue: 100,
-          displayRange: '70 - 100',
-        },
-      ],
-    },
-    ratelistEntries: [
-      { name: 'Fasting Blood Sugar', fee: 50 },
-      { name: 'Blood Sugar Fasting & PP', fee: 100 },
-      { name: 'Diabetic package', fee: 100 },
-    ],
-    panelsIncluded: [{ name: 'Diabetic Profile' }, { name: 'Executive Health Checkup' }],
-  },
-  {
-    id: '6228775',
-    order: 10,
-    name: 'Blood Sugar PP',
-    shortName: 'PPBS',
-    category: 'Biochemistry',
-    testType: 'Single parameter',
-    unit: 'mg/dl',
-    price: 50,
-    normalValues: {
-      selectType: 'numeric_range',
-      ranges: [
-        {
-          id: 'ppbs_1',
-          gender: 'Any',
-          minAge: 0,
-          minAgeUnit: 'Years',
-          maxAge: 120,
-          maxAgeUnit: 'Years',
-          lowerValue: 70,
-          upperValue: 140,
-          displayRange: '70 - 140',
-        },
-      ],
-    },
-    ratelistEntries: [
-      { name: 'Blood Sugar PP', fee: 50 },
-      { name: 'Blood Sugar Fasting & PP', fee: 100 },
-    ],
-    panelsIncluded: [{ name: 'Diabetic Profile' }],
-  },
-  {
-    id: '6228778',
-    order: 11,
-    name: 'Serum Creatinine',
-    shortName: 'CREAT',
-    category: 'Biochemistry',
-    testType: 'Single parameter',
-    unit: 'mg/dl',
-    price: 80,
-    description:
-      'Creatinine is a waste byproduct of muscle metabolism excreted by the kidneys. Critical marker for glomerular filtration and renal clearance assessment.',
-    normalValues: {
-      selectType: 'numeric_range',
-      ranges: [
-        {
-          id: 'cr_m',
-          gender: 'Male',
-          minAge: 0,
-          minAgeUnit: 'Years',
-          maxAge: 120,
-          maxAgeUnit: 'Years',
-          lowerValue: 0.7,
-          upperValue: 1.3,
-          displayRange: '0.7 - 1.3',
-        },
-        {
-          id: 'cr_f',
-          gender: 'Female',
-          minAge: 0,
-          minAgeUnit: 'Years',
-          maxAge: 120,
-          maxAgeUnit: 'Years',
-          lowerValue: 0.5,
-          upperValue: 1.1,
-          displayRange: '0.5 - 1.1',
-        },
-      ],
-    },
-    ratelistEntries: [
-      { name: 'Serum Creatinine', fee: 80 },
-      { name: 'Kidney Function Test (KFT)', fee: 250 },
-    ],
-    panelsIncluded: [{ name: 'Kidney Function Test (KFT)' }, { name: 'Full Body Checkup' }],
-  },
-  {
-    id: '6228780',
-    order: 12,
-    name: 'Urine Routine Examination',
-    shortName: 'URINE-RE',
-    category: 'Clinical Pathology',
-    testType: 'Multiple nested parameters',
-    price: 80,
-    description:
-      'Routine and microscopic urinalysis providing diagnostic information about renal function, metabolic status, urinary tract infection, and systemic disease.',
-    parameters: [
-      {
-        id: 'u_color',
-        order: 1,
-        name: 'Color',
-        unit: '',
-        groupBy: 'Physical Examination',
-        isOptional: false,
-        normalValues: { selectType: 'text', textualNormal: 'Pale Yellow / Straw', ranges: [] },
-      },
-      {
-        id: 'u_app',
-        order: 2,
-        name: 'Appearance',
-        unit: '',
-        groupBy: 'Physical Examination',
-        isOptional: false,
-        normalValues: { selectType: 'text', textualNormal: 'Clear', ranges: [] },
-      },
-      {
-        id: 'u_sg',
-        order: 3,
-        name: 'Specific Gravity',
-        unit: '',
-        groupBy: 'Physical Examination',
-        isOptional: false,
-        normalValues: {
-          selectType: 'numeric_range',
-          ranges: [
-            {
-              id: 'sg_1',
-              gender: 'Any',
-              minAge: 0,
-              minAgeUnit: 'Years',
-              maxAge: 120,
-              maxAgeUnit: 'Years',
-              lowerValue: 1.005,
-              upperValue: 1.03,
-              displayRange: '1.005 - 1.030',
-            },
-          ],
-        },
-      },
-      {
-        id: 'u_ph',
-        order: 4,
-        name: 'Reaction (pH)',
-        unit: '',
-        groupBy: 'Chemical Examination',
-        isOptional: false,
-        normalValues: {
-          selectType: 'numeric_range',
-          ranges: [
-            {
-              id: 'ph_1',
-              gender: 'Any',
-              minAge: 0,
-              minAgeUnit: 'Years',
-              maxAge: 120,
-              maxAgeUnit: 'Years',
-              lowerValue: 4.5,
-              upperValue: 8.0,
-              displayRange: '4.5 - 8.0',
-            },
-          ],
-        },
-      },
-      {
-        id: 'u_alb',
-        order: 5,
-        name: 'Albumin / Protein',
-        unit: '',
-        groupBy: 'Chemical Examination',
-        isOptional: false,
-        normalValues: { selectType: 'text', textualNormal: 'Nil', ranges: [] },
-      },
-      {
-        id: 'u_sug',
-        order: 6,
-        name: 'Sugar / Glucose',
-        unit: '',
-        groupBy: 'Chemical Examination',
-        isOptional: false,
-        normalValues: { selectType: 'text', textualNormal: 'Nil', ranges: [] },
-      },
-      {
-        id: 'u_pus',
-        order: 7,
-        name: 'Pus Cells (WBCs)',
-        unit: '/HPF',
-        groupBy: 'Microscopic Examination',
-        isOptional: false,
-        normalValues: {
-          selectType: 'numeric_range',
-          ranges: [
-            {
-              id: 'pus_1',
-              gender: 'Any',
-              minAge: 0,
-              minAgeUnit: 'Years',
-              maxAge: 120,
-              maxAgeUnit: 'Years',
-              lowerValue: 0,
-              upperValue: 5,
-              displayRange: '0 - 5',
-            },
-          ],
-        },
-      },
-      {
-        id: 'u_rbc',
-        order: 8,
-        name: 'RBCs',
-        unit: '/HPF',
-        groupBy: 'Microscopic Examination',
-        isOptional: false,
-        normalValues: { selectType: 'text', textualNormal: 'Nil / HPF', ranges: [] },
-      },
-      {
-        id: 'u_epi',
-        order: 9,
-        name: 'Epithelial Cells',
-        unit: '/HPF',
-        groupBy: 'Microscopic Examination',
-        isOptional: false,
-        normalValues: { selectType: 'text', textualNormal: '1 - 3 / HPF', ranges: [] },
-      },
-    ],
-    ratelistEntries: [{ name: 'Urine Routine Examination', fee: 80 }],
-    panelsIncluded: [{ name: 'Basic Urine Screen' }, { name: 'Full Body Checkup' }],
-  },
-];
+const INITIAL_TESTS: LabTestDetail[] = ALL_LABSMART_TESTS;
 
-export const TestMasterPage: React.FC = () => {
+interface TestMasterPageProps {
+  onNavigate?: (screen: string) => void;
+}
+
+export const TestMasterPage: React.FC<TestMasterPageProps> = ({ onNavigate }) => {
   const [tests, setTests] = useState<LabTestDetail[]>(INITIAL_TESTS);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -1008,6 +150,18 @@ export const TestMasterPage: React.FC = () => {
                   id: backendTest.id,
                   price: backendTest.rate || updated[existingIdx].price,
                 };
+              } else {
+                updated.push({
+                  id: backendTest.id || String(Date.now()),
+                  order: updated.length + 1,
+                  name: backendTest.name,
+                  shortName: backendTest.code || backendTest.name.slice(0, 4).toUpperCase(),
+                  category: backendTest.department || 'Miscellaneous',
+                  testType: 'Single parameter',
+                  price: backendTest.rate || 0,
+                  ratelistEntries: [{ name: backendTest.name, fee: backendTest.rate || 0 }],
+                  panelsIncluded: [],
+                });
               }
             });
             return updated;
@@ -1394,7 +548,17 @@ export const TestMasterPage: React.FC = () => {
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
                   type="button"
-                  onClick={() => handleOpenEditTest(activeTest)}
+                  onClick={() => {
+                    if (activeTest) {
+                      localStorage.setItem('labsmart_active_test_id', activeTest.id);
+                      window.history.pushState({}, '', `/37749971/lab_tests/${activeTest.id}/edit`);
+                      if (onNavigate) {
+                        onNavigate('edit_lab_test');
+                      } else {
+                        window.dispatchEvent(new PopStateEvent('popstate'));
+                      }
+                    }
+                  }}
                   style={{
                     backgroundColor: '#0284c7',
                     color: '#ffffff',
@@ -1801,24 +965,31 @@ export const TestMasterPage: React.FC = () => {
         <h1 style={{ fontSize: '24px', fontWeight: 700, margin: 0, color: '#0f172a' }}>
           Test database
         </h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => showToast('Opening Labsmart global test library import...')}
-            style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            <Download size={15} color="#0284c7" />
-            <span>Import</span>
-          </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button
             type="button"
             className="btn btn-primary"
             onClick={handleOpenCreateTest}
-            style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#0284c7', borderColor: '#0284c7' }}
+            style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#0284c7', borderColor: '#0284c7', color: '#ffffff' }}
           >
             <Plus size={15} />
             <span>Add new</span>
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => {
+              if (onNavigate) {
+                onNavigate('lab_tests_library');
+              } else {
+                window.history.pushState({}, '', '/37749971/lab_tests_library');
+                window.dispatchEvent(new PopStateEvent('popstate'));
+              }
+            }}
+            style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#0284c7', borderColor: '#0284c7', color: '#ffffff' }}
+          >
+            <Plus size={15} />
+            <span>Import</span>
           </button>
         </div>
       </div>
@@ -1974,7 +1145,15 @@ export const TestMasterPage: React.FC = () => {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
                       <button
                         type="button"
-                        onClick={() => handleOpenEditTest(t)}
+                        onClick={() => {
+                          localStorage.setItem('labsmart_active_test_id', t.id);
+                          window.history.pushState({}, '', `/37749971/lab_tests/${t.id}/edit`);
+                          if (onNavigate) {
+                            onNavigate('edit_lab_test');
+                          } else {
+                            window.dispatchEvent(new PopStateEvent('popstate'));
+                          }
+                        }}
                         style={{
                           background: 'none',
                           border: 'none',
@@ -1993,8 +1172,13 @@ export const TestMasterPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => {
-                          setActiveTest(t);
-                          setViewMode('detail');
+                          localStorage.setItem('labsmart_active_test_id', t.id);
+                          window.history.pushState({}, '', `/37749971/lab_tests/${t.id}`);
+                          if (onNavigate) {
+                            onNavigate('view_lab_test');
+                          } else {
+                            window.dispatchEvent(new PopStateEvent('popstate'));
+                          }
                         }}
                         style={{
                           background: 'none',

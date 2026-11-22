@@ -38,8 +38,8 @@ export interface TodayReportItem {
 }
 
 interface TodayReportsPageProps {
-  onNavigateEnterResults?: () => void;
-  onNavigateViewReport?: () => void;
+  onNavigateEnterResults?: (caseId?: string, regNo?: string) => void;
+  onNavigateViewReport?: (caseId?: string, regNo?: string) => void;
   onNavigateNewBill?: () => void;
   onNavigateSearchReports?: () => void;
   onNavigateTestCounts?: () => void;
@@ -520,33 +520,34 @@ export const TodayReportsPage: React.FC<TodayReportsPageProps> = ({
                     {/* Actions */}
                     <td style={{ textAlign: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                        {isSigned ? (
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                           <button
                             type="button"
                             onClick={() => {
                               localStorage.setItem('labsmart_active_case_id', r.id);
                               localStorage.setItem('labsmart_active_bill_number', r.regNo);
-                              if (onNavigateViewReport) onNavigateViewReport();
+                              localStorage.setItem('labsmart_report_return_to', 'today_reports');
+                              if (onNavigateViewReport) onNavigateViewReport(r.id, r.regNo);
                             }}
                             className="btn btn-secondary"
                             style={{ padding: '4px 10px', fontSize: '12px' }}
                           >
                             View
                           </button>
-                        ) : (
                           <button
                             type="button"
                             onClick={() => {
                               localStorage.setItem('labsmart_active_case_id', r.id);
                               localStorage.setItem('labsmart_active_bill_number', r.regNo);
-                              if (onNavigateEnterResults) onNavigateEnterResults();
+                              localStorage.setItem('labsmart_report_return_to', 'today_reports');
+                              if (onNavigateEnterResults) onNavigateEnterResults(r.id, r.regNo);
                             }}
-                            className="btn btn-primary"
+                            className={isSigned ? "btn btn-secondary" : "btn btn-primary"}
                             style={{ padding: '4px 10px', fontSize: '12px' }}
                           >
-                            Enter results
+                            {isSigned ? 'Edit' : 'Enter results'}
                           </button>
-                        )}
+                        </div>
 
                         {/* 3-Dot Meatball Menu */}
                         <div style={{ position: 'relative' }}>
@@ -591,7 +592,10 @@ export const TodayReportsPage: React.FC<TodayReportsPageProps> = ({
                                 }}
                                 onClick={() => {
                                   setActiveMenuId(null);
-                                  onNavigateEnterResults?.();
+                                  localStorage.setItem('labsmart_active_case_id', r.id);
+                                  localStorage.setItem('labsmart_active_bill_number', r.regNo);
+                                  localStorage.setItem('labsmart_report_return_to', 'today_reports');
+                                  onNavigateEnterResults?.(r.id, r.regNo);
                                 }}
                               >
                                 Edit / Results

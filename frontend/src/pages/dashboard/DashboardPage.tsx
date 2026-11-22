@@ -167,23 +167,38 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     <div style={{ maxWidth: '1440px', margin: '0 auto', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
       {/* 0. Live Diagnostic Center Status Banner */}
       <div style={{
-        backgroundColor: '#f0f9ff',
+        background: 'linear-gradient(100deg, #f0f9ff 0%, #f8fcff 65%, #f0fdfa 100%)',
         border: '1px solid #bae6fd',
-        borderRadius: '10px',
-        padding: '12px 18px',
+        borderRadius: '12px',
+        padding: '11px 14px',
         marginBottom: '20px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '12px'
+        gap: '16px',
+        flexWrap: 'wrap'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Sparkles size={18} color="#0284c7" />
-          <div>
-            <span style={{ fontWeight: 700, color: '#0369a1', fontSize: '13px' }}>
-              Diagnostic Center Terminal Active
-            </span>
-            <span style={{ color: '#475569', fontSize: '12px', marginLeft: '6px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '11px', minWidth: 0, flex: '1 1 480px' }}>
+          <div style={{
+            width: '34px', height: '34px', borderRadius: '10px', flexShrink: 0,
+            display: 'grid', placeItems: 'center', background: '#e0f2fe', border: '1px solid #bae6fd'
+          }}>
+            <Sparkles size={17} color="#0284c7" />
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '7px' }}>
+              <span style={{ fontWeight: 750, color: '#075985', fontSize: '13px' }}>
+                Diagnostic Center Terminal
+              </span>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 7px',
+                borderRadius: '999px', background: '#dcfce7', color: '#166534', fontSize: '10px', fontWeight: 750
+              }}>
+                <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#22c55e' }} />
+                ACTIVE
+              </span>
+            </div>
+            <span style={{ display: 'block', color: '#64748b', fontSize: '12px', lineHeight: 1.45, marginTop: '2px' }}>
               • All modules (Pathology, USG, X-Ray, Billing & Masters) are fully functional and synchronized.
             </span>
           </div>

@@ -165,6 +165,10 @@ export class CaseService {
       this.generateBillNumber(),
       this.generateDailyCode(data.modality || 'LAB')
     ]);
+    const parsedCollectionTime = data.collectionTime ? new Date(data.collectionTime) : null;
+    const collectedAt = parsedCollectionTime && !Number.isNaN(parsedCollectionTime.getTime())
+      ? parsedCollectionTime
+      : null;
 
     // 5. Create Case, Items, and initial payment in transaction
     const newCase = await prisma.$transaction(async (tx) => {
@@ -176,10 +180,13 @@ export class CaseService {
           patientId: patient.id,
           doctorId,
           agentId: data.agentId || null,
+          branchId: data.branchId || 'main',
           modality: data.modality || 'LAB',
+          isUrgent: Boolean(data.isUrgent),
           reportStatus: 'Registered',
           paymentStatus,
           sampleStatus: data.modality === 'LAB' ? 'Pending' : 'Collected',
+          collectedAt,
           grossAmount,
           discountType: data.discountType || 'fixed',
           discountValue: data.discountValue || 0,
@@ -302,6 +309,7 @@ export class CaseService {
       const term = query.search.trim();
       where.OR = [
         { billNumber: { contains: term } },
+        { dailyCode: { contains: term } },
         { uhid: { contains: term } },
         { patient: { fullName: { contains: term } } },
         { patient: { mobile: { contains: term } } }

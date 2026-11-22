@@ -42,7 +42,17 @@ export class MasterController {
   static async updateTest(req: Request, res: Response, next: NextFunction) {
     try {
       const updated = await MasterService.updateTest(req.params.id as string, req.body);
-      res.status(200).json({ success: true, data: updated });
+      res.status(200).json({ success: true, data: updated, message: 'Test updated successfully' });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async linkRatelist(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { ratelist } = req.body;
+      const updated = await MasterService.linkRatelist(req.params.id as string, ratelist);
+      res.status(200).json({ success: true, data: updated, message: 'Ratelist linked successfully' });
     } catch (err) {
       next(err);
     }

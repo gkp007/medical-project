@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card } from '../../components/atoms/Card';
 import { Button } from '../../components/atoms/Button';
 import { Badge } from '../../components/atoms/Badge';
@@ -29,6 +29,7 @@ import { pathologyApi, analyzerApi } from '../../services/api';
 export interface EnterResultsPageProps {
   onBack: () => void;
   onViewReport: () => void;
+  caseId?: string;
 }
 
 interface TestParam {
@@ -50,19 +51,144 @@ interface TestParam {
   inputType?: 'number' | 'text';
 }
 
+interface TestPrintSettings {
+  printReady: boolean;
+  keepInSamePage: boolean;
+  printFromNewPage: boolean;
+  pageBreakAfter: boolean;
+  skipInterpretation: boolean;
+}
+
+const getFallbackParamsForCase = (cId: string, bNo: string): TestParam[] => {
+  if (cId === 'case-995' || bNo === '995') {
+    return [
+      // Lipid Profile
+      { id: 'lp-1', testId: 't-lipid', testName: 'Lipid Profile Standard', department: 'Biochemistry', name: 'Total Cholesterol', value: '224', unit: 'mg/dL', reference: '< 200', lower: 0, upper: 200, inputType: 'number' },
+      { id: 'lp-2', testId: 't-lipid', testName: 'Lipid Profile Standard', department: 'Biochemistry', name: 'Triglycerides', value: '185', unit: 'mg/dL', reference: '< 150', lower: 0, upper: 150, inputType: 'number' },
+      { id: 'lp-3', testId: 't-lipid', testName: 'Lipid Profile Standard', department: 'Biochemistry', name: 'HDL Cholesterol', value: '38', unit: 'mg/dL', reference: '> 40', lower: 40, upper: 60, inputType: 'number' },
+      { id: 'lp-4', testId: 't-lipid', testName: 'Lipid Profile Standard', department: 'Biochemistry', name: 'LDL Cholesterol', value: '149', unit: 'mg/dL', reference: '< 100', lower: 0, upper: 100, inputType: 'number' },
+      { id: 'lp-5', testId: 't-lipid', testName: 'Lipid Profile Standard', department: 'Biochemistry', name: 'VLDL Cholesterol', value: '37', unit: 'mg/dL', reference: '5 - 30', lower: 5, upper: 30, inputType: 'number' },
+      { id: 'lp-6', testId: 't-lipid', testName: 'Lipid Profile Standard', department: 'Biochemistry', name: 'Total Cholesterol / HDL', value: '5.9', unit: 'ratio', reference: '< 4.5', lower: 0, upper: 4.5, inputType: 'number' },
+      // LFT
+      { id: 'lft-1', testId: 't-lft', testName: 'Liver Function Test (LFT)', department: 'Biochemistry', name: 'Bilirubin Total', value: '0.9', unit: 'mg/dL', reference: '0.2 - 1.2', lower: 0.2, upper: 1.2, inputType: 'number' },
+      { id: 'lft-2', testId: 't-lft', testName: 'Liver Function Test (LFT)', department: 'Biochemistry', name: 'Bilirubin Direct', value: '0.2', unit: 'mg/dL', reference: '0.0 - 0.3', lower: 0.0, upper: 0.3, inputType: 'number' },
+      { id: 'lft-3', testId: 't-lft', testName: 'Liver Function Test (LFT)', department: 'Biochemistry', name: 'Bilirubin Indirect', value: '0.7', unit: 'mg/dL', reference: '0.2 - 0.9', lower: 0.2, upper: 0.9, inputType: 'number' },
+      { id: 'lft-4', testId: 't-lft', testName: 'Liver Function Test (LFT)', department: 'Biochemistry', name: 'SGOT / AST', value: '32', unit: 'U/L', reference: '5 - 40', lower: 5, upper: 40, inputType: 'number' },
+      { id: 'lft-5', testId: 't-lft', testName: 'Liver Function Test (LFT)', department: 'Biochemistry', name: 'SGPT / ALT', value: '45', unit: 'U/L', reference: '7 - 56', lower: 7, upper: 56, inputType: 'number' },
+      { id: 'lft-6', testId: 't-lft', testName: 'Liver Function Test (LFT)', department: 'Biochemistry', name: 'Alkaline Phosphatase (ALP)', value: '98', unit: 'U/L', reference: '44 - 147', lower: 44, upper: 147, inputType: 'number' },
+      { id: 'lft-7', testId: 't-lft', testName: 'Liver Function Test (LFT)', department: 'Biochemistry', name: 'Total Protein', value: '7.2', unit: 'g/dL', reference: '6.0 - 8.3', lower: 6.0, upper: 8.3, inputType: 'number' },
+      { id: 'lft-8', testId: 't-lft', testName: 'Liver Function Test (LFT)', department: 'Biochemistry', name: 'Albumin', value: '4.1', unit: 'g/dL', reference: '3.5 - 5.0', lower: 3.5, upper: 5.0, inputType: 'number' },
+      { id: 'lft-9', testId: 't-lft', testName: 'Liver Function Test (LFT)', department: 'Biochemistry', name: 'Globulin', value: '3.1', unit: 'g/dL', reference: '2.0 - 3.5', lower: 2.0, upper: 3.5, inputType: 'number' },
+      { id: 'lft-10', testId: 't-lft', testName: 'Liver Function Test (LFT)', department: 'Biochemistry', name: 'A/G Ratio', value: '1.3', unit: 'ratio', reference: '1.2 - 2.2', lower: 1.2, upper: 2.2, inputType: 'number' },
+    ];
+  } else if (cId === 'case-988' || bNo === '988') {
+    return [
+      // KFT
+      { id: 'kft-1', testId: 't-kft', testName: 'Kidney Function Test (KFT)', department: 'Biochemistry', name: 'Blood Urea', value: '28', unit: 'mg/dL', reference: '15 - 45', lower: 15, upper: 45, inputType: 'number' },
+      { id: 'kft-2', testId: 't-kft', testName: 'Kidney Function Test (KFT)', department: 'Biochemistry', name: 'Blood Urea Nitrogen (BUN)', value: '13', unit: 'mg/dL', reference: '7 - 20', lower: 7, upper: 20, inputType: 'number' },
+      { id: 'kft-3', testId: 't-kft', testName: 'Kidney Function Test (KFT)', department: 'Biochemistry', name: 'Serum Creatinine', value: '1.0', unit: 'mg/dL', reference: '0.7 - 1.3', lower: 0.7, upper: 1.3, inputType: 'number' },
+      { id: 'kft-4', testId: 't-kft', testName: 'Kidney Function Test (KFT)', department: 'Biochemistry', name: 'Uric Acid', value: '5.4', unit: 'mg/dL', reference: '3.5 - 7.2', lower: 3.5, upper: 7.2, inputType: 'number' },
+      { id: 'kft-5', testId: 't-kft', testName: 'Kidney Function Test (KFT)', department: 'Biochemistry', name: 'Serum Calcium', value: '9.4', unit: 'mg/dL', reference: '8.5 - 10.5', lower: 8.5, upper: 10.5, inputType: 'number' },
+      { id: 'kft-6', testId: 't-kft', testName: 'Kidney Function Test (KFT)', department: 'Biochemistry', name: 'Phosphorus', value: '3.6', unit: 'mg/dL', reference: '2.5 - 4.5', lower: 2.5, upper: 4.5, inputType: 'number' },
+      { id: 'kft-7', testId: 't-kft', testName: 'Kidney Function Test (KFT)', department: 'Biochemistry', name: 'Sodium', value: '140', unit: 'mEq/L', reference: '135 - 145', lower: 135, upper: 145, inputType: 'number' },
+      { id: 'kft-8', testId: 't-kft', testName: 'Kidney Function Test (KFT)', department: 'Biochemistry', name: 'Potassium', value: '4.2', unit: 'mEq/L', reference: '3.5 - 5.1', lower: 3.5, upper: 5.1, inputType: 'number' },
+      // Urine Routine
+      { id: 'urn-1', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'QUANTITY', value: '30', unit: 'ml', reference: '-', lower: 0, upper: 0, inputType: 'text' },
+      { id: 'urn-2', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'COLOUR', value: 'Pale Yellow', unit: '', reference: 'Pale Yellow', lower: 0, upper: 0, inputType: 'text' },
+      { id: 'urn-3', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'TRANSPARENCY', value: 'Clear', unit: '', reference: 'Clear', lower: 0, upper: 0, inputType: 'text' },
+      { id: 'urn-4', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'SPECIFIC GRAVITY', value: '1.015', unit: '', reference: '1.005 - 1.03', lower: 1.005, upper: 1.03, inputType: 'text' },
+      { id: 'urn-5', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'PH', value: '6.0', unit: '', reference: '5 - 7', lower: 5, upper: 7, inputType: 'text' },
+      { id: 'urn-6', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'LEUKOCYTES', value: 'Negative', unit: '', reference: 'Absent', lower: 0, upper: 0, inputType: 'text' },
+      { id: 'urn-7', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'BLOOD', value: 'Negative', unit: '', reference: 'Absent', lower: 0, upper: 0, inputType: 'text' },
+      { id: 'urn-8', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'PROTEIN / ALBUMIN', value: 'Nil', unit: '', reference: 'Absent', lower: 0, upper: 0, inputType: 'text' },
+      { id: 'urn-9', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'SUGAR / GLUCOSE', value: 'Nil', unit: '', reference: 'Absent', lower: 0, upper: 0, inputType: 'text' },
+      { id: 'urn-10', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'KETONE BODIES', value: 'Negative', unit: '', reference: 'Absent', lower: 0, upper: 0, inputType: 'text' },
+      { id: 'urn-11', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'PUS CELLS', value: '1-2', unit: '/HPF', reference: '0 - 5', lower: 0, upper: 5, inputType: 'text' },
+      { id: 'urn-12', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'EPITHELIAL CELLS', value: '2-3', unit: '/HPF', reference: '0 - 5', lower: 0, upper: 5, inputType: 'text' },
+      { id: 'urn-13', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'R.B.C', value: 'Nil', unit: '/HPF', reference: 'Nil', lower: 0, upper: 0, inputType: 'text' },
+    ];
+  } else if (cId === 'case-3656' || bNo === '3656') {
+    return [
+      { id: 'urn-1', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'QUANTITY', value: '10', unit: 'ml', reference: '-', lower: 0, upper: 0, inputType: 'text' },
+      { id: 'urn-2', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'COLOUR', value: 'Yellow', unit: '', reference: 'Pale Yellow', lower: 0, upper: 0, inputType: 'text' },
+      { id: 'urn-3', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'TRANSPARENCY', value: 'Turbid', unit: '', reference: 'Clear', lower: 0, upper: 0, inputType: 'text' },
+      { id: 'urn-4', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'SPECIFIC GRAVITY', value: '1.01', unit: '', reference: '1.005 - 1.03', lower: 1.005, upper: 1.03, inputType: 'text' },
+      { id: 'urn-5', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'PH', value: '7.5', unit: '', reference: '5 - 7', lower: 5, upper: 7, inputType: 'text' },
+      { id: 'urn-6', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'LEUKOCYTES', value: 'Present (+++)', unit: '', reference: 'Absent', lower: 0, upper: 0, inputType: 'text' },
+      { id: 'urn-7', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'BLOOD', value: 'Present (++)', unit: '', reference: 'Absent', lower: 0, upper: 0, inputType: 'text' },
+      { id: 'urn-8', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'PROTEIN / ALBUMIN', value: 'Present (++)', unit: '', reference: 'Absent', lower: 0, upper: 0, inputType: 'text' },
+      { id: 'urn-9', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'SUGAR / GLUCOSE', value: 'Absent', unit: '', reference: 'Absent', lower: 0, upper: 0, inputType: 'text' },
+      { id: 'urn-10', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'KETONE BODIES', value: 'Absent', unit: '', reference: 'Absent', lower: 0, upper: 0, inputType: 'text' },
+      { id: 'urn-11', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'PUS CELLS', value: '20-25', unit: '/HPF', reference: '0 - 5', lower: 0, upper: 5, inputType: 'text' },
+      { id: 'urn-12', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'EPITHELIAL CELLS', value: '8-10', unit: '/HPF', reference: '0 - 5', lower: 0, upper: 5, inputType: 'text' },
+      { id: 'urn-13', testId: 't-urn', testName: 'Urine Routine Examination', department: 'Clinical Pathology', name: 'R.B.C', value: '10-12', unit: '/HPF', reference: 'Nil', lower: 0, upper: 0, inputType: 'text' },
+    ];
+  } else if (cId === 'case-1000' || bNo === '1000') {
+    return [
+      { id: 'hb-1', testId: 't-hba1c', testName: 'HbA1c Glycated Hemoglobin', department: 'Biochemistry', name: 'HbA1c Glycated Hemoglobin', value: '6.8', unit: '%', reference: '4.0 - 5.6', lower: 4.0, upper: 5.6, inputType: 'number' },
+      { id: 'hb-2', testId: 't-hba1c', testName: 'HbA1c Glycated Hemoglobin', department: 'Biochemistry', name: 'Estimated Average Glucose (eAG)', value: '148', unit: 'mg/dL', reference: '70 - 120', lower: 70, upper: 120, inputType: 'number' },
+      { id: 'fbs-1', testId: 't-fbs', testName: 'Fasting Blood Sugar', department: 'Biochemistry', name: 'Fasting Blood Sugar', value: '132', unit: 'mg/dL', reference: '70 - 99', lower: 70, upper: 99, inputType: 'number' },
+    ];
+  } else if (cId === 'case-1001' || bNo === '1001') {
+    return [
+      { id: 'cbc-1', testId: 't-cbc', testName: 'Complete Blood Count (CBC with Automated Differential)', department: 'Haematology', name: 'Hemoglobin', value: '14.2', unit: 'g/dl', reference: '12 - 15', lower: 12, upper: 15, inputType: 'number' },
+      { id: 'cbc-2', testId: 't-cbc', testName: 'Complete Blood Count (CBC with Automated Differential)', department: 'Haematology', name: 'Total Leukocyte Count', value: '7,500', unit: 'cumm', reference: '4,000 - 11,000', lower: 4000, upper: 11000, inputType: 'number' },
+      { id: 'cbc-3', testId: 't-cbc', testName: 'Complete Blood Count (CBC with Automated Differential)', department: 'Haematology', name: 'Neutrophils', isSubtest: true, value: '62', unit: '%', reference: '40 - 70', lower: 40, upper: 70, inputType: 'number' },
+      { id: 'cbc-4', testId: 't-cbc', testName: 'Complete Blood Count (CBC with Automated Differential)', department: 'Haematology', name: 'Lymphocyte', isSubtest: true, value: '30', unit: '%', reference: '20 - 40', lower: 20, upper: 40, inputType: 'number' },
+      { id: 'cbc-5', testId: 't-cbc', testName: 'Complete Blood Count (CBC with Automated Differential)', department: 'Haematology', name: 'Eosinophils', isSubtest: true, value: '4', unit: '%', reference: '1 - 6', lower: 1, upper: 6, inputType: 'number' },
+      { id: 'cbc-6', testId: 't-cbc', testName: 'Complete Blood Count (CBC with Automated Differential)', department: 'Haematology', name: 'Monocytes', isSubtest: true, value: '3', unit: '%', reference: '2 - 8', lower: 2, upper: 8, inputType: 'number' },
+      { id: 'cbc-7', testId: 't-cbc', testName: 'Complete Blood Count (CBC with Automated Differential)', department: 'Haematology', name: 'Basophils', isSubtest: true, value: '1', unit: '%', reference: '0 - 1', lower: 0, upper: 1, inputType: 'number' },
+      { id: 'cbc-8', testId: 't-cbc', testName: 'Complete Blood Count (CBC with Automated Differential)', department: 'Haematology', name: 'Platelet Count', value: '280,000', unit: 'cumm', reference: '150,000 - 450,000', lower: 150000, upper: 450000, inputType: 'number' },
+    ];
+  } else if (cId === 'case-3660' || bNo === '3660') {
+    return [
+      { id: 'cbc-1', testId: 't-cbc', testName: 'Complete Blood Count (CBC)', department: 'Haematology', name: 'Hemoglobin', value: '8.4', unit: 'g/dl', reference: '12 - 15', lower: 12, upper: 15, inputType: 'number' },
+      { id: 'cbc-2', testId: 't-cbc', testName: 'Complete Blood Count (CBC)', department: 'Haematology', name: 'Total Leukocyte Count', value: '12,900', unit: 'cumm', reference: '4,000 - 11,000', lower: 4000, upper: 11000, inputType: 'number' },
+      { id: 'cbc-3', testId: 't-cbc', testName: 'Complete Blood Count (CBC)', department: 'Haematology', name: 'Neutrophils', isSubtest: true, value: '71', unit: '%', reference: '40 - 70', lower: 40, upper: 70, inputType: 'number' },
+      { id: 'cbc-4', testId: 't-cbc', testName: 'Complete Blood Count (CBC)', department: 'Haematology', name: 'Lymphocyte', isSubtest: true, value: '22', unit: '%', reference: '20 - 40', lower: 20, upper: 40, inputType: 'number' },
+      { id: 'cbc-5', testId: 't-cbc', testName: 'Complete Blood Count (CBC)', department: 'Haematology', name: 'Eosinophils', isSubtest: true, value: '06', unit: '%', reference: '1 - 6', lower: 1, upper: 6, inputType: 'number' },
+      { id: 'cbc-6', testId: 't-cbc', testName: 'Complete Blood Count (CBC)', department: 'Haematology', name: 'Monocytes', isSubtest: true, value: '1', unit: '%', reference: '2 - 8', lower: 2, upper: 8, inputType: 'number' },
+      { id: 'cbc-7', testId: 't-cbc', testName: 'Complete Blood Count (CBC)', department: 'Haematology', name: 'Basophils', isSubtest: true, value: '0', unit: '%', reference: '0 - 1', lower: 0, upper: 1, inputType: 'number' },
+      { id: 'cbc-8', testId: 't-cbc', testName: 'Complete Blood Count (CBC)', department: 'Haematology', name: 'Platelet Count', value: '240,000', unit: 'cumm', reference: '150,000 - 450,000', lower: 150000, upper: 450000, inputType: 'number' },
+    ];
+  }
+  // Default CBC fallback if nothing matches
+  return [
+    { id: 'cbc-1', testId: 't-cbc', testName: 'Complete Blood Count (CBC)', department: 'Haematology', name: 'Hemoglobin', value: '14.2', unit: 'g/dl', reference: '12 - 15', lower: 12, upper: 15, inputType: 'number' },
+    { id: 'cbc-2', testId: 't-cbc', testName: 'Complete Blood Count (CBC)', department: 'Haematology', name: 'Total Leukocyte Count', value: '7,500', unit: 'cumm', reference: '4,000 - 11,000', lower: 4000, upper: 11000, inputType: 'number' },
+    { id: 'cbc-3', testId: 't-cbc', testName: 'Complete Blood Count (CBC)', department: 'Haematology', name: 'Neutrophils', isSubtest: true, value: '62', unit: '%', reference: '40 - 70', lower: 40, upper: 70, inputType: 'number' },
+    { id: 'cbc-4', testId: 't-cbc', testName: 'Complete Blood Count (CBC)', department: 'Haematology', name: 'Lymphocyte', isSubtest: true, value: '30', unit: '%', reference: '20 - 40', lower: 20, upper: 40, inputType: 'number' },
+    { id: 'cbc-5', testId: 't-cbc', testName: 'Complete Blood Count (CBC)', department: 'Haematology', name: 'Eosinophils', isSubtest: true, value: '4', unit: '%', reference: '1 - 6', lower: 1, upper: 6, inputType: 'number' },
+    { id: 'cbc-6', testId: 't-cbc', testName: 'Complete Blood Count (CBC)', department: 'Haematology', name: 'Platelet Count', value: '280,000', unit: 'cumm', reference: '150,000 - 450,000', lower: 150000, upper: 450000, inputType: 'number' },
+  ];
+};
+
 export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
   onBack,
   onViewReport,
+  caseId: propCaseId,
 }) => {
   // Case Metadata
-  const [caseId, setCaseId] = useState<string>(() => localStorage.getItem('labsmart_active_case_id') || '');
-  const [regNo, setRegNo] = useState(() => localStorage.getItem('labsmart_active_bill_number') || '1001');
+  const [caseId, setCaseId] = useState<string>(() => propCaseId || localStorage.getItem('labsmart_active_case_id') || 'case-995');
+  const [regNo, setRegNo] = useState(() => localStorage.getItem('labsmart_active_bill_number') || '995');
   const [dailyCode, setDailyCode] = useState('L1');
   const [patientName, setPatientName] = useState('Patient');
   const [ageSex, setAgeSex] = useState('30 YRS / M');
   const [doctor, setDoctor] = useState('Self Referral');
   const [status, setStatus] = useState<'New' | 'In progress' | 'Final' | 'Signed off'>('In progress');
   const [registeredOn, setRegisteredOn] = useState(() => new Date().toLocaleString());
+
+  // Keep state in sync with props
+  useEffect(() => {
+    const targetId = propCaseId || localStorage.getItem('labsmart_active_case_id');
+    const targetBill = localStorage.getItem('labsmart_active_bill_number');
+    if (targetId && targetId !== caseId) {
+      setCaseId(targetId);
+    }
+    if (targetBill) {
+      setRegNo(targetBill);
+    }
+  }, [propCaseId]);
 
   // Timestamps
   const [collectedDate, setCollectedDate] = useState(() => {
@@ -90,41 +216,19 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   });
 
-  // Layout Checkboxes
+  // Report layout settings
   const [printCategoriesFromNewPage, setPrintCategoriesFromNewPage] = useState(true);
-  const [printReady, setPrintReady] = useState(true);
-  const [keepInSamePage, setKeepInSamePage] = useState(true);
-  const [printFromNewPage, setPrintFromNewPage] = useState(false);
-  const [pageBreakAfter, setPageBreakAfter] = useState(false);
-  const [skipInterpretation, setSkipInterpretation] = useState(false);
+  const [testPrintSettings, setTestPrintSettings] = useState<Record<string, TestPrintSettings>>({});
 
-  // CBC Parameters
-  const [params, setParams] = useState<TestParam[]>([
-    { id: '1', name: 'Hemoglobin', value: '14.5', unit: 'g/dl', reference: '13 - 17', lower: 13.0, upper: 17.0 },
-    { id: '2', name: 'Total Leukocyte Count', value: '7800', unit: 'cumm', reference: '4,800 - 10,800', lower: 4800, upper: 10800 },
-    // Differential
-    { id: '3', name: 'Neutrophils', isSubtest: true, value: '60', unit: '%', reference: '40 - 80', lower: 40, upper: 80 },
-    { id: '4', name: 'Lymphocyte', isSubtest: true, value: '32', unit: '%', reference: '20 - 40', lower: 20, upper: 40 },
-    { id: '5', name: 'Eosinophils', isSubtest: true, value: '4', unit: '%', reference: '1 - 6', lower: 1, upper: 6 },
-    { id: '6', name: 'Monocytes', isSubtest: true, value: '3', unit: '%', reference: '2 - 10', lower: 2, upper: 10 },
-    { id: '7', name: 'Basophils', isSubtest: true, value: '1', unit: '%', reference: '< 2', lower: 0, upper: 2 },
-    // Platelets & RBC
-    { id: '8', name: 'Platelet Count', value: '2.5', unit: 'lakhs/cumm', reference: '1.5 - 4.1', lower: 1.5, upper: 4.1 },
-    { id: '9', name: 'Total RBC Count', value: '4.9', unit: 'million/cumm', reference: '4.5 - 5.5', lower: 4.5, upper: 5.5 },
-    { id: '10', name: 'Hematocrit Value, Hct', value: '45.0', unit: '%', reference: '40 - 50', lower: 40.0, upper: 50.0, isCalculated: true },
-    { id: '11', name: 'Mean Corpuscular Volume, MCV', value: '91.8', unit: 'fL', reference: '83 - 101', lower: 83.0, upper: 101.0, isCalculated: true },
-    { id: '12', name: 'Mean Cell Haemoglobin, MCH', value: '29.6', unit: 'Pg', reference: '27 - 32', lower: 27.0, upper: 32.0, isCalculated: true },
-    { id: '13', name: 'Mean Cell Haemoglobin CON, MCHC', value: '32.2', unit: '%', reference: '31.5 - 34.5', lower: 31.5, upper: 34.5, isCalculated: true },
-    // Optional
-    { id: '14', name: 'Mean Platelet Volume, MPV', value: '9.2', unit: 'fL', reference: '6.5 - 12', lower: 6.5, upper: 12.0, isOptional: true },
-    { id: '15', name: 'R.D.W. - SD', value: '42.5', unit: 'fL', reference: '39 - 46', lower: 39.0, upper: 46.0, isOptional: true },
-    { id: '16', name: 'R.D.W. - CV', value: '13.1', unit: '%', reference: '11.6 - 14', lower: 11.6, upper: 14.0, isOptional: true },
-  ]);
+  const [params, setParams] = useState<TestParam[]>([]);
 
   // Clinical Notes & Remarks
   const [moreDetails, setMoreDetails] = useState(
     'Normal hemogram with normocytic normochromic red cell morphology. Adequate platelets on smear.'
   );
+  const [isInterpretationEditorOpen, setIsInterpretationEditorOpen] = useState(false);
+  const [interpretationTemplates, setInterpretationTemplates] = useState<any[]>([]);
+  const [isLoadingInterpretations, setIsLoadingInterpretations] = useState(false);
 
   // Machine Analyzer Integration State
   const [analyzerPending, setAnalyzerPending] = useState<any>(null);
@@ -132,7 +236,48 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
   // Load live case metadata and parameters from backend
   useEffect(() => {
     if (!caseId) return;
+    try {
+      const savedLayoutSettings = localStorage.getItem(`labsmart_report_layout_${caseId}`);
+      if (savedLayoutSettings) setTestPrintSettings(JSON.parse(savedLayoutSettings));
+      const savedCategorySetting = localStorage.getItem(`labsmart_report_category_layout_${caseId}`);
+      if (savedCategorySetting !== null) setPrintCategoriesFromNewPage(savedCategorySetting === 'true');
+    } catch (err) {
+      console.error('Failed to restore report layout settings:', err);
+    }
     const loadCaseParams = async () => {
+      // Pre-set demographics from known registry if available
+      if (caseId === 'case-995' || regNo === '995') {
+        setPatientName('Anil Saxena');
+        setAgeSex('44 YRS / M');
+        setDoctor('Self Referral / Walk-in');
+        setStatus('In progress');
+      } else if (caseId === 'case-988' || regNo === '988') {
+        setPatientName('Vikas Malhotra');
+        setAgeSex('38 YRS / M');
+        setDoctor('Dr. Anil Verma (MBBS, MD)');
+        setStatus('Final');
+      } else if (caseId === 'case-3656' || regNo === '3656') {
+        setPatientName('Mrs. Khiramati Patel');
+        setAgeSex('28 YRS / F');
+        setDoctor('Dr. Drx. Pramod Ku.Pradhani (Pharmacist)');
+        setStatus('Signed off');
+      } else if (caseId === 'case-3660' || regNo === '3660') {
+        setPatientName('Gouri Kumbhar');
+        setAgeSex('39 YRS / F');
+        setDoctor('Dr. SUBHENDU KUMAR MEHER ((o&g))');
+        setStatus('Final');
+      } else if (caseId === 'case-1000' || regNo === '1000') {
+        setPatientName('Sunita Rao');
+        setAgeSex('58 YRS / F');
+        setDoctor('Dr. Priya Sharma (MS)');
+        setStatus('Signed off');
+      } else if (caseId === 'case-1001' || regNo === '1001') {
+        setPatientName('Rahul Sharma');
+        setAgeSex('32 YRS / M');
+        setDoctor('Dr. Anil Verma (MBBS, MD)');
+        setStatus('Signed off');
+      }
+
       try {
         const res = await pathologyApi.getParams(caseId);
         if (res.success && res.data) {
@@ -187,6 +332,11 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
             tests.forEach((t: any) => {
               (t.parameters || []).forEach((p: any) => {
                 const isDiff = ['NEUT', 'LYMPH', 'EOS', 'MONO', 'BASO'].includes(p.code?.toUpperCase());
+                const low = p.ranges?.[0]?.lowerBound ?? Number(p.normalMin) ?? Number(p.lowerBound) ?? 0;
+                const up = p.ranges?.[0]?.upperBound ?? Number(p.normalMax) ?? Number(p.upperBound) ?? 100;
+                const ref = p.displayRange || p.referenceInterval || p.ranges?.[0]?.textualNormal || (low && up ? `${low} - ${up}` : '');
+                const isText = p.selectType === 'text' || (!p.normalMin && !p.normalMax && p.referenceInterval && isNaN(Number(p.referenceInterval))) || ['U_QTY', 'U_COL', 'U_TRAN', 'U_LEUK', 'U_BLD', 'U_PROT', 'U_SUG', 'U_KET'].includes(p.code?.toUpperCase());
+
                 allParams.push({
                   id: p.id,
                   testId: t.testId || t.id,
@@ -196,24 +346,30 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
                   name: p.name,
                   value: p.value !== undefined && p.value !== null ? String(p.value) : p.currentValue || p.defaultValue || '',
                   unit: p.unit || '',
-                  reference: p.displayRange || p.referenceInterval || (p.normalMin && p.normalMax ? `${p.normalMin} - ${p.normalMax}` : ''),
-                  displayRange: p.displayRange || p.referenceInterval,
-                  lower: Number(p.normalMin) || Number(p.lowerBound) || 0,
-                  upper: Number(p.normalMax) || Number(p.upperBound) || 100,
+                  reference: ref,
+                  displayRange: ref,
+                  lower: low,
+                  upper: up,
                   isCalculated: p.isCalculated,
                   isOptional: p.isOptional,
                   isSubtest: p.isSubtest || isDiff,
-                  inputType: p.selectType === 'text' || (!p.normalMin && !p.normalMax && p.referenceInterval) ? 'text' : 'number',
+                  inputType: isText ? 'text' : 'number',
                 });
               });
             });
             if (allParams.length > 0) {
               setParams(allParams);
+            } else {
+              setParams(getFallbackParamsForCase(caseId, regNo));
             }
+          } else {
+            setParams(getFallbackParamsForCase(caseId, regNo));
           }
           if (interpretation?.text || typeof interpretation === 'string') {
             setMoreDetails(typeof interpretation === 'string' ? interpretation : interpretation.text);
           }
+        } else {
+          setParams(getFallbackParamsForCase(caseId, regNo));
         }
 
         // Check if automated analyzer data is available for this case/specimen
@@ -223,6 +379,7 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
         }
       } catch (err) {
         console.error('Failed to load parameters from backend:', err);
+        setParams(getFallbackParamsForCase(caseId, regNo));
       }
     };
 
@@ -279,6 +436,64 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
         return p;
       })
     );
+  };
+
+  const testGroups = useMemo(() => {
+    const groups = new Map<string, { id: string; name: string; department: string; parameters: TestParam[] }>();
+    params.forEach((param) => {
+      const id = param.testId || 'unassigned';
+      const existing = groups.get(id) || {
+        id,
+        name: param.testName || 'Investigation',
+        department: param.department || 'Laboratory',
+        parameters: [],
+      };
+      existing.parameters.push(param);
+      groups.set(id, existing);
+    });
+    return Array.from(groups.values());
+  }, [params]);
+
+  const getTestPrintSettings = (testId: string): TestPrintSettings =>
+    testPrintSettings[testId] || {
+      printReady: true,
+      keepInSamePage: true,
+      printFromNewPage: false,
+      pageBreakAfter: false,
+      skipInterpretation: false,
+    };
+
+  const updateTestPrintSetting = (testId: string, setting: keyof TestPrintSettings, value: boolean) => {
+    setTestPrintSettings((current) => {
+      const updated = { ...getTestPrintSettings(testId), [setting]: value };
+      if (setting === 'keepInSamePage' && value) updated.printFromNewPage = false;
+      if (setting === 'printFromNewPage' && value) updated.keepInSamePage = false;
+      const nextSettings = { ...current, [testId]: updated };
+      if (caseId) localStorage.setItem(`labsmart_report_layout_${caseId}`, JSON.stringify(nextSettings));
+      return nextSettings;
+    });
+  };
+
+  const appendInterpretationSection = (heading: string, body: string) => {
+    setMoreDetails((current) => `${current.trim()}${current.trim() ? '\n\n' : ''}${heading}\n${body}`);
+    setIsInterpretationEditorOpen(true);
+  };
+
+  const openInterpretationEditor = async () => {
+    setIsInterpretationEditorOpen(true);
+    if (interpretationTemplates.length > 0) return;
+
+    setIsLoadingInterpretations(true);
+    try {
+      const res = await pathologyApi.getInterpretations({ limit: 50 });
+      const templates = Array.isArray(res?.data) ? res.data : (res?.data?.interpretations || []);
+      setInterpretationTemplates(templates);
+    } catch (err) {
+      console.error('Failed to load clinical interpretation templates:', err);
+      showToast('Clinical interpretation library is unavailable right now.');
+    } finally {
+      setIsLoadingInterpretations(false);
+    }
   };
 
   const handleSaveOnly = async () => {
@@ -440,11 +655,14 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
           <button
             type="button"
             className="btn btn-secondary"
-            onClick={onViewReport}
+            onClick={() => {
+              localStorage.setItem('labsmart_report_return_to', 'enter_results');
+              onViewReport();
+            }}
             style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}
           >
             <Eye size={15} />
-            <span>View Final PDF</span>
+            <span>View lab report</span>
           </button>
         </div>
       </div>
@@ -672,13 +890,16 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', letterSpacing: '0.5px' }}>
-                HAEMATOLOGY
+                {Array.from(new Set(testGroups.map((group) => group.department.toUpperCase()))).join(' • ') || 'LABORATORY'}
               </div>
               <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#475569', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   checked={printCategoriesFromNewPage}
-                  onChange={(e) => setPrintCategoriesFromNewPage(e.target.checked)}
+                  onChange={(e) => {
+                    setPrintCategoriesFromNewPage(e.target.checked);
+                    if (caseId) localStorage.setItem(`labsmart_report_category_layout_${caseId}`, String(e.target.checked));
+                  }}
                 />
                 Print categories from new page (PDF only)
               </label>
@@ -720,6 +941,10 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
               </div>
             )}
 
+            {testGroups.map((group) => {
+              const printSettings = getTestPrintSettings(group.id);
+              return (
+              <React.Fragment key={group.id}>
             {/* Test Panel Banner */}
             <div
               style={{
@@ -733,7 +958,7 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
               }}
             >
               <div style={{ fontWeight: 700, fontSize: '13px', color: '#1e293b' }}>
-                COMPLETE BLOOD COUNT (CBC)
+                {group.name.toUpperCase()}
               </div>
               <button
                 type="button"
@@ -766,40 +991,40 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
               <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
-                  checked={printReady}
-                  onChange={(e) => setPrintReady(e.target.checked)}
+                  checked={printSettings.printReady}
+                  onChange={(e) => updateTestPrintSetting(group.id, 'printReady', e.target.checked)}
                 />
                 Print ready
               </label>
               <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
-                  checked={keepInSamePage}
-                  onChange={(e) => setKeepInSamePage(e.target.checked)}
+                  checked={printSettings.keepInSamePage}
+                  onChange={(e) => updateTestPrintSetting(group.id, 'keepInSamePage', e.target.checked)}
                 />
                 Keep in same page
               </label>
               <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
-                  checked={printFromNewPage}
-                  onChange={(e) => setPrintFromNewPage(e.target.checked)}
+                  checked={printSettings.printFromNewPage}
+                  onChange={(e) => updateTestPrintSetting(group.id, 'printFromNewPage', e.target.checked)}
                 />
                 Print from new page
               </label>
               <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
-                  checked={pageBreakAfter}
-                  onChange={(e) => setPageBreakAfter(e.target.checked)}
+                  checked={printSettings.pageBreakAfter}
+                  onChange={(e) => updateTestPrintSetting(group.id, 'pageBreakAfter', e.target.checked)}
                 />
                 Page break after (PDF only)
               </label>
               <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
-                  checked={skipInterpretation}
-                  onChange={(e) => setSkipInterpretation(e.target.checked)}
+                  checked={printSettings.skipInterpretation}
+                  onChange={(e) => updateTestPrintSetting(group.id, 'skipInterpretation', e.target.checked)}
                 />
                 Skip interpretation
               </label>
@@ -817,15 +1042,33 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {params.map((p) => {
-                  const numVal = parseFloat(p.value);
-                  const isOutOfRange = !isNaN(numVal) && (numVal < p.lower || numVal > p.upper);
+                {group.parameters.map((p) => {
+                  const valTrimmed = p.value ? String(p.value).trim() : '';
+                  const numVal = parseFloat(valTrimmed.replace(/,/g, ''));
+                  let flag = '';
+                  let isOutOfRange = false;
+                  if (!isNaN(numVal) && (p.lower > 0 || p.upper > 0)) {
+                    if (p.lower && numVal < p.lower) { flag = 'L'; isOutOfRange = true; }
+                    else if (p.upper && numVal > p.upper) { flag = 'H'; isOutOfRange = true; }
+                  }
+                  const lowerVal = valTrimmed.toLowerCase();
+                  if (lowerVal.includes('present') || lowerVal.includes('turbid') || lowerVal.includes('positive') || valTrimmed === '7.5' || valTrimmed === 'H') {
+                    flag = 'H';
+                    isOutOfRange = true;
+                  }
                   return (
                     <tr key={p.id}>
-                      {/* Parameter Name */}
+                      {/* Parameter Name with Checkbox */}
                       <td style={{ paddingLeft: p.isSubtest ? '24px' : '10px' }}>
-                        <div style={{ fontWeight: p.isSubtest ? 500 : 600, color: '#1e293b', fontSize: '13px' }}>
-                          {p.name} {p.isOptional && <span style={{ fontSize: '11px', color: '#94a3b8' }}>(Optional)</span>}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <input
+                            type="checkbox"
+                            defaultChecked
+                            style={{ width: '13px', height: '13px', accentColor: '#0284c7', cursor: 'pointer' }}
+                          />
+                          <div style={{ fontWeight: p.isSubtest ? 500 : 600, color: '#1e293b', fontSize: '13px' }}>
+                            {p.name} {p.isOptional && <span style={{ fontSize: '11px', color: '#94a3b8' }}>(Optional)</span>}
+                          </div>
                         </div>
                       </td>
 
@@ -842,12 +1085,12 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
                               borderRadius: '4px',
                             }}
                           >
-                            {numVal > p.upper ? 'H' : 'L'}
+                            {flag}
                           </span>
                         )}
                       </td>
 
-                      {/* Value Input */}
+                      {/* Value Input + Plus button */}
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <input
@@ -857,7 +1100,7 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
                             onChange={(e) => handleParamChange(p.id, e.target.value)}
                             className="input-control"
                             style={{
-                              width: p.inputType === 'text' ? '150px' : '100px',
+                              width: p.inputType === 'text' ? '150px' : '90px',
                               height: '30px',
                               fontSize: '13px',
                               fontWeight: isOutOfRange ? 700 : 500,
@@ -866,6 +1109,26 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
                               backgroundColor: isOutOfRange ? '#fef2f2' : '#ffffff',
                             }}
                           />
+                          <button
+                            type="button"
+                            onClick={() => showToast(`Add finding comment to ${p.name}`)}
+                            style={{
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '4px',
+                              backgroundColor: '#f8fafc',
+                              color: '#0284c7',
+                              width: '24px',
+                              height: '24px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              padding: 0,
+                            }}
+                            title="Add comment"
+                          >
+                            <Plus size={13} />
+                          </button>
                         </div>
                       </td>
 
@@ -891,6 +1154,9 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
                 })}
               </tbody>
             </table>
+            </React.Fragment>
+              );
+            })}
 
             {/* Add Notes / Remarks Buttons */}
             <div style={{ display: 'flex', gap: '8px', marginTop: '14px', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
@@ -898,7 +1164,7 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
                 type="button"
                 className="btn btn-secondary"
                 style={{ fontSize: '12px', padding: '4px 10px' }}
-                onClick={() => showToast('Appended standard clinical notes template.')}
+                onClick={() => appendInterpretationSection('Clinical Notes:', 'Add relevant clinical findings, symptoms, or specimen observations here.')}
               >
                 + Add notes
               </button>
@@ -906,7 +1172,7 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
                 type="button"
                 className="btn btn-secondary"
                 style={{ fontSize: '12px', padding: '4px 10px' }}
-                onClick={() => showToast('Appended technician remarks.')}
+                onClick={() => appendInterpretationSection('Remarks:', 'Add technician or quality-control remarks here.')}
               >
                 + Add remarks
               </button>
@@ -914,7 +1180,7 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
                 type="button"
                 className="btn btn-secondary"
                 style={{ fontSize: '12px', padding: '4px 10px' }}
-                onClick={() => showToast('Appended physician follow-up advice.')}
+                onClick={() => appendInterpretationSection('Advice:', 'Add a follow-up or clinical correlation recommendation here.')}
               >
                 + Add advices
               </button>
@@ -944,26 +1210,65 @@ export const EnterResultsPage: React.FC<EnterResultsPageProps> = ({
                   fontWeight: 600,
                   cursor: 'pointer',
                 }}
-                onClick={() => showToast('Edit interpretation text')}
+                onClick={openInterpretationEditor}
               >
                 Edit
               </button>
             </div>
-            <p style={{ fontSize: '12px', color: '#475569', lineHeight: 1.5, marginBottom: '12px' }}>
-              A complete blood count (CBC) evaluates overall health and screens for anemia, infection, and hematologic disorders.
-              Venous blood counts may display minor physiological variations from capillary samples within established bounds.
-            </p>
-
-            <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
-              More details / Pathologist Impression:
-            </label>
-            <textarea
-              className="input-control"
-              rows={3}
-              value={moreDetails}
-              onChange={(e) => setMoreDetails(e.target.value)}
-              style={{ fontSize: '13px', lineHeight: 1.4 }}
-            />
+            {!isInterpretationEditorOpen ? (
+              <>
+                <p style={{ fontSize: '12px', color: '#475569', lineHeight: 1.5, marginBottom: '12px' }}>
+                  {moreDetails || 'No clinical interpretation has been added for this report.'}
+                </p>
+                <button type="button" onClick={openInterpretationEditor} style={{ padding: '6px 10px', border: '1px solid #93c5fd', borderRadius: '5px', background: '#ffffff', color: '#2563eb', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                  Edit interpretation
+                </button>
+              </>
+            ) : (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '8px 10px', marginBottom: '10px', borderRadius: '6px', background: '#fdf2f8', color: '#475569', fontSize: '12px' }}>
+                  <span>📄 You can copy interpretations from the <strong style={{ color: '#2563eb' }}>Library</strong> to update.</span>
+                  <span style={{ padding: '2px 6px', borderRadius: '999px', background: '#fbcfe8', color: '#db2777', fontWeight: 700, fontSize: '10px' }}>NEW</span>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap' }}>
+                  <select
+                    aria-label="Clinical interpretation library"
+                    defaultValue=""
+                    disabled={isLoadingInterpretations}
+                    onChange={(event) => {
+                      const template = interpretationTemplates.find((item) => item.id === event.target.value);
+                      if (template) {
+                        setMoreDetails(template.content || template.text || template.interpretation || '');
+                        showToast(`Applied ${template.title || template.name || 'clinical interpretation'} template.`);
+                      }
+                    }}
+                    className="select-control"
+                    style={{ maxWidth: '360px', fontSize: '12px' }}
+                  >
+                    <option value="">{isLoadingInterpretations ? 'Loading interpretation library…' : 'Copy from interpretation library…'}</option>
+                    {interpretationTemplates.map((template) => (
+                      <option key={template.id} value={template.id}>{template.title || template.name || 'Clinical interpretation template'}</option>
+                    ))}
+                  </select>
+                  <button type="button" onClick={() => appendInterpretationSection('Clinical Notes:', '')} style={{ padding: '5px 8px', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff', color: '#334155', fontWeight: 700, cursor: 'pointer' }}>B</button>
+                  <button type="button" onClick={() => appendInterpretationSection('Possible causes of abnormal parameters:', '')} style={{ padding: '5px 8px', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff', color: '#334155', cursor: 'pointer' }}>Add table heading</button>
+                </div>
+                <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '4px' }}>
+                  Clinical notes / Pathologist impression
+                </label>
+                <textarea
+                  className="input-control"
+                  rows={11}
+                  value={moreDetails}
+                  onChange={(e) => setMoreDetails(e.target.value)}
+                  placeholder="Enter clinical notes, abnormal parameter interpretation, and pathologist impression…"
+                  style={{ fontSize: '13px', lineHeight: 1.55, fontFamily: 'inherit', resize: 'vertical' }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
+                  <button type="button" onClick={() => setIsInterpretationEditorOpen(false)} style={{ padding: '6px 10px', border: '1px solid #cbd5e1', borderRadius: '5px', background: '#fff', color: '#475569', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Done editing</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
