@@ -18,7 +18,7 @@ import {
   BarChart2,
   Barcode,
 } from 'lucide-react';
-import { pathologyApi } from '../../services/api';
+import { casesApi, pathologyApi } from '../../services/api';
 
 export interface TodayReportItem {
   id: string;
@@ -52,7 +52,7 @@ export const TodayReportsPage: React.FC<TodayReportsPageProps> = ({
   onNavigateSearchReports,
   onNavigateTestCounts,
 }) => {
-  const [currentDate, setCurrentDate] = useState(() => new Date().toLocaleDateString());
+  const [currentDate, setCurrentDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [sortBy, setSortBy] = useState<'Oldest first' | 'Recent first'>('Oldest first');
   const [activeStatusTab, setActiveStatusTab] = useState<'All' | 'New' | 'In progress' | 'Final' | 'Signed off'>('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -60,10 +60,9 @@ export const TodayReportsPage: React.FC<TodayReportsPageProps> = ({
   const [reports, setReports] = useState<TodayReportItem[]>([]);
 
   // Load live pathology worklist from backend API
-  useEffect(() => {
-    const fetchWorklist = async () => {
+  const fetchWorklist = async (date = currentDate) => {
       try {
-        const res = await pathologyApi.getWorklist();
+        const res = await pathologyApi.getWorklist({ date });
         if (res.success && res.data?.cases) {
           const mapped: TodayReportItem[] = res.data.cases.map((c: any) => {
             const rawDate = c.registeredAt || c.createdAt || Date.now();
@@ -90,11 +89,11 @@ export const TodayReportsPage: React.FC<TodayReportsPageProps> = ({
         }
       } catch (err) {
         console.error('Failed to load pathology worklist:', err);
+        setReports([]);
       }
-    };
+  };
 
-    fetchWorklist();
-  }, []);
+  useEffect(() => { fetchWorklist(); }, [currentDate]);
 
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [barcodeModalItem, setBarcodeModalItem] = useState<TodayReportItem | null>(null);
@@ -107,21 +106,33 @@ export const TodayReportsPage: React.FC<TodayReportsPageProps> = ({
   };
 
   const handleStepDay = (direction: 'prev' | 'next') => {
-    showToast(`Navigated to ${direction === 'prev' ? 'previous' : 'next'} day.`);
+    const date = new Date(`${currentDate}T00:00:00`);
+    date.setDate(date.getDate() + (direction === 'prev' ? -1 : 1));
+    setCurrentDate(date.toISOString().slice(0, 10));
   };
 
-  const handleConfirmCancel = () => {
+  const handleConfirmCancel = async () => {
     if (!cancelModalItem) return;
-    setReports((prev) => prev.filter((r) => r.id !== cancelModalItem.id));
-    showToast(`Cancelled lab report #${cancelModalItem.regNo} (${cancelModalItem.patientName})`);
-    setCancelModalItem(null);
+    try {
+      const response = await casesApi.cancelCase(cancelModalItem.id, 'Cancelled from today reports');
+      if (!response.success) throw new Error(response.message || 'Unable to cancel report');
+      setReports((prev) => prev.filter((r) => r.id !== cancelModalItem.id));
+      showToast(`Cancelled lab report #${cancelModalItem.regNo} (${cancelModalItem.patientName})`);
+      setCancelModalItem(null);
+    } catch (error: any) { showToast(error?.message || 'Unable to cancel this report.'); }
   };
 
-  const handleTogglePrint = (id: string) => {
+  const handleTogglePrint = async (id: string) => {
+    const current = reports.find((report) => report.id === id);
+    if (!current) return;
+    try {
+      const response = await casesApi.updatePrintedStatus(id, !current.isPrinted);
+      if (!response.success) throw new Error(response.message || 'Unable to update print status');
     setReports((prev) =>
       prev.map((r) => (r.id === id ? { ...r, isPrinted: !r.isPrinted } : r))
     );
     showToast('Updated report printed status');
+    } catch (error: any) { showToast(error?.message || 'Unable to update report print status.'); }
   };
 
   // Filter and Sort Logic
@@ -274,7 +285,7 @@ export const TodayReportsPage: React.FC<TodayReportsPageProps> = ({
               color: '#334155',
             }}
           >
-            {currentDate}
+            {new Date(`${currentDate}T00:00:00`).toLocaleDateString('en-GB')}
           </div>
           <button
             type="button"

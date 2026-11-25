@@ -82,16 +82,19 @@ export class PatientService {
   }
 
   static async createPatient(data: any) {
+    const cleanMobile = String(data.mobile || '').trim();
     // Check if patient with same mobile and exact name already exists
-    const existing = await prisma.patient.findFirst({
-      where: {
-        mobile: data.mobile,
-        fullName: { equals: data.fullName }
-      }
-    });
+    if (cleanMobile.length >= 10) {
+      const existing = await prisma.patient.findFirst({
+        where: {
+          mobile: cleanMobile,
+          fullName: { equals: data.fullName }
+        }
+      });
 
-    if (existing) {
-      return existing;
+      if (existing) {
+        return existing;
+      }
     }
 
     const uhid = await this.generateUHID();
@@ -118,7 +121,7 @@ export class PatientService {
         ageDays,
         ageUnit: primaryUnit,
         gender: data.gender || 'Male',
-        mobile: data.mobile,
+        mobile: cleanMobile || '',
         email: data.email || null,
         address: data.address || null,
         aadhaar: data.aadhaar || null,

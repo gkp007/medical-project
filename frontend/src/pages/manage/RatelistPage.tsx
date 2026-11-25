@@ -102,13 +102,10 @@ export const RatelistPage: React.FC = () => {
             department: t.department || 'Haematology',
             fee: Number(t.rate) || 50,
             revenueShare: Number(t.b2bRate) || Math.round((Number(t.rate) || 50) * 0.2),
-            forGender: 'Both',
-            status: t.isDeleted ? 'inactive' : 'active',
+            forGender: t.ratelistGender || 'Both',
+            status: t.isActiveInRatelist === false || t.isDeleted ? 'inactive' : 'active',
           }));
-          // Merge with default list to ensure all common tests are present
-          const existingCodes = new Set(mapped.map((m) => m.code.toLowerCase()));
-          const extraDefaults = DEFAULT_RATELIST.filter((d) => !existingCodes.has(d.code.toLowerCase()));
-          setEntries([...mapped, ...extraDefaults]);
+          setEntries(mapped);
         }
       } catch (err) {
         console.error('Failed to load tests for ratelist:', err);
@@ -138,45 +135,50 @@ export const RatelistPage: React.FC = () => {
     } catch {}
   };
 
-  const handleUpdateGender = (id: string, gender: 'Both' | 'Male' | 'Female' | 'Other') => {
+  const handleUpdateGender = async (id: string, gender: 'Both' | 'Male' | 'Female' | 'Other') => {
     setEntries((prev) =>
       prev.map((e) => (e.id === id ? { ...e, forGender: gender } : e))
     );
-    showToast('Updated gender applicability.');
+    try { await mastersApi.updateTest(id, { ratelistGender: gender }); showToast('Updated gender applicability.'); }
+    catch (error: any) { showToast(error?.message || 'Unable to save gender applicability.'); }
   };
 
-  const handleToggleStatus = (id: string) => {
+  const handleToggleStatus = async (id: string) => {
+    const entry = entries.find((value) => value.id === id);
+    if (!entry) return;
+    const nextStatus = entry.status === 'active' ? 'inactive' : 'active';
     setEntries((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, status: e.status === 'active' ? 'inactive' : 'active' } : e))
+      prev.map((e) => (e.id === id ? { ...e, status: nextStatus } : e))
     );
-    showToast('Entry status toggled.');
+    try { await mastersApi.updateTest(id, { isActiveInRatelist: nextStatus === 'active' }); showToast('Entry status updated.'); }
+    catch (error: any) { showToast(error?.message || 'Unable to update ratelist status.'); }
   };
 
   // Bulk update revenue share by percentage
-  const handleApplyBulkPercentage = () => {
+  const handleApplyBulkPercentage = async () => {
     const pct = parseFloat(bulkPercent);
     if (isNaN(pct) || pct <= 0 || pct > 100) {
       showToast('Please enter a valid percentage between 1 and 100');
       return;
     }
-    setEntries((prev) =>
-      prev.map((e) => ({
+    const updates = entries.map((e) => ({ id: e.id, revenueShare: Math.round((e.fee * pct) / 100) }));
+    setEntries((prev) => prev.map((e) => ({
         ...e,
-        revenueShare: Math.round((e.fee * pct) / 100),
-      }))
-    );
-    showToast(`Bulk updated doctor revenue share to ${pct}% for all entries!`);
+        revenueShare: updates.find((update) => update.id === e.id)?.revenueShare ?? e.revenueShare,
+      })));
+    try { await Promise.all(updates.map((update) => mastersApi.updateTest(update.id, { b2bRate: update.revenueShare }))); showToast(`Bulk updated doctor revenue share to ${pct}% for all entries!`); }
+    catch (error: any) { showToast(error?.message || 'Some ratelist entries could not be updated.'); }
     setBulkPercent('');
   };
 
   // Add new item to ratelist
-  const handleCreateEntry = () => {
+  const handleCreateEntry = async () => {
     if (!newName.trim()) {
       showToast('Please enter an investigation or package name');
       return;
     }
     const newEntry: RatelistEntry = {
-      id: `custom_${Date.now()}`,
+      id: '',
       name: newName.trim(),
       code: newCode.trim().toUpperCase() || newName.substring(0, 4).toUpperCase(),
       entryType: newType,
@@ -185,7 +187,12 @@ export const RatelistPage: React.FC = () => {
       forGender: newGender,
       status: 'active',
     };
-    setEntries([newEntry, ...entries]);
+    try {
+      const response = await mastersApi.createTest({ code: newEntry.code, name: newEntry.name, department: 'Miscellaneous', testType: newType === 'Panel' ? 'Multiple parameters' : 'Single parameter', rate: newEntry.fee, b2bRate: newEntry.revenueShare, ratelistGender: newEntry.forGender, parameters: [{ name: newEntry.name, unit: '', inputType: 'Single Line', order: 1 }] });
+      if (!response.success) throw new Error(response.message || 'Unable to create ratelist entry');
+      newEntry.id = response.data.id;
+      setEntries([newEntry, ...entries]);
+    } catch (error: any) { showToast(error?.message || 'Unable to create ratelist entry.'); return; }
     setIsNewModalOpen(false);
     setNewName('');
     setNewCode('');

@@ -22,6 +22,7 @@ import {
   PANELS_LIBRARY_DATA,
 } from './interpretationsLibraryData';
 import { RichInterpretationEditor } from './RichInterpretationEditor';
+import { pathologyApi } from '../../services/api';
 
 export type { LibraryItem } from './interpretationsLibraryData';
 export { TESTS_LIBRARY_DATA, PANELS_LIBRARY_DATA } from './interpretationsLibraryData';
@@ -44,6 +45,7 @@ export const InterpretationsLibraryPage: React.FC<InterpretationsLibraryPageProp
   const [modalText, setModalText] = useState('');
   const [copiedSuccess, setCopiedSuccess] = useState(false);
   const [savedToMySuccess, setSavedToMySuccess] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
   const [viewMode, setViewMode] = useState<'formatted' | 'raw'>('formatted');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -75,34 +77,44 @@ export const InterpretationsLibraryPage: React.FC<InterpretationsLibraryPageProp
     setTimeout(() => setCopiedSuccess(false), 2200);
   };
 
-  const handleSaveToMyInterpretations = (item: LibraryItem) => {
+  const handleSaveToMyInterpretations = async (item: LibraryItem) => {
     try {
-      const stored = localStorage.getItem('my_interpretations');
-      const existingList = stored ? JSON.parse(stored) : [];
-      const alreadyExists = existingList.some((i: any) => i.name === item.name);
-
+      const existing = await pathologyApi.getInterpretations({ search: item.name });
+      const alreadyExists = Array.isArray(existing.data) && existing.data.some((value: any) => value.title?.toLowerCase() === item.name.toLowerCase());
       if (!alreadyExists) {
-        const newItem = {
-          id: `custom-${Date.now()}`,
-          sNo: existingList.length + 1,
-          name: item.name,
-          type: item.type,
-          physiologicalBasis: item.rawText,
-          increasedIn: '',
-          decreasedIn: '',
-          comments: item.rawText,
-          htmlContent: item.htmlContent,
-        };
-        existingList.push(newItem);
-        localStorage.setItem('my_interpretations', JSON.stringify(existingList));
+        const response = await pathologyApi.createInterpretation({
+          title: item.name,
+          testCode: item.type === 'panel' ? `PANEL-${item.id}` : `LIBRARY-${item.id}`,
+          department: item.type === 'panel' ? 'Panel' : item.category || 'Biochemistry',
+          content: modalHtml || item.htmlContent || item.rawText,
+        });
+        if (!response.success) throw new Error(response.message || 'Unable to save interpretation');
       }
-
       setSavedToMySuccess(true);
       showToast(`Added "${item.name}" to My Interpretations!`);
       setTimeout(() => setSavedToMySuccess(false), 2500);
-    } catch (e) {
-      showToast(`Saved "${item.name}" locally.`);
+    } catch (error: any) {
+      setAutoSaveStatus('error');
+      showToast(error?.message || `Unable to save "${item.name}" to the server.`);
     }
+  };
+
+  const getSavedLibraryEdit = (item: LibraryItem) => {
+    try {
+      const savedEdits = JSON.parse(localStorage.getItem('interpretation_library_edits') || '{}');
+      return savedEdits[item.id] as { html: string; text: string } | undefined;
+    } catch {
+      return undefined;
+    }
+  };
+
+  const handleEditorChange = (html: string, text: string) => {
+    setModalHtml(html);
+    setModalText(text);
+
+    if (!selectedItem) return;
+
+    setAutoSaveStatus('idle');
   };
 
   return (
@@ -452,11 +464,13 @@ export const InterpretationsLibraryPage: React.FC<InterpretationsLibraryPageProp
                   <td style={{ padding: '11px 16px', textAlign: 'right' }}>
                     <button
                       onClick={() => {
+                        const savedEdit = getSavedLibraryEdit(item);
                         setSelectedItem(item);
-                        setModalHtml(item.htmlContent || item.rawText);
-                        setModalText(item.rawText);
+                        setModalHtml(savedEdit?.html || item.htmlContent || item.rawText);
+                        setModalText(savedEdit?.text || item.rawText);
                         setCopiedSuccess(false);
                         setSavedToMySuccess(false);
+                        setAutoSaveStatus(savedEdit ? 'saved' : 'idle');
                       }}
                       style={{
                         backgroundColor: '#ffffff',
@@ -628,6 +642,17 @@ export const InterpretationsLibraryPage: React.FC<InterpretationsLibraryPageProp
                 {selectedItem.type === 'panel' ? 'Panel' : 'Test'}: {selectedItem.name}
               </div>
 
+              <div
+                aria-live="polite"
+                style={{ fontSize: '12px', color: autoSaveStatus === 'error' ? '#dc2626' : '#64748b' }}
+              >
+                {autoSaveStatus === 'saved'
+                  ? 'Changes saved automatically'
+                  : autoSaveStatus === 'error'
+                    ? 'Could not save changes to the server'
+                    : 'Save changes to add this interpretation to your laboratory'}
+              </div>
+
               {/* COPY button */}
               <div>
                 <button
@@ -657,15 +682,19 @@ export const InterpretationsLibraryPage: React.FC<InterpretationsLibraryPageProp
                   {copiedSuccess ? <Check size={14} /> : <Copy size={14} />}
                   <span>{copiedSuccess ? 'COPIED!' : 'COPY'}</span>
                 </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveToMyInterpretations(selectedItem)}
+                  style={{ marginLeft: '8px', backgroundColor: savedToMySuccess ? '#16a34a' : '#0f766e', color: '#ffffff', border: 'none', borderRadius: '4px', padding: '7px 18px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  {savedToMySuccess ? 'SAVED' : 'SAVE TO MY INTERPRETATIONS'}
+                </button>
               </div>
 
               {/* Rich Text Editor Component */}
               <RichInterpretationEditor
                 initialValue={modalHtml || modalText}
-                onChange={(html, text) => {
-                  setModalHtml(html);
-                  setModalText(text);
-                }}
+                onChange={handleEditorChange}
                 minHeight="340px"
               />
             </div>

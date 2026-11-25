@@ -2,6 +2,18 @@ import { Request, Response, NextFunction } from 'express';
 import { MasterService } from './master.service.js';
 
 export class MasterController {
+  static async listUnits(_req: Request, res: Response, next: NextFunction) {
+    try {
+      res.status(200).json({ success: true, data: await MasterService.listUnits() });
+    } catch (err) { next(err); }
+  }
+
+  static async createUnit(req: Request, res: Response, next: NextFunction) {
+    try {
+      res.status(201).json({ success: true, data: await MasterService.createUnit(req.body?.name) });
+    } catch (err) { next(err); }
+  }
+
   // Tests
   static async listTests(req: Request, res: Response, next: NextFunction) {
     try {
@@ -34,6 +46,19 @@ export class MasterController {
     try {
       const created = await MasterService.createTest(req.body);
       res.status(201).json({ success: true, data: created });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async importLibraryTest(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await MasterService.importLibraryTest(req.body);
+      res.status(result.created ? 201 : 200).json({
+        success: true,
+        data: result,
+        message: result.created ? 'Test imported into the test database' : 'Test is already present in the test database',
+      });
     } catch (err) {
       next(err);
     }

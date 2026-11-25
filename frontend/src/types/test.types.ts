@@ -89,6 +89,7 @@ export interface InvestigationTest {
 
 export interface SelectedInvestigation {
   testId: string;
+  itemType?: 'test' | 'panel' | 'package';
   code: string;
   name: string;
   department: Department;

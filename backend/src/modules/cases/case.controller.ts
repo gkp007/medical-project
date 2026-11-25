@@ -51,6 +51,13 @@ export class CaseController {
     }
   }
 
+  static async updatePrintedStatus(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const updated = await CaseService.updatePrintedStatus(req.params.id as string, Boolean(req.body?.isPrinted));
+      res.status(200).json({ success: true, data: updated });
+    } catch (err) { next(err); }
+  }
+
   static async collectDue(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const receivedBy = req.user?.username || 'Billing Desk';

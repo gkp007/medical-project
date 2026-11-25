@@ -214,43 +214,44 @@ export const TestPanelsPage: React.FC<TestPanelsPageProps> = ({ onNavigate }) =>
     }));
 
     if (modalMode === 'create') {
-      const newPanel: TestPanelItem = {
-        id: `panel-${Date.now()}`,
-        order: panels.length + 1,
+      const payload = {
         name: formName.trim(),
         category: formCategory,
-        price: Number(formPrice) || 200,
-        tests: formSelectedTests,
-        testsCount: formSelectedTests.length,
-        ratelistEntries: rateEntries,
-        ratelistSummary: rateEntries.map((r) => r.name).join(', '),
-        hideInterpretation: formHideInterpretation,
-        hideMethodInstrument: formHideMethod,
-        noteHtml: formInterpretation,
-        interpretation: formInterpretation,
+        department: formCategory,
+        testCount: formSelectedTests.length,
+        testIds: JSON.stringify(formSelectedTests),
+        subheadings: JSON.stringify({
+          order: panels.length + 1,
+          hideInterpretation: formHideInterpretation,
+          hideMethodInstrument: formHideMethod,
+          noteHtml: formInterpretation,
+          ratelistEntries: rateEntries,
+        }),
+        panelPrice: Number(formPrice) || 200,
       };
-
-      setPanels((prev) => [...prev, newPanel]);
-      showToast(`Test panel "${newPanel.name}" added successfully.`);
-
-      // Persist to backend database
       try {
-        await mastersApi.createPanel({
-          name: newPanel.name,
-          category: newPanel.category,
-          department: newPanel.category,
-          testCount: newPanel.tests.length,
-          testIds: JSON.stringify(newPanel.tests),
-          subheadings: JSON.stringify({
-            order: newPanel.order,
-            hideInterpretation: newPanel.hideInterpretation,
-            hideMethodInstrument: newPanel.hideMethodInstrument,
-            noteHtml: newPanel.noteHtml,
-            ratelistEntries: newPanel.ratelistEntries,
-          }),
-          panelPrice: newPanel.price,
-        });
-      } catch (err) {}
+        const res = await mastersApi.createPanel(payload);
+        const newPanel: TestPanelItem = {
+          id: res?.data?.id || `panel-${Date.now()}`,
+          order: panels.length + 1,
+          name: formName.trim(),
+          category: formCategory,
+          price: Number(formPrice) || 200,
+          tests: formSelectedTests,
+          testsCount: formSelectedTests.length,
+          ratelistEntries: rateEntries,
+          ratelistSummary: rateEntries.map((r) => r.name).join(', '),
+          hideInterpretation: formHideInterpretation,
+          hideMethodInstrument: formHideMethod,
+          noteHtml: formInterpretation,
+          interpretation: formInterpretation,
+        };
+        setPanels((prev) => [...prev, newPanel]);
+        showToast(`Test panel "${newPanel.name}" added successfully.`);
+      } catch (err: any) {
+        showToast(err?.message || 'Unable to save panel to server.');
+        return;
+      }
     } else if (modalMode === 'edit' && selectedPanel) {
       const updatedPanel: TestPanelItem = {
         ...selectedPanel,
@@ -267,14 +268,8 @@ export const TestPanelsPage: React.FC<TestPanelsPageProps> = ({ onNavigate }) =>
         interpretation: formInterpretation,
       };
 
-      setPanels((prev) =>
-        prev.map((p) => (p.id === selectedPanel.id ? updatedPanel : p))
-      );
-      showToast(`Test panel "${formName}" updated.`);
-
-      // Persist update to backend database
       try {
-        await mastersApi.updatePanel(selectedPanel.id, {
+        const payload = {
           name: updatedPanel.name,
           category: updatedPanel.category,
           department: updatedPanel.category,
@@ -288,8 +283,22 @@ export const TestPanelsPage: React.FC<TestPanelsPageProps> = ({ onNavigate }) =>
             ratelistEntries: updatedPanel.ratelistEntries,
           }),
           panelPrice: updatedPanel.price,
-        });
-      } catch (err) {}
+        };
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(selectedPanel.id);
+        if (isUuid) {
+          await mastersApi.updatePanel(selectedPanel.id, payload);
+        } else {
+          const created = await mastersApi.createPanel(payload);
+          if (created?.data?.id) updatedPanel.id = created.data.id;
+        }
+        setPanels((prev) =>
+          prev.map((p) => (p.id === selectedPanel.id ? updatedPanel : p))
+        );
+        showToast(`Test panel "${formName}" updated.`);
+      } catch (err: any) {
+        showToast(err?.message || 'Unable to update panel on server.');
+        return;
+      }
     }
 
     setModalMode(null);

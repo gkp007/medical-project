@@ -40,16 +40,37 @@ export const LabTestViewPage: React.FC<LabTestViewPageProps> = ({
   const [selectedRatelistEntry, setSelectedRatelistEntry] = useState('');
   const [ratelistFeeInput, setRatelistFeeInput] = useState('100');
 
-  // Look up master test details from ALL_LABSMART_TESTS
+  // Look up master test details from ALL_LABSMART_TESTS only when an actual match exists
   const baseTest: LabTestDetail = useMemo(() => {
+    const normalized = (testId || '').trim().toLowerCase();
     const found = ALL_LABSMART_TESTS.find(
       (t) =>
         t.id === testId ||
-        t.name.toLowerCase() === testId?.toLowerCase() ||
+        t.name.toLowerCase() === normalized ||
+        (t.shortName && t.shortName.toLowerCase() === normalized) ||
         String(t.order) === testId
     );
-    return found || ALL_LABSMART_TESTS[0];
+    if (found) return found;
+    return {
+      id: testId || 'unknown',
+      order: 0,
+      name: testId && !/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(testId) ? testId : 'Loading test...',
+      shortName: '',
+      category: 'Haematology',
+      testType: 'Single parameter',
+      unit: '',
+      price: 0,
+      description: '',
+      increasedIn: [],
+      decreasedIn: [],
+      comments: '',
+      ratelistEntries: [],
+      panelsIncluded: [],
+      normalValues: { selectType: 'numeric_range', ranges: [] },
+    } as LabTestDetail;
   }, [testId]);
+
+  const activeTestId = testId || baseTest.id;
 
   // Dynamic test properties with local state support for real-time edits
   const [testName, setTestName] = useState(baseTest.name);
@@ -137,21 +158,35 @@ export const LabTestViewPage: React.FC<LabTestViewPageProps> = ({
       );
     }
 
-    // Also fetch any dynamic backend updates
+    // Also fetch any dynamic backend updates using the actual testId
     const fetchBackendData = async () => {
       try {
-        const res = await mastersApi.getTestById(baseTest.id);
+        const res = await mastersApi.getTestById(activeTestId);
         if (res?.data) {
           if (res.data.name) setTestName(res.data.name);
-          if (res.data.department) setCategory(res.data.department);
+          if (res.data.shortName !== undefined) setShortName(res.data.shortName || '');
+          if (res.data.department || res.data.category) setCategory(res.data.department || res.data.category);
+          const catalogMatch = ALL_LABSMART_TESTS.find(
+            (t) => t.name.toLowerCase() === String(res.data.name || '').trim().toLowerCase()
+          );
+          if (res.data.interpretation) {
+            setComments(res.data.interpretation);
+          } else if (catalogMatch) {
+            setDescription(catalogMatch.description || '');
+            setIncreasedIn(catalogMatch.increasedIn || []);
+            setDecreasedIn(catalogMatch.decreasedIn || []);
+            setComments(catalogMatch.comments || '');
+          }
           if (res.data.ratelistsIncluded && res.data.ratelistsIncluded.length > 0) {
             setRatelistEntries(
               res.data.ratelistsIncluded.map((r: any, idx: number) => ({
                 sNo: idx + 1,
                 name: r.name,
-                fee: r.fee || 50,
+                fee: r.fee || res.data.price || 50,
               }))
             );
+          } else if (res.data.price !== undefined) {
+            setRatelistEntries([{ sNo: 1, name: res.data.name, fee: Number(res.data.price) || 0 }]);
           }
           if (res.data.panelsIncluded && res.data.panelsIncluded.length > 0) {
             setPanelsIncluded(res.data.panelsIncluded);
@@ -176,11 +211,11 @@ export const LabTestViewPage: React.FC<LabTestViewPageProps> = ({
           }
         }
       } catch (err) {
-        // Fallback to local
+        // Keep fallback metadata if backend test lookup fails
       }
     };
     fetchBackendData();
-  }, [baseTest]);
+  }, [baseTest, activeTestId]);
 
   const handleAddRange = () => {
     const newId = `range-${Date.now()}`;
@@ -230,7 +265,7 @@ export const LabTestViewPage: React.FC<LabTestViewPageProps> = ({
   const handleSaveNormalValues = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await mastersApi.updateNormalValues(baseTest.id, {
+      await mastersApi.updateNormalValues(activeTestId, {
         unit: unit,
         selectType: 'numeric_range',
         ranges: ranges.map((r) => ({
@@ -245,10 +280,10 @@ export const LabTestViewPage: React.FC<LabTestViewPageProps> = ({
         })),
       });
       showToast('Normal values saved to database.');
-    } catch (err) {
-      showToast('Normal values updated successfully.');
+      setIsNormalValuesModalOpen(false);
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to save normal values.');
     }
-    setIsNormalValuesModalOpen(false);
   };
 
   const showToast = (msg: string) => {
@@ -263,29 +298,29 @@ export const LabTestViewPage: React.FC<LabTestViewPageProps> = ({
       return;
     }
     try {
-      await mastersApi.linkRatelist(baseTest.id, selectedRatelistEntry);
+      await mastersApi.linkRatelist(activeTestId, selectedRatelistEntry);
       showToast(`Linked "${selectedRatelistEntry}" to lab test.`);
-    } catch (err) {
-      showToast(`Linked "${selectedRatelistEntry}" to lab test.`);
+      const newEntry = {
+        sNo: ratelistEntries.length + 1,
+        name: selectedRatelistEntry,
+        fee: Number(ratelistFeeInput) || 100,
+      };
+      setRatelistEntries((prev) => [...prev, newEntry]);
+      setIsLinkModalOpen(false);
+      setSelectedRatelistEntry('');
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to link ratelist entry.');
     }
-    const newEntry = {
-      sNo: ratelistEntries.length + 1,
-      name: selectedRatelistEntry,
-      fee: Number(ratelistFeeInput) || 100,
-    };
-    setRatelistEntries((prev) => [...prev, newEntry]);
-    setIsLinkModalOpen(false);
-    setSelectedRatelistEntry('');
   };
 
   const handleEditClick = () => {
-    localStorage.setItem('labsmart_active_test_id', baseTest.id);
+    localStorage.setItem('labsmart_active_test_id', activeTestId);
     if (onEdit) {
-      onEdit(baseTest.id);
+      onEdit(activeTestId);
     } else if (onNavigate) {
       onNavigate('edit_lab_test');
     } else {
-      window.history.pushState({}, '', `/37749971/lab_tests/${baseTest.id}/edit`);
+      window.history.pushState({}, '', `/37749971/lab_tests/${activeTestId}/edit`);
       window.dispatchEvent(new PopStateEvent('popstate'));
     }
   };

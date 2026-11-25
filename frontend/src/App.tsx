@@ -44,6 +44,7 @@ import { LabTestsLibraryPage } from './pages/manage/LabTestsLibraryPage';
 import { LabTestViewPage } from './pages/lab/LabTestViewPage';
 import { LabTestEditPage } from './pages/lab/LabTestEditPage';
 import { TestCountsPage } from './pages/lab/TestCountsPage';
+import { AnalyzersPage } from './pages/lab/AnalyzersPage';
 
 // USG Pages
 import { USGWorklistPage } from './pages/lab/USGWorklistPage';
@@ -107,7 +108,7 @@ const pathToScreen: Record<string, string> = {
   '/lab/interpretations': 'interpretations',
   '/lab/interpretations/library': 'interpretations_library',
   '/lab/test-counts': 'test_counts',
-  '/lab/analyzers': 'today_reports',
+  '/lab/analyzers': 'analyzers',
   '/usg/today': 'usg_today',
   '/usg/search': 'usg_reports',
   '/usg/templates': 'usg_templates',
@@ -158,6 +159,7 @@ const screenToPath: Record<string, string> = {
   interpretations: '/lab/interpretations',
   interpretations_library: '/lab/interpretations/library',
   test_counts: '/lab/test-counts',
+  analyzers: '/lab/analyzers',
   usg_today: '/usg/today',
   usg_reports: '/usg/search',
   usg_templates: '/usg/templates',
@@ -205,7 +207,7 @@ const resolvePathToScreen = (rawPath: string): { screen: string; caseId?: string
   const testEditMatch = path.match(/(?:\/\d+)?\/lab_tests\/([^/]+)\/edit/i);
   if (testEditMatch) {
     if (testEditMatch[1]) {
-      localStorage.setItem('labsmart_active_test_id', testEditMatch[1]);
+      localStorage.setItem('labsmart_active_test_id', decodeURIComponent(testEditMatch[1]));
     }
     return { screen: 'edit_lab_test' };
   }
@@ -213,7 +215,7 @@ const resolvePathToScreen = (rawPath: string): { screen: string; caseId?: string
   const testViewMatch = path.match(/(?:\/\d+)?\/lab_tests\/([^/]+)/i);
   if (testViewMatch) {
     if (testViewMatch[1]) {
-      localStorage.setItem('labsmart_active_test_id', testViewMatch[1]);
+      localStorage.setItem('labsmart_active_test_id', decodeURIComponent(testViewMatch[1]));
     }
     return { screen: 'view_lab_test' };
   }
@@ -565,7 +567,14 @@ export function App() {
         return <TestPanelsPage onNavigate={(screen) => setActiveScreen(screen)} />;
 
       case 'test_categories':
-        return <TestCategoriesPage />;
+        return (
+          <TestCategoriesPage
+            onNavigateTestDatabaseWithCategory={(catName) => {
+              localStorage.setItem('labsmart_selected_category', catName);
+              setActiveScreen('test_master');
+            }}
+          />
+        );
 
       case 'test_master':
         return <TestMasterPage onNavigate={(screen) => setActiveScreen(screen)} />;
@@ -615,6 +624,9 @@ export function App() {
 
       case 'test_counts':
         return <TestCountsPage />;
+
+      case 'analyzers':
+        return <AnalyzersPage />;
 
       // 5. USG GROUP
       case 'usg_today':

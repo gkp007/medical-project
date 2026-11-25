@@ -29,6 +29,8 @@ export interface TestSubParameter {
   unit: string;
   isOptional: boolean;
   inputType?: 'decimal' | 'string' | 'text';
+  defaultResult?: string;
+  isRemoved?: boolean;
   groupBy?: string;
   normalValues: NormalValueConfig;
 }
@@ -54,6 +56,8 @@ export interface LabTestDetail {
   isAlwaysBold?: boolean;
   printLineAfter?: boolean;
   defaultResultText?: string;
+  displayNameInReport?: boolean;
+  nestedTemplate?: string | null;
   ratelistEntries?: Array<{ name: string; fee: number }>;
   panelsIncluded?: Array<{ name: string }>;
   parameters?: TestSubParameter[];

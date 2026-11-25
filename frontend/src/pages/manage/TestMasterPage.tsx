@@ -83,7 +83,14 @@ interface TestMasterPageProps {
 
 export const TestMasterPage: React.FC<TestMasterPageProps> = ({ onNavigate }) => {
   const [tests, setTests] = useState<LabTestDetail[]>(INITIAL_TESTS);
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [selectedCategory, setSelectedCategory] = useState<string>(() => {
+    const preselected = localStorage.getItem('labsmart_selected_category');
+    if (preselected) {
+      localStorage.removeItem('labsmart_selected_category');
+      return preselected;
+    }
+    return 'All';
+  });
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Navigation mode: 'list' (Test Database) or 'detail' (view test)
@@ -191,21 +198,21 @@ export const TestMasterPage: React.FC<TestMasterPageProps> = ({ onNavigate }) =>
     const currentConfig: NormalValueConfig = subParam
       ? subParam.normalValues
       : test.normalValues || {
-          selectType: 'numeric_range',
-          ranges: [
-            {
-              id: 'def_' + Date.now(),
-              gender: 'Any',
-              minAge: 0,
-              minAgeUnit: 'Years',
-              maxAge: 120,
-              maxAgeUnit: 'Years',
-              lowerValue: 0,
-              upperValue: 100,
-              displayRange: '0 - 100',
-            },
-          ],
-        };
+        selectType: 'numeric_range',
+        ranges: [
+          {
+            id: 'def_' + Date.now(),
+            gender: 'Any',
+            minAge: 0,
+            minAgeUnit: 'Years',
+            maxAge: 120,
+            maxAgeUnit: 'Years',
+            lowerValue: 0,
+            upperValue: 100,
+            displayRange: '0 - 100',
+          },
+        ],
+      };
 
     setEditingTarget({
       testId: test.id,
@@ -220,18 +227,18 @@ export const TestMasterPage: React.FC<TestMasterPageProps> = ({ onNavigate }) =>
       currentConfig.ranges && currentConfig.ranges.length > 0
         ? JSON.parse(JSON.stringify(currentConfig.ranges))
         : [
-            {
-              id: 'range_' + Date.now(),
-              gender: 'Any',
-              minAge: 0,
-              minAgeUnit: 'Years',
-              maxAge: 120,
-              maxAgeUnit: 'Years',
-              lowerValue: 0,
-              upperValue: 100,
-              displayRange: '0 - 100',
-            },
-          ]
+          {
+            id: 'range_' + Date.now(),
+            gender: 'Any',
+            minAge: 0,
+            minAgeUnit: 'Years',
+            maxAge: 120,
+            maxAgeUnit: 'Years',
+            lowerValue: 0,
+            upperValue: 100,
+            displayRange: '0 - 100',
+          },
+        ]
     );
 
     setIsNormalValueModalOpen(true);
@@ -774,7 +781,7 @@ export const TestMasterPage: React.FC<TestMasterPageProps> = ({ onNavigate }) =>
                           {p.normalValues.selectType === 'text'
                             ? p.normalValues.textualNormal || 'Textual'
                             : p.normalValues.ranges[0]?.displayRange ||
-                              `${p.normalValues.ranges[0]?.lowerValue} - ${p.normalValues.ranges[0]?.upperValue}`}
+                            `${p.normalValues.ranges[0]?.lowerValue} - ${p.normalValues.ranges[0]?.upperValue}`}
                         </td>
                         <td style={{ padding: '10px 12px', textAlign: 'center' }}>
                           <button
@@ -1114,14 +1121,14 @@ export const TestMasterPage: React.FC<TestMasterPageProps> = ({ onNavigate }) =>
                           t.testType === 'Single parameter'
                             ? '#eff6ff'
                             : t.testType === 'Multi parameter' || t.testType === 'Multiple nested parameters'
-                            ? '#f0fdf4'
-                            : '#fef3c7',
+                              ? '#f0fdf4'
+                              : '#fef3c7',
                         color:
                           t.testType === 'Single parameter'
                             ? '#1d4ed8'
                             : t.testType === 'Multi parameter' || t.testType === 'Multiple nested parameters'
-                            ? '#15803d'
-                            : '#b45309',
+                              ? '#15803d'
+                              : '#b45309',
                       }}
                     >
                       {t.testType}

@@ -9,11 +9,15 @@ router.get('/public/tests', MasterController.listTests);
 
 router.use(authenticate);
 
+router.get('/units', MasterController.listUnits);
+router.post('/units', MasterController.createUnit);
+
 // Tests
 router.get('/tests', MasterController.listTests);
 router.get('/tests/:id', MasterController.getTestById);
 router.put('/tests/:id/normal-values', MasterController.updateNormalValues);
 router.post('/tests/:id/link-ratelist', MasterController.linkRatelist);
+router.post('/tests/import-library', MasterController.importLibraryTest);
 router.post('/tests', MasterController.createTest);
 router.put('/tests/:id', MasterController.updateTest);
 router.delete('/tests/:id', MasterController.deleteTest);

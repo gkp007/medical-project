@@ -126,6 +126,7 @@ model TestCategory {
   department  String
   description String?
   testCount   Int      @default(0)
+  displayOrder Int     @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
 }
@@ -151,10 +152,15 @@ model HealthPackage {
   category      String?
   description   String?
   testsIncluded String   // JSON stringified array of test codes/ids
+  panelsIncluded String? // JSON stringified panel names/ids
   retailPrice   Float
   packagePrice  Float
   discountPct   Float
   fastingNotes  String?
+  forGender     String   @default("Both")
+  isInRatelist  Boolean  @default(true)
+  hideInterpretation Boolean @default(true)
+  hideMethodInstrument Boolean @default(false)
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @default(now()) @updatedAt
@@ -166,10 +172,14 @@ model Investigation {
   name        String
   department  String
   testType    String           @default("Single parameter")
+  displayNameInReport Boolean  @default(true)
+  nestedTemplate String?
   specimen    String
   container   String
   rate        Float
   b2bRate     Float?
+  ratelistGender String         @default("Both")
+  isActiveInRatelist Boolean    @default(true)
   tatHours    Int              @default(4)
   isDeleted   Boolean          @default(false)
 
@@ -177,6 +187,13 @@ model Investigation {
   caseItems   CaseItem[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
+}
+
+model LaboratoryUnit {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model TestParameter {
@@ -190,6 +207,10 @@ model TestParameter {
   formula         String?
   isCalculated    Boolean          @default(false)
   isOptional      Boolean          @default(false)
+  isRemoved       Boolean          @default(false)
+  inputType       String           @default("Single Line")
+  defaultResult   String?
+  groupBy          String?
   sortOrder       Int              @default(0)
 
   ranges          ParameterRange[]
@@ -242,6 +263,8 @@ model Case {
   signedOffBy        String?
   notes              String?
   cancellationReason String?
+  isPrinted         Boolean              @default(false)
+  printedAt         DateTime?
 
   items              CaseItem[]
   payments           PaymentTransaction[]

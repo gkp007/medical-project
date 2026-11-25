@@ -5,6 +5,15 @@ import { amountInWords } from '../../shared/financial/currencyInWords.js';
 import { AuthUserPayload } from '../../core/middleware/authenticate.js';
 
 export class CaseService {
+  static async updatePrintedStatus(caseId: string, isPrinted: boolean) {
+    const record = await prisma.case.findUnique({ where: { id: caseId } });
+    if (!record) throw new NotFoundError('Case not found');
+    return prisma.case.update({
+      where: { id: caseId },
+      data: { isPrinted, printedAt: isPrinted ? new Date() : null },
+    });
+  }
+
   /**
    * Generates sequence Bill Number: e.g. BL-2026-0002
    */
@@ -73,41 +82,123 @@ export class CaseService {
       patient = await PatientService.createPatient(data.patient);
     }
 
-    // 2. Fetch Investigations to calculate gross and line items (by id or test code)
+    // 2. Fetch Investigations, Panels, and Packages to calculate gross and line items
     const testIds = data.investigations.map((i: any) => i.testId);
-    const tests = await prisma.investigation.findMany({
-      where: {
-        OR: [
-          { id: { in: testIds } },
-          { code: { in: testIds } }
-        ]
-      },
-      include: { parameters: { include: { ranges: true } } }
-    });
-
-    if (tests.length === 0) {
-      throw new BadRequestError('No valid investigations found for the provided test IDs');
-    }
+    const [tests, panels, packages] = await Promise.all([
+      prisma.investigation.findMany({
+        where: {
+          OR: [
+            { id: { in: testIds } },
+            { code: { in: testIds } }
+          ]
+        },
+        include: { parameters: { include: { ranges: true } } }
+      }),
+      prisma.testPanel.findMany({
+        where: {
+          OR: [
+            { id: { in: testIds } },
+            { name: { in: testIds } }
+          ]
+        }
+      }),
+      prisma.healthPackage.findMany({
+        where: {
+          OR: [
+            { id: { in: testIds } },
+            { code: { in: testIds } }
+          ]
+        }
+      })
+    ]);
 
     let grossAmount = 0;
-    const caseItemsData = tests.map(test => {
-      const selectedInfo = data.investigations.find((i: any) => i.testId === test.id || i.testId === test.code);
-      const discount = selectedInfo?.discount || 0;
-      const netAmount = Math.max(0, test.rate - discount);
-      grossAmount += test.rate;
+    const caseItemsData: any[] = [];
 
-      return {
-        testId: test.id,
-        testCode: test.code,
-        testName: test.name,
-        department: test.department,
-        specimen: test.specimen,
-        rate: test.rate,
-        discount,
-        netAmount,
-        deliveryTime: new Date(Date.now() + test.tatHours * 60 * 60 * 1000)
-      };
-    });
+    for (const selectedInfo of data.investigations) {
+      const matchedTest = tests.find((t) => t.id === selectedInfo.testId || t.code === selectedInfo.testId);
+      if (matchedTest) {
+        const rate = selectedInfo.rate !== undefined ? Number(selectedInfo.rate) : matchedTest.rate;
+        const discount = selectedInfo.discount || 0;
+        const netAmount = Math.max(0, rate - discount);
+        grossAmount += rate;
+        caseItemsData.push({
+          testId: matchedTest.id,
+          testCode: matchedTest.code,
+          testName: matchedTest.name,
+          department: matchedTest.department,
+          specimen: matchedTest.specimen,
+          rate,
+          discount,
+          netAmount,
+          deliveryTime: new Date(Date.now() + matchedTest.tatHours * 60 * 60 * 1000)
+        });
+        continue;
+      }
+
+      const matchedPanel = panels.find((p) => p.id === selectedInfo.testId || p.name === selectedInfo.testId);
+      if (matchedPanel) {
+        const rate = selectedInfo.rate !== undefined ? Number(selectedInfo.rate) : Number(matchedPanel.panelPrice || 0);
+        const discount = selectedInfo.discount || 0;
+        const netAmount = Math.max(0, rate - discount);
+        grossAmount += rate;
+        caseItemsData.push({
+          testId: matchedPanel.id,
+          testCode: matchedPanel.name.toUpperCase().replace(/[^A-Z0-9]+/g, '_').slice(0, 24),
+          testName: matchedPanel.name,
+          department: matchedPanel.department || matchedPanel.category || 'Pathology',
+          specimen: 'Blood / Panel',
+          rate,
+          discount,
+          netAmount,
+          deliveryTime: new Date(Date.now() + 6 * 60 * 60 * 1000)
+        });
+        continue;
+      }
+
+      const matchedPkg = packages.find((pkg) => pkg.id === selectedInfo.testId || pkg.code === selectedInfo.testId);
+      if (matchedPkg) {
+        const rate = selectedInfo.rate !== undefined ? Number(selectedInfo.rate) : Number(matchedPkg.packagePrice || 0);
+        const discount = selectedInfo.discount || 0;
+        const netAmount = Math.max(0, rate - discount);
+        grossAmount += rate;
+        caseItemsData.push({
+          testId: matchedPkg.id,
+          testCode: matchedPkg.code,
+          testName: matchedPkg.name,
+          department: selectedInfo.department || 'Package',
+          specimen: 'Multiple Specimens',
+          rate,
+          discount,
+          netAmount,
+          deliveryTime: new Date(Date.now() + 12 * 60 * 60 * 1000)
+        });
+        continue;
+      }
+
+      // Fallback for catalog-only items sent with name & rate
+      if (selectedInfo.name && selectedInfo.rate !== undefined) {
+        const rate = Number(selectedInfo.rate) || 0;
+        const discount = selectedInfo.discount || 0;
+        const netAmount = Math.max(0, rate - discount);
+        grossAmount += rate;
+        caseItemsData.push({
+          testId: selectedInfo.testId,
+          testCode: selectedInfo.testId,
+          testName: selectedInfo.name,
+          department: selectedInfo.department || 'Pathology',
+          specimen: 'Serum',
+          rate,
+          discount,
+          netAmount,
+          deliveryTime: new Date(Date.now() + 6 * 60 * 60 * 1000)
+        });
+      }
+    }
+
+    if (caseItemsData.length === 0) {
+      throw new BadRequestError('No valid investigations found for the provided test IDs');
+    }
 
     // 3. Resolve Doctor ID safely
     let doctorId = data.doctorId;
@@ -138,14 +229,19 @@ export class CaseService {
       }
     }
 
-    // Mandatory discount reason when discount is applied
-    if (discountAmount > 0 && (!data.discountReason || !data.discountReason.trim())) {
-      throw new BadRequestError('Discount reason is mandatory when applying a discount');
-    }
+    // Discount reason defaults gracefully when omitted
+    const resolvedDiscountReason = discountAmount > 0 ? (data.discountReason?.trim() || 'Centre Discount') : null;
 
-    const netPayable = Math.max(0, grossAmount - discountAmount);
+    const collectionCharge = Math.max(0, Number(data.collectionCharge) || 0);
+    const netPayable = Math.max(0, grossAmount - discountAmount + collectionCharge);
     const paidAmount = Math.min(netPayable, Math.max(0, data.paidAmount || 0));
     const balanceDue = Math.max(0, netPayable - paidAmount);
+
+    const noteParts: string[] = [];
+    if (data.notes && String(data.notes).trim()) noteParts.push(String(data.notes).trim());
+    if (data.sampleCollectedAt && String(data.sampleCollectedAt).trim()) noteParts.push(`Sample collected at: ${String(data.sampleCollectedAt).trim()}`);
+    if (collectionCharge > 0) noteParts.push(`Collection charge: Rs. ${collectionCharge}`);
+    const combinedNotes = noteParts.length > 0 ? noteParts.join(' | ') : null;
 
     // Explicit authorization required for outstanding dues
     if (balanceDue > 0 && !data.allowDue) {
@@ -191,13 +287,13 @@ export class CaseService {
           discountType: data.discountType || 'fixed',
           discountValue: data.discountValue || 0,
           discountAmount,
-          discountReason: data.discountReason || null,
+          discountReason: resolvedDiscountReason,
           netPayable,
           paidAmount,
           balanceDue,
           allowDue: Boolean(data.allowDue),
           paymentMode: data.paymentMode || 'Cash',
-          notes: data.notes || null,
+          notes: combinedNotes,
           items: {
             create: caseItemsData
           }

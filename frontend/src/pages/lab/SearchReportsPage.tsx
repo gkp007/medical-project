@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card } from '../../components/atoms/Card';
 import { Badge } from '../../components/atoms/Badge';
 import {
@@ -10,6 +10,7 @@ import {
   ChevronUp,
   RotateCcw,
 } from 'lucide-react';
+import { casesApi } from '../../services/api';
 
 export interface HistoricalReportItem {
   id: string;
@@ -52,7 +53,8 @@ export const SearchReportsPage: React.FC<SearchReportsPageProps> = ({
   const [collectionCentre, setCollectionCentre] = useState('');
 
   // Sample Reports Data with real backend integrated IDs
-  const [reports] = useState<HistoricalReportItem[]>([
+  const [reports, setReports] = useState<HistoricalReportItem[]>([]);
+  /* Legacy placeholder records retained below only as development reference; the rendered list is server-authoritative.
     {
       id: 'case-1001',
       regNo: '1001',
@@ -143,7 +145,7 @@ export const SearchReportsPage: React.FC<SearchReportsPageProps> = ({
       status: 'Signed off',
       uhid: '35373656',
     },
-  ]);
+  ]; */
 
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -152,6 +154,34 @@ export const SearchReportsPage: React.FC<SearchReportsPageProps> = ({
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  const toReport = (item: any): HistoricalReportItem => ({
+    id: item.id,
+    regNo: item.billNumber || item.id,
+    dailyCode: item.dailyCode || '',
+    dateTime: new Date(item.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }),
+    patientName: item.patient?.fullName || 'Walk-in patient',
+    ageGender: `${item.patient?.age || item.patient?.ageYears || 0} YRS/${(item.patient?.gender || 'Other').charAt(0)}`,
+    phone: item.patient?.mobile || '',
+    referredBy: item.doctor?.name || 'Self Referral / Walk-in',
+    referredDegree: item.doctor?.degree || '',
+    tests: (item.items || []).map((test: any) => test.testName),
+    collectionCentre: item.collectionCentre || 'Main',
+    status: item.reportStatus === 'Signed Off' ? 'Signed off' : item.reportStatus === 'Finalized' ? 'Final' : item.reportStatus === 'In Progress' ? 'In progress' : 'New',
+    uhid: item.uhid || item.patient?.uhid || '',
+  });
+
+  const loadReports = async () => {
+    try {
+      const response = await casesApi.listCases({ modality: 'LAB', limit: 100, search: [patientFirstName, regNo, dailyCaseNo, uhid].filter(Boolean).join(' ') || undefined });
+      if (!response.success) throw new Error(response.message || 'Unable to load reports');
+      setReports((response.data?.cases || []).map(toReport));
+    } catch (error: any) {
+      showToast(error?.message || 'Unable to load reports from the server.');
+    }
+  };
+
+  useEffect(() => { loadReports(); }, []);
 
   const handleClearFilters = () => {
     setDuration('Past 7 days');
@@ -167,9 +197,9 @@ export const SearchReportsPage: React.FC<SearchReportsPageProps> = ({
     showToast('Filters cleared to default (Past 7 days)');
   };
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    showToast('Search executed with applied filters.');
+    await loadReports();
   };
 
   // Filter evaluation

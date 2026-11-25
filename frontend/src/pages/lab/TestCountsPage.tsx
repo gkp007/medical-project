@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Card } from '../../components/atoms/Card';
 import { Button } from '../../components/atoms/Button';
 import {
@@ -11,6 +11,7 @@ import {
   AlertCircle,
   FileSpreadsheet,
 } from 'lucide-react';
+import { pathologyApi } from '../../services/api';
 
 interface TestCountRow {
   id: string;
@@ -23,20 +24,81 @@ interface TestCountRow {
 }
 
 export const TestCountsPage: React.FC = () => {
-  const [dateRange, setDateRange] = useState('19/09/2026 - 19/10/2026');
+  const [dateRange, setDateRange] = useState(() => {
+    const end = new Date();
+    const start = new Date(end);
+    start.setDate(end.getDate() - 30);
+    const format = (date: Date) => date.toLocaleDateString('en-GB');
+    return `${format(start)} - ${format(end)}`;
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [testRows, setTestRows] = useState<TestCountRow[]>([]);
+  const [previousTotalTests, setPreviousTotalTests] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [testRows] = useState<TestCountRow[]>([
-    { id: '1', sNo: 1, testName: 'Complete Blood Count (CBC)', department: 'Haematology', count: 184, revenue: 73600, percentage: 38 },
-    { id: '2', sNo: 2, testName: 'Liver Function Test (LFT)', department: 'Biochemistry', count: 96, revenue: 76800, percentage: 20 },
-    { id: '3', sNo: 3, testName: 'Kidney Function Test (KFT)', department: 'Biochemistry', count: 82, revenue: 57400, percentage: 17 },
-    { id: '4', sNo: 4, testName: 'Fasting Blood Sugar (FBS)', department: 'Biochemistry', count: 74, revenue: 7400, percentage: 15 },
-    { id: '5', sNo: 5, testName: 'Lipid Profile Standard', department: 'Biochemistry', count: 48, revenue: 31200, percentage: 10 },
-  ]);
+  const parseRange = (value: string) => {
+    const [start, end] = value.split('-').map((part) => part.trim());
+    const parseDate = (part?: string) => {
+      if (!part) return undefined;
+      const [day, month, year] = part.split('/');
+      return day && month && year ? `${year}-${month}-${day}` : undefined;
+    };
+    return { startDate: parseDate(start), endDate: parseDate(end) };
+  };
+
+  const getPreviousRange = (startDate?: string, endDate?: string) => {
+    if (!startDate || !endDate) return null;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+    const spanMs = Math.max(24 * 60 * 60 * 1000, end.getTime() - start.getTime() + 24 * 60 * 60 * 1000);
+    const prevEnd = new Date(start.getTime() - 24 * 60 * 60 * 1000);
+    const prevStart = new Date(prevEnd.getTime() - spanMs + 24 * 60 * 60 * 1000);
+    const toIso = (d: Date) => d.toISOString().slice(0, 10);
+    return { startDate: toIso(prevStart), endDate: toIso(prevEnd) };
+  };
+
+  const loadCounts = async (range = dateRange) => {
+    setIsLoading(true);
+    try {
+      const parsed = parseRange(range);
+      const prevRange = getPreviousRange(parsed.startDate, parsed.endDate);
+      const [response, prevResponse] = await Promise.all([
+        pathologyApi.getTestCounts(parsed),
+        prevRange ? pathologyApi.getTestCounts(prevRange).catch(() => ({ success: false, data: [] })) : Promise.resolve({ success: false, data: [] }),
+      ]);
+      if (!response.success) throw new Error(response.message || 'Unable to load workload analytics');
+      const rows = (response.data || []).map((row: any, index: number) => ({
+        id: row.code || `${index}`,
+        sNo: index + 1,
+        testName: row.name || row.testName || 'Unnamed test',
+        department: row.department || 'Uncategorised',
+        count: Number(row.count || 0),
+        revenue: Number(row.revenue || 0),
+        percentage: 0,
+      }));
+      const total = rows.reduce((sum: number, row: TestCountRow) => sum + row.count, 0);
+      setTestRows(rows.map((row: TestCountRow) => ({ ...row, percentage: total ? Math.round((row.count / total) * 100) : 0 })));
+      const prevTotal = prevResponse?.success && Array.isArray(prevResponse.data)
+        ? prevResponse.data.reduce((sum: number, row: any) => sum + Number(row.count || 0), 0)
+        : 0;
+      setPreviousTotalTests(prevTotal);
+    } catch (error: any) {
+      setTestRows([]);
+      setPreviousTotalTests(0);
+      showToast(error?.message || 'Could not load test workload analytics.');
+    } finally { setIsLoading(false); }
+  };
+
+  useEffect(() => { loadCounts(); }, []);
 
   const totalTests = testRows.reduce((acc, r) => acc + r.count, 0);
   const totalRevenue = testRows.reduce((acc, r) => acc + r.revenue, 0);
+  const avgPerTest = totalTests > 0 ? Math.round(totalRevenue / totalTests) : 0;
+  const periodChangePct = previousTotalTests > 0
+    ? Math.round(((totalTests - previousTotalTests) / previousTotalTests) * 100)
+    : totalTests > 0 ? 100 : 0;
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -45,17 +107,21 @@ export const TestCountsPage: React.FC = () => {
 
   const handleApplyFilter = (e: React.FormEvent) => {
     e.preventDefault();
-    showToast(`Loaded test count analytics for: ${dateRange}`);
+    loadCounts();
   };
 
   const handleExport = () => {
-    showToast('Exported test workload analytics spreadsheet (.xlsx)');
+    const csv = ['Test,Department,Sample count,Revenue', ...filteredRows.map((row) => [row.testName, row.department, row.count, row.revenue].map((value) => `"${String(value).replace(/"/g, '""')}"`).join(','))].join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url; link.download = 'test-workload.csv'; link.click(); URL.revokeObjectURL(url);
+    showToast('Downloaded workload analytics CSV.');
   };
 
-  const filteredRows = testRows.filter((r) => {
+  const filteredRows = useMemo(() => testRows.filter((r) => {
     const q = searchQuery.toLowerCase();
     return r.testName.toLowerCase().includes(q) || r.department.toLowerCase().includes(q);
-  });
+  }), [testRows, searchQuery]);
 
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto', position: 'relative' }}>
@@ -193,8 +259,19 @@ export const TestCountsPage: React.FC = () => {
           <div style={{ fontSize: '24px', fontWeight: 700, color: '#0f172a', marginTop: '4px' }}>
             {totalTests}
           </div>
-          <div style={{ fontSize: '11px', color: '#16a34a', marginTop: '4px', fontWeight: 500 }}>
-            ↑ 14% vs previous 30-day period
+          <div
+            style={{
+              fontSize: '11px',
+              color: periodChangePct > 0 ? '#16a34a' : periodChangePct < 0 ? '#dc2626' : '#64748b',
+              marginTop: '4px',
+              fontWeight: 500,
+            }}
+          >
+            {previousTotalTests === 0 && totalTests === 0
+              ? 'No tests in current or previous period'
+              : previousTotalTests === 0 && totalTests > 0
+                ? `${totalTests} tests (0 in previous period)`
+                : `${periodChangePct > 0 ? '↑' : periodChangePct < 0 ? '↓' : '→'} ${Math.abs(periodChangePct)}% vs previous period (${previousTotalTests})`}
           </div>
         </div>
 
@@ -211,7 +288,7 @@ export const TestCountsPage: React.FC = () => {
             ₹{totalRevenue.toLocaleString()}
           </div>
           <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
-            Avg ₹{Math.round(totalRevenue / totalTests)} per test
+            Avg ₹{avgPerTest.toLocaleString()} per test
           </div>
         </div>
       </div>
@@ -230,7 +307,14 @@ export const TestCountsPage: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredRows.map((r, idx) => (
+            {filteredRows.length === 0 ? (
+              <tr>
+                <td colSpan={6} style={{ textAlign: 'center', padding: '28px', color: '#64748b', fontSize: '13px' }}>
+                  {isLoading ? 'Loading workload analytics...' : 'No test workload recorded for this date range.'}
+                </td>
+              </tr>
+            ) : (
+              filteredRows.map((r, idx) => (
               <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                 <td style={{ fontSize: '13px', color: '#64748b' }}>{idx + 1}.</td>
                 <td>
@@ -283,7 +367,8 @@ export const TestCountsPage: React.FC = () => {
                   </div>
                 </td>
               </tr>
-            ))}
+            ))
+            )}
           </tbody>
         </table>
       </div>

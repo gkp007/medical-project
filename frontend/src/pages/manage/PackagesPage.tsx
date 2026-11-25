@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card } from '../../components/atoms/Card';
 import { Button } from '../../components/atoms/Button';
 import { Modal } from '../../components/atoms/Modal';
@@ -13,6 +13,7 @@ import {
   MoreVertical,
   PlayCircle,
 } from 'lucide-react';
+import { mastersApi } from '../../services/api';
 
 interface TestPackageItem {
   id: string;
@@ -84,7 +85,8 @@ export const PackagesPage: React.FC<PackagesPageProps> = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState<'in_ratelist' | 'not_in_ratelist'>('in_ratelist');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [packages, setPackages] = useState<TestPackageItem[]>([
+  const [packages, setPackages] = useState<TestPackageItem[]>([]);
+  /* Legacy placeholder records retained only as development reference; packages load from the API.
     {
       id: '0',
       sNo: 1,
@@ -195,7 +197,9 @@ export const PackagesPage: React.FC<PackagesPageProps> = ({ onNavigate }) => {
         'Vitamin B12, Urine Routine Examination, Random Blood Sugar, HbA1c, 25 Hydroxy (OH) Vitamin D, Thyroid Function Test (TFT), Liver Function Test (LFT), Lipid Profile, Kidney Function Test (KFT), Iron Studies, CBC',
       inRatelist: true,
     },
-  ]);
+  ]; */
+  const [testOptions, setTestOptions] = useState<MultiSelectOption[]>([]);
+  const [panelOptions, setPanelOptions] = useState<MultiSelectOption[]>([]);
 
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null);
@@ -220,6 +224,27 @@ export const PackagesPage: React.FC<PackagesPageProps> = ({ onNavigate }) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  useEffect(() => {
+    Promise.all([mastersApi.listPackages(), mastersApi.listTests({ limit: 250 }), mastersApi.listPanels()]).then(([response, testsResponse, panelsResponse]) => {
+      if (!response.success || !Array.isArray(response.data)) return;
+      const decode = (value: unknown) => {
+        try { return Array.isArray(value) ? value : JSON.parse(String(value || '[]')); } catch { return []; }
+      };
+      setPackages(response.data.map((pkg: any, index: number) => ({
+        id: pkg.id, sNo: index + 1, name: pkg.name, fee: Number(pkg.packagePrice ?? pkg.retailPrice ?? 0),
+        forGender: pkg.forGender || 'Both', includedTests: decode(pkg.testsIncluded).join(', '),
+        includedPanels: decode(pkg.panelsIncluded).join(', '), inRatelist: pkg.isInRatelist !== false,
+        hideInterpretation: pkg.hideInterpretation !== false, hideMethodInstrument: Boolean(pkg.hideMethodInstrument),
+      })));
+      if (testsResponse.success && Array.isArray(testsResponse.data)) {
+        setTestOptions(testsResponse.data.map((test: any) => ({ value: test.name, label: test.name, category: test.department })));
+      }
+      if (panelsResponse.success && Array.isArray(panelsResponse.data)) {
+        setPanelOptions(panelsResponse.data.map((panel: any) => ({ value: panel.name, label: panel.name, category: panel.department })));
+      }
+    }).catch(() => showToast('Unable to load test packages from the server.'));
+  }, []);
 
   const handleOpenCreate = () => {
     setFormName('');
@@ -246,7 +271,7 @@ export const PackagesPage: React.FC<PackagesPageProps> = ({ onNavigate }) => {
     setModalMode('edit');
   };
 
-  const handleSaveForm = (e: React.FormEvent) => {
+  const handleSaveForm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) return;
 
@@ -254,8 +279,15 @@ export const PackagesPage: React.FC<PackagesPageProps> = ({ onNavigate }) => {
     const joinedPanels = formPanels.join(', ');
 
     if (modalMode === 'create') {
+      const response = await mastersApi.createPackage({
+        code: `PKG_${formName.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_')}_${Date.now()}`,
+        name: formName.trim(), testsIncluded: formTests, panelsIncluded: formPanels,
+        retailPrice: Number(formFee) || 0, packagePrice: Number(formFee) || 0, discountPct: 0,
+        forGender: formGender, isInRatelist: true, hideInterpretation, hideMethodInstrument,
+      });
+      if (!response.success) { showToast(response.message || 'Unable to create package.'); return; }
       const newPkg: TestPackageItem = {
-        id: String(Date.now()),
+        id: response.data.id,
         sNo: packages.length + 1,
         name: formName,
         fee: Number(formFee) || 0,
@@ -269,6 +301,12 @@ export const PackagesPage: React.FC<PackagesPageProps> = ({ onNavigate }) => {
       setPackages([...packages, newPkg]);
       showToast(`Package "${newPkg.name}" added successfully.`);
     } else if (modalMode === 'edit' && selectedPkg) {
+      const response = await mastersApi.updatePackage(selectedPkg.id, {
+        name: formName.trim(), testsIncluded: formTests, panelsIncluded: formPanels,
+        retailPrice: Number(formFee) || 0, packagePrice: Number(formFee) || 0,
+        forGender: formGender, hideInterpretation, hideMethodInstrument,
+      });
+      if (!response.success) { showToast(response.message || 'Unable to update package.'); return; }
       setPackages((prev) =>
         prev.map((p) =>
           p.id === selectedPkg.id
@@ -290,14 +328,18 @@ export const PackagesPage: React.FC<PackagesPageProps> = ({ onNavigate }) => {
     setModalMode(null);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!pkgToDelete) return;
+    const response = await mastersApi.deletePackage(pkgToDelete.id);
+    if (!response.success) { showToast(response.message || 'Unable to remove package.'); return; }
     setPackages((prev) => prev.filter((p) => p.id !== pkgToDelete.id));
     showToast(`Package "${pkgToDelete.name}" deleted.`);
     setPkgToDelete(null);
   };
 
-  const handleToggleRatelist = (pkg: TestPackageItem) => {
+  const handleToggleRatelist = async (pkg: TestPackageItem) => {
+    const response = await mastersApi.updatePackage(pkg.id, { isInRatelist: !pkg.inRatelist });
+    if (!response.success) { showToast(response.message || 'Unable to update ratelist membership.'); return; }
     setPackages((prev) =>
       prev.map((p) => (p.id === pkg.id ? { ...p, inRatelist: !p.inRatelist } : p))
     );
@@ -691,7 +733,7 @@ export const PackagesPage: React.FC<PackagesPageProps> = ({ onNavigate }) => {
                   </button>
                 }
                 placeholder="Select tests..."
-                options={MASTER_PACKAGE_TEST_OPTIONS}
+                options={testOptions}
                 selectedValues={formTests}
                 onChange={setFormTests}
               />
@@ -723,7 +765,7 @@ export const PackagesPage: React.FC<PackagesPageProps> = ({ onNavigate }) => {
                   </button>
                 }
                 placeholder="Select panels..."
-                options={MASTER_PACKAGE_PANEL_OPTIONS}
+                options={panelOptions}
                 selectedValues={formPanels}
                 onChange={setFormPanels}
               />

@@ -784,21 +784,25 @@ export class PathologyService {
       select: {
         testCode: true,
         testName: true,
-        department: true
+        department: true,
+        rate: true
       }
     });
 
-    const countsMap = new Map<string, { code: string; name: string; department: string; count: number }>();
+    const countsMap = new Map<string, { code: string; name: string; department: string; count: number; revenue: number }>();
     for (const item of items) {
       if (!countsMap.has(item.testCode)) {
         countsMap.set(item.testCode, {
           code: item.testCode,
           name: item.testName,
           department: item.department,
-          count: 1
+          count: 1,
+          revenue: Number(item.rate || 0)
         });
       } else {
-        countsMap.get(item.testCode)!.count++;
+        const current = countsMap.get(item.testCode)!;
+        current.count++;
+        current.revenue += Number(item.rate || 0);
       }
     }
 

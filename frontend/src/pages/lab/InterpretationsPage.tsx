@@ -21,12 +21,14 @@ import {
   LibraryItem,
 } from './interpretationsLibraryData';
 import { RichInterpretationEditor } from './RichInterpretationEditor';
-import { pathologyApi } from '../../services/api';
+import { pathologyApi, mastersApi } from '../../services/api';
+import { ALL_LABSMART_TESTS } from '../manage/allLabsmartTestsData';
 
 export interface InterpretationItem {
   id: string;
   sNo: number;
   name: string;
+  testCode?: string;
   type: 'test' | 'panel';
   physiologicalBasis: string;
   increasedIn?: string;
@@ -113,24 +115,7 @@ export const InterpretationsPage: React.FC<InterpretationsPageProps> = ({ onNavi
   }, []);
 
   // State holding both panels and tests
-  const [items, setItems] = useState<InterpretationItem[]>(() => {
-    try {
-      const stored = localStorage.getItem('my_interpretations_v3');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length >= 129) {
-          return parsed;
-        }
-      }
-    } catch (e) {
-      // ignore
-    }
-    const all = [...initialPanels, ...initialTests];
-    try {
-      localStorage.setItem('my_interpretations_v3', JSON.stringify(all));
-    } catch (e) {}
-    return all;
-  });
+  const [items, setItems] = useState<InterpretationItem[]>([]);
 
   const testCount = useMemo(() => items.filter((i) => i.type === 'test').length, [items]);
   const panelCount = useMemo(() => items.filter((i) => i.type === 'panel').length, [items]);
@@ -205,15 +190,24 @@ export const InterpretationsPage: React.FC<InterpretationsPageProps> = ({ onNavi
     setActiveMenuId(null);
   };
 
+  const [backendTests, setBackendTests] = useState<any[]>([]);
+
   useEffect(() => {
     const fetchBackendInterpretations = async () => {
       try {
-        const res = await pathologyApi.getInterpretations();
-        if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+        const [res, testsRes] = await Promise.all([
+          pathologyApi.getInterpretations(),
+          mastersApi.listTests().catch(() => ({ success: false, data: [] })),
+        ]);
+        if (testsRes?.success && Array.isArray(testsRes.data)) {
+          setBackendTests(testsRes.data);
+        }
+        if (res?.data && Array.isArray(res.data)) {
           const backendItems: InterpretationItem[] = res.data.map((bi: any, index: number) => ({
             id: bi.id,
             sNo: index + 1,
             name: bi.title,
+            testCode: bi.testCode,
             type: bi.department === 'Panel' || bi.testCode?.startsWith('PANEL-') ? 'panel' : 'test',
             physiologicalBasis: bi.content?.slice(0, 300) || '',
             increasedIn: '',
@@ -222,13 +216,7 @@ export const InterpretationsPage: React.FC<InterpretationsPageProps> = ({ onNavi
             htmlContent: bi.content || '',
           }));
 
-          setItems((prev) => {
-            const map = new Map<string, InterpretationItem>();
-            prev.forEach((p) => map.set(p.name.toLowerCase(), p));
-            backendItems.forEach((b) => map.set(b.name.toLowerCase(), b));
-            const merged = Array.from(map.values());
-            return merged.sort((a, b) => a.name.localeCompare(b.name));
-          });
+          setItems(backendItems.sort((a, b) => a.name.localeCompare(b.name)));
         }
       } catch (err) {
         // Fallback to local
@@ -237,34 +225,39 @@ export const InterpretationsPage: React.FC<InterpretationsPageProps> = ({ onNavi
     fetchBackendInterpretations();
   }, []);
 
-  const handleDeleteItem = (id: string, name: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
-    pathologyApi.deleteInterpretation(id).catch(() => {});
-    showToast(`Deleted interpretation for "${name}".`);
+  const handleDeleteItem = async (id: string, name: string) => {
+    try {
+      const response = await pathologyApi.deleteInterpretation(id);
+      if (!response.success) throw new Error(response.message || 'Unable to delete interpretation');
+      setItems((prev) => prev.filter((i) => i.id !== id));
+      showToast(`Deleted interpretation for "${name}".`);
+    } catch (error: any) { showToast(error?.message || 'Unable to delete interpretation.'); }
     setActiveMenuId(null);
   };
 
-  const handleDuplicateItem = (item: InterpretationItem) => {
+  const handleDuplicateItem = async (item: InterpretationItem) => {
     const duplicate: InterpretationItem = {
       ...item,
       id: `item-${Date.now()}`,
       sNo: items.filter((i) => i.type === item.type).length + 1,
       name: `${item.name} (Copy)`,
     };
-    setItems((prev) => [...prev, duplicate]);
-    pathologyApi
-      .createInterpretation({
+    try {
+      const response = await pathologyApi.createInterpretation({
         title: duplicate.name,
         testCode: duplicate.type === 'panel' ? `PANEL-${duplicate.name.replace(/\s+/g, '-').toUpperCase()}` : duplicate.name.replace(/\s+/g, '-').toUpperCase(),
         department: duplicate.type === 'panel' ? 'Panel' : 'Biochemistry',
         content: duplicate.htmlContent || duplicate.comments,
-      })
-      .catch(() => {});
-    showToast(`Duplicated "${item.name}".`);
+      });
+      if (!response.success) throw new Error(response.message || 'Unable to duplicate interpretation');
+      duplicate.id = response.data.id;
+      setItems((prev) => [...prev, duplicate]);
+      showToast(`Duplicated "${item.name}".`);
+    } catch (error: any) { showToast(error?.message || 'Unable to duplicate interpretation.'); }
     setActiveMenuId(null);
   };
 
-  const handleSaveForm = (e: React.FormEvent) => {
+  const handleSaveForm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) return;
 
@@ -280,14 +273,8 @@ export const InterpretationsPage: React.FC<InterpretationsPageProps> = ({ onNavi
         comments: editorText.trim(),
         htmlContent: editorHtml,
       };
-      const updated = [...items, newItem];
-      setItems(updated);
       try {
-        localStorage.setItem('my_interpretations_v3', JSON.stringify(updated));
-      } catch (err) {}
-
-      pathologyApi
-        .createInterpretation({
+        const response = await pathologyApi.createInterpretation({
           title: formName.trim(),
           testCode:
             formType === 'panel'
@@ -295,10 +282,12 @@ export const InterpretationsPage: React.FC<InterpretationsPageProps> = ({ onNavi
               : formName.trim().replace(/\s+/g, '-').toUpperCase(),
           department: formType === 'panel' ? 'Panel' : 'Biochemistry',
           content: editorHtml || editorText,
-        })
-        .catch(() => {});
-
-      showToast(`Added interpretation for "${formName}".`);
+        });
+        if (!response.success) throw new Error(response.message || 'Unable to save interpretation');
+        newItem.id = response.data.id;
+        setItems((prev) => [...prev, newItem]);
+        showToast(`Added interpretation for "${formName}".`);
+      } catch (error: any) { showToast(error?.message || 'Unable to save interpretation.'); return; }
     } else if (modalMode === 'edit' && selectedItem) {
       const updated = items.map((i) =>
         i.id === selectedItem.id
@@ -312,38 +301,23 @@ export const InterpretationsPage: React.FC<InterpretationsPageProps> = ({ onNavi
             }
           : i
       );
-      setItems(updated);
       try {
-        localStorage.setItem('my_interpretations_v3', JSON.stringify(updated));
-      } catch (err) {}
-
-      pathologyApi
-        .updateInterpretation(selectedItem.id, {
+        const response = await pathologyApi.updateInterpretation(selectedItem.id, {
           title: formName.trim(),
           content: editorHtml || editorText,
-        })
-        .catch(() => {
-          pathologyApi
-            .createInterpretation({
-              title: formName.trim(),
-              testCode:
-                formType === 'panel'
-                  ? `PANEL-${formName.trim().replace(/\s+/g, '-').toUpperCase()}`
-                  : formName.trim().replace(/\s+/g, '-').toUpperCase(),
-              department: formType === 'panel' ? 'Panel' : 'Biochemistry',
-              content: editorHtml || editorText,
-            })
-            .catch(() => {});
         });
-
-      showToast(`Updated interpretation for "${formName}".`);
+        if (!response.success) throw new Error(response.message || 'Unable to save interpretation');
+        setItems(updated);
+        showToast(`Updated interpretation for "${formName}".`);
+      } catch (error: any) { showToast(error?.message || 'Unable to save interpretation.'); return; }
     }
     setModalMode(null);
   };
 
   // Formatter for interpretation preview snippet
   const renderInterpretationSnippet = (item: InterpretationItem) => {
-    const text = item.physiologicalBasis || item.comments || '';
+    const rawText = item.physiologicalBasis || item.comments || '';
+    const text = rawText.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
     if (item.name.toLowerCase().includes('bilirubin')) {
       return (
         <span>
@@ -682,7 +656,7 @@ export const InterpretationsPage: React.FC<InterpretationsPageProps> = ({ onNavi
         style={{
           border: '1px solid #e2e8f0',
           borderRadius: '4px',
-          overflow: 'hidden',
+          overflow: 'visible',
           backgroundColor: '#ffffff',
         }}
       >
@@ -907,21 +881,35 @@ export const InterpretationsPage: React.FC<InterpretationsPageProps> = ({ onNavi
                             style={{
                               position: 'absolute',
                               right: 0,
-                              top: '100%',
+                              ...(idx >= filteredItems.length - 1 && filteredItems.length > 1
+                                ? { bottom: '100%', marginBottom: '4px' }
+                                : { top: '100%', marginTop: '4px' }),
                               backgroundColor: '#ffffff',
                               border: '1px solid #cbd5e1',
                               borderRadius: '4px',
-                              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                              zIndex: 50,
-                              minWidth: '110px',
+                              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)',
+                              zIndex: 100,
+                              minWidth: '120px',
                               padding: '4px 0',
                               textAlign: 'left',
                             }}
                           >
                             <button
                               onClick={() => {
-                                const targetId = item.id.replace('test-', '').replace('panel-', '') || '6228816';
-                                window.open(`/lab_tests/${targetId}`, '_blank');
+                                const normalized = item.name.trim().toLowerCase();
+                                const matchedBackend = backendTests.find(
+                                  (t: any) =>
+                                    t.name?.trim().toLowerCase() === normalized ||
+                                    (item.testCode && t.code?.trim().toLowerCase() === item.testCode.trim().toLowerCase())
+                                );
+                                const matchedLocal = ALL_LABSMART_TESTS.find(
+                                  (t) =>
+                                    t.name.trim().toLowerCase() === normalized ||
+                                    t.shortName?.trim().toLowerCase() === normalized
+                                );
+                                const targetId = matchedBackend?.id || matchedLocal?.id || item.name;
+                                localStorage.setItem('labsmart_active_test_id', targetId);
+                                window.open(`/lab_tests/${encodeURIComponent(targetId)}`, '_blank');
                                 setActiveMenuId(null);
                               }}
                               style={{

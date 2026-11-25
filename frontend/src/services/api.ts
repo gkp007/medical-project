@@ -206,6 +206,8 @@ export const casesApi = {
       method: 'POST',
       body: JSON.stringify({ reason }),
     }),
+  updatePrintedStatus: (caseId: string, isPrinted: boolean) =>
+    request<any>(`/cases/${caseId}/printed`, { method: 'PATCH', body: JSON.stringify({ isPrinted }) }),
 };
 
 // -------------------------------------------------------------
@@ -405,6 +407,8 @@ export const settingsApi = {
 
 
 export const mastersApi = {
+  listUnits: () => request<any>('/masters/units'),
+  createUnit: (name: string) => request<any>('/masters/units', { method: 'POST', body: JSON.stringify({ name }) }),
   listTests: (query: any = {}) => {
     const params = new URLSearchParams(query).toString();
     return request<any>(`/masters/tests${params ? `?${params}` : ''}`);
@@ -412,6 +416,11 @@ export const mastersApi = {
   getTestById: (id: string) => request<any>(`/masters/tests/${id}`),
   createTest: (data: any) =>
     request<any>('/masters/tests', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  importLibraryTest: (data: any) =>
+    request<any>('/masters/tests/import-library', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
@@ -435,6 +444,9 @@ export const mastersApi = {
       body: JSON.stringify({ ratelist }),
     }),
   listPackages: () => request<any>('/masters/packages'),
+  createPackage: (data: any) => request<any>('/masters/packages', { method: 'POST', body: JSON.stringify(data) }),
+  updatePackage: (id: string, data: any) => request<any>(`/masters/packages/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deletePackage: (id: string) => request<any>(`/masters/packages/${id}`, { method: 'DELETE' }),
   listPanels: () => request<any>('/masters/panels'),
   createPanel: (data: any) =>
     request<any>('/masters/panels', {
@@ -451,6 +463,9 @@ export const mastersApi = {
       method: 'DELETE',
     }),
   listCategories: () => request<any>('/masters/categories'),
+  createCategory: (data: any) => request<any>('/masters/categories', { method: 'POST', body: JSON.stringify(data) }),
+  updateCategory: (id: string, data: any) => request<any>(`/masters/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteCategory: (id: string) => request<any>(`/masters/categories/${id}`, { method: 'DELETE' }),
   listAgents: () => request<any>('/masters/agents'),
 };
 

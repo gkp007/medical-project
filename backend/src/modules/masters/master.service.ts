@@ -1,7 +1,17 @@
 import { prisma } from '../../core/database/prisma.client.js';
-import { NotFoundError } from '../../core/errors/AppError.js';
+import { BadRequestError, NotFoundError } from '../../core/errors/AppError.js';
 
 export class MasterService {
+  static async listUnits() {
+    return prisma.laboratoryUnit.findMany({ orderBy: { name: 'asc' } });
+  }
+
+  static async createUnit(rawName: unknown) {
+    const name = typeof rawName === 'string' ? rawName.trim() : '';
+    if (!name) throw new BadRequestError('Unit name is required');
+    return prisma.laboratoryUnit.upsert({ where: { name }, create: { name }, update: {} });
+  }
+
   // --- Investigations & Tests ---
   static async listTests(query: { search?: string; department?: string }) {
     const where: any = { isDeleted: false };
@@ -42,8 +52,9 @@ export class MasterService {
       test = await prisma.investigation.findFirst({
         where: {
           OR: [
-            { code: id },
-            { name: { contains: id } }
+            { code: { equals: id, mode: 'insensitive' } },
+            { name: { equals: id, mode: 'insensitive' } },
+            { name: { contains: id, mode: 'insensitive' } }
           ]
         },
         include: {
@@ -204,18 +215,102 @@ export class MasterService {
   }
 
   static async createTest(data: any) {
-    return prisma.investigation.create({
+    const parameters = Array.isArray(data.parameters) ? data.parameters : [];
+    const testType = data.testType || (parameters.length > 1 ? 'Multi parameter' : 'Single parameter');
+
+    if (!data.name?.trim() || !data.code?.trim() || !data.department?.trim()) {
+      throw new Error('Code, name and department are required to create a test');
+    }
+    if (testType === 'Multi parameter' && parameters.filter((p: any) => !p.isRemoved).length === 0) {
+      throw new Error('A multi-parameter test needs at least one active parameter');
+    }
+
+    const created = await prisma.investigation.create({
       data: {
-        code: data.code,
-        name: data.name,
-        department: data.department,
-        specimen: data.specimen,
+        code: data.code.trim(),
+        name: data.name.trim(),
+        department: data.department.trim(),
+        testType,
+        displayNameInReport: data.displayNameInReport !== false,
+        nestedTemplate: data.nestedTemplate || null,
+        specimen: data.specimen || 'Blood',
         container: data.container || 'Standard Container',
-        rate: data.rate,
-        b2bRate: data.b2bRate || null,
-        tatHours: data.tatHours || 4
-      }
+        rate: Number(data.rate || 0),
+        b2bRate: data.b2bRate ? Number(data.b2bRate) : null,
+        ratelistGender: data.ratelistGender || 'Both',
+        isActiveInRatelist: data.isActiveInRatelist !== false,
+        tatHours: Number(data.tatHours || 4),
+        parameters: {
+          create: parameters.map((parameter: any, index: number) => ({
+            code: data.code.trim(),
+            name: parameter.name?.trim() || data.name.trim(),
+            unit: parameter.unit || '',
+            sortOrder: Number(parameter.order ?? index + 1),
+            isOptional: Boolean(parameter.isOptional),
+            isRemoved: Boolean(parameter.isRemoved),
+            inputType: parameter.inputType || 'Single Line',
+            defaultResult: parameter.defaultResult || null,
+            groupBy: parameter.groupBy || null,
+          })),
+        },
+      },
     });
+
+    return this.getTestById(created.id);
+  }
+
+  static async importLibraryTest(data: any) {
+    const name = data.name?.trim();
+    const department = data.department?.trim();
+    const libraryId = String(data.libraryId || '').trim();
+    const rate = Number(data.rate);
+
+    if (!name || !department || !libraryId || !Number.isFinite(rate) || rate <= 0) {
+      throw new BadRequestError('Library test name, category, reference and a positive fee are required');
+    }
+
+    const code = `LIB_${libraryId.replace(/[^A-Za-z0-9_-]/g, '_')}`;
+    const existing = await prisma.investigation.findFirst({
+      where: {
+        OR: [
+          { code },
+          { name: { equals: name, mode: 'insensitive' } },
+        ],
+      },
+      select: { id: true, isDeleted: true },
+    });
+
+    if (existing && !existing.isDeleted) {
+      return { created: false, test: await this.getTestById(existing.id) };
+    }
+
+    if (existing?.isDeleted) {
+      await prisma.investigation.update({
+        where: { id: existing.id },
+        data: {
+          name,
+          department,
+          rate,
+          specimen: data.specimen?.trim() || 'Serum',
+          container: data.container?.trim() || 'Standard Container',
+          isDeleted: false,
+        },
+      });
+      return { created: true, test: await this.getTestById(existing.id) };
+    }
+
+    const test = await this.createTest({
+      code,
+      name,
+      department,
+      rate,
+      specimen: data.specimen?.trim() || 'Serum',
+      container: data.container?.trim() || 'Standard Container',
+      testType: 'Single parameter',
+      parameters: [{ name, unit: '', inputType: 'Single Line', order: 1 }],
+    });
+
+    return { created: true, test };
   }
 
   static async updateTest(id: string, data: any) {
@@ -227,11 +322,16 @@ export class MasterService {
 
     const updatePayload: any = {};
     if (data.name !== undefined) updatePayload.name = data.name;
+    if (data.testType !== undefined) updatePayload.testType = data.testType;
+    if (data.displayNameInReport !== undefined) updatePayload.displayNameInReport = Boolean(data.displayNameInReport);
+    if (data.nestedTemplate !== undefined) updatePayload.nestedTemplate = data.nestedTemplate || null;
     if (data.department !== undefined) updatePayload.department = data.department;
     if (data.specimen !== undefined) updatePayload.specimen = data.specimen;
     if (data.container !== undefined) updatePayload.container = data.container;
     if (data.rate !== undefined) updatePayload.rate = Number(data.rate);
     if (data.b2bRate !== undefined) updatePayload.b2bRate = data.b2bRate ? Number(data.b2bRate) : null;
+    if (data.ratelistGender !== undefined) updatePayload.ratelistGender = data.ratelistGender;
+    if (data.isActiveInRatelist !== undefined) updatePayload.isActiveInRatelist = Boolean(data.isActiveInRatelist);
     if (data.tatHours !== undefined) updatePayload.tatHours = Number(data.tatHours);
 
     if (Object.keys(updatePayload).length > 0) {
@@ -277,6 +377,42 @@ export class MasterService {
           }
         });
       }
+    }
+
+    if (Array.isArray(data.parameters)) {
+      const existingParameters = await prisma.testParameter.findMany({
+        where: { investigationId: test.id },
+        select: { id: true },
+      });
+      const existingIds = new Set(existingParameters.map((parameter) => parameter.id));
+      const incomingIds = new Set<string>(
+        data.parameters
+          .map((parameter: any) => parameter.id)
+          .filter((id: unknown): id is string => typeof id === 'string')
+      );
+
+      await prisma.$transaction(async (tx) => {
+        await tx.testParameter.deleteMany({
+          where: { investigationId: test!.id, id: { notIn: [...incomingIds] } },
+        });
+
+        await Promise.all(data.parameters.map((parameter: any, index: number) => {
+          const value = {
+            code: data.code || test!.code,
+            name: parameter.name?.trim() || test!.name,
+            unit: parameter.unit || '',
+            sortOrder: Number(parameter.order ?? index + 1),
+            isOptional: Boolean(parameter.isOptional),
+            isRemoved: Boolean(parameter.isRemoved),
+            inputType: parameter.inputType || 'Single Line',
+            defaultResult: parameter.defaultResult || null,
+            groupBy: parameter.groupBy || null,
+          };
+          return existingIds.has(parameter.id)
+            ? tx.testParameter.update({ where: { id: parameter.id }, data: value })
+            : tx.testParameter.create({ data: { ...value, investigationId: test!.id } });
+        }));
+      });
     }
 
     return this.getTestById(test.id);
@@ -346,9 +482,14 @@ export class MasterService {
         name: data.name,
         description: data.description || null,
         testsIncluded: typeof data.testsIncluded === 'string' ? data.testsIncluded : JSON.stringify(data.testsIncluded || []),
+        panelsIncluded: typeof data.panelsIncluded === 'string' ? data.panelsIncluded : JSON.stringify(data.panelsIncluded || []),
         retailPrice: Number(data.retailPrice),
         packagePrice: Number(data.packagePrice),
-        discountPct: Number(data.discountPct || 0.0)
+        discountPct: Number(data.discountPct || 0.0),
+        forGender: data.forGender || 'Both',
+        isInRatelist: data.isInRatelist !== false,
+        hideInterpretation: data.hideInterpretation !== false,
+        hideMethodInstrument: Boolean(data.hideMethodInstrument)
       }
     });
   }
@@ -360,6 +501,9 @@ export class MasterService {
     const updateData: any = { ...data };
     if (data.testsIncluded && typeof data.testsIncluded !== 'string') {
       updateData.testsIncluded = JSON.stringify(data.testsIncluded);
+    }
+    if (data.panelsIncluded && typeof data.panelsIncluded !== 'string') {
+      updateData.panelsIncluded = JSON.stringify(data.panelsIncluded);
     }
     if (data.retailPrice !== undefined) updateData.retailPrice = Number(data.retailPrice);
     if (data.packagePrice !== undefined) updateData.packagePrice = Number(data.packagePrice);
@@ -429,7 +573,7 @@ export class MasterService {
 
   // --- Test Categories ---
   static async listCategories() {
-    return prisma.testCategory.findMany({ orderBy: { name: 'asc' } });
+    return prisma.testCategory.findMany({ orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }] });
   }
 
   static async createCategory(data: any) {
@@ -439,7 +583,8 @@ export class MasterService {
         code: data.code || undefined,
         department: data.department,
         description: data.description || null,
-        testCount: Number(data.testCount || 0)
+        testCount: Number(data.testCount || 0),
+        displayOrder: Number(data.displayOrder || data.testCount || 0)
       }
     });
   }
@@ -448,9 +593,11 @@ export class MasterService {
     const category = await prisma.testCategory.findUnique({ where: { id } });
     if (!category) throw new NotFoundError('Test category not found');
 
+    const updateData: any = { ...data };
+    if (data.displayOrder !== undefined) updateData.displayOrder = Number(data.displayOrder);
     return prisma.testCategory.update({
       where: { id },
-      data
+      data: updateData
     });
   }
 

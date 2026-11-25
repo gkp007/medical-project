@@ -23,6 +23,7 @@ router.post(
 router.get('/:id', CaseController.getCaseById);
 router.put('/:id', requirePermission('canBilling'), CaseController.updateCase);
 router.patch('/:id/sample-status', CaseController.updateSampleStatus);
+router.patch('/:id/printed', CaseController.updatePrintedStatus);
 router.get('/:id/printable-bill', CaseController.getPrintableBill);
 router.get('/:id/bill-pdf', CaseController.getPrintableBill);
 router.get('/:id/barcodes', CaseController.getBarcodes);

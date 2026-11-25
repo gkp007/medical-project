@@ -25,16 +25,37 @@ export const LabTestEditPage: React.FC<LabTestEditPageProps> = ({
   const [activeTab, setActiveTab] = useState<'more' | 'format'>('more');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Look up master test details from ALL_LABSMART_TESTS
+  // Look up master test details from ALL_LABSMART_TESTS only when an actual match exists
   const baseTest: LabTestDetail = useMemo(() => {
+    const normalized = (testId || '').trim().toLowerCase();
     const found = ALL_LABSMART_TESTS.find(
       (t) =>
         t.id === testId ||
-        t.name.toLowerCase() === testId?.toLowerCase() ||
+        t.name.toLowerCase() === normalized ||
+        (t.shortName && t.shortName.toLowerCase() === normalized) ||
         String(t.order) === testId
     );
-    return found || ALL_LABSMART_TESTS[0];
+    if (found) return found;
+    return {
+      id: testId || 'unknown',
+      order: 0,
+      name: testId && !/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(testId) ? testId : 'Loading test...',
+      shortName: '',
+      category: 'Haematology',
+      testType: 'Single parameter',
+      unit: '',
+      price: 0,
+      description: '',
+      increasedIn: [],
+      decreasedIn: [],
+      comments: '',
+      ratelistEntries: [],
+      panelsIncluded: [],
+      normalValues: { selectType: 'numeric_range', ranges: [] },
+    } as LabTestDetail;
   }, [testId]);
+
+  const activeTestId = testId || baseTest.id;
 
   // Form states matching media_1795333880694_4e171475.png
   const [name, setName] = useState(baseTest.name);
@@ -138,32 +159,44 @@ export const LabTestEditPage: React.FC<LabTestEditPageProps> = ({
     if (baseTest.comments) parts.push(`Comments:\n${baseTest.comments}`);
     setInterpretationText(parts.join('\n\n') || baseTest.interpretation || '');
 
-    // Fetch from backend API if available
+    // Fetch from backend API if available using actual testId
     const fetchBackend = async () => {
       try {
-        const res = await mastersApi.getTestById(baseTest.id);
+        const [res, unitsRes] = await Promise.all([
+          mastersApi.getTestById(activeTestId),
+          mastersApi.listUnits().catch(() => ({ success: false, data: [] })),
+        ]);
+        if (unitsRes?.success && Array.isArray(unitsRes.data) && unitsRes.data.length > 0) {
+          setUnitOptions((prev) => Array.from(new Set([...prev, ...unitsRes.data.map((u: any) => u.name)])));
+        }
         if (res?.data) {
           if (res.data.name) setName(res.data.name);
-          if (res.data.department) setCategory(res.data.department);
+          if (res.data.shortName !== undefined) setShortName(res.data.shortName || '');
+          if (res.data.department || res.data.category) setCategory(res.data.department || res.data.category);
           if (res.data.parameters?.[0]?.unit) setUnit(res.data.parameters[0].unit);
-          if (res.data.interpretation) setInterpretationText(res.data.interpretation);
+          if (res.data.interpretation !== undefined) setInterpretationText(res.data.interpretation || '');
         }
       } catch (err) { }
     };
     fetchBackend();
-  }, [baseTest]);
+  }, [baseTest, activeTestId]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleSaveNewUnit = (e: React.FormEvent) => {
+  const handleSaveNewUnit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = newUnitValue.trim();
     if (!trimmed) {
       showToast('Please enter a unit name');
       return;
+    }
+    try {
+      await mastersApi.createUnit(trimmed);
+    } catch {
+      // keep local option if already exists
     }
     if (!unitOptions.includes(trimmed)) {
       const updated = [...unitOptions, trimmed];
@@ -181,7 +214,7 @@ export const LabTestEditPage: React.FC<LabTestEditPageProps> = ({
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await mastersApi.updateTest(baseTest.id, {
+      await mastersApi.updateTest(activeTestId, {
         name,
         shortName,
         department: category,
@@ -193,8 +226,9 @@ export const LabTestEditPage: React.FC<LabTestEditPageProps> = ({
         printLineAfter,
       });
       showToast('Saved test specifications successfully in database!');
-    } catch (err) {
-      showToast('Saved test specifications successfully!');
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to save test specifications.');
+      return;
     }
 
     // Update in-memory ALL_LABSMART_TESTS object
@@ -207,24 +241,24 @@ export const LabTestEditPage: React.FC<LabTestEditPageProps> = ({
     baseTest.interpretation = interpretationText;
 
     setTimeout(() => {
-      localStorage.setItem('labsmart_active_test_id', baseTest.id);
+      localStorage.setItem('labsmart_active_test_id', activeTestId);
       if (onSaved) {
         onSaved();
       } else if (onNavigate) {
         onNavigate('view_lab_test');
       } else {
-        window.history.pushState({}, '', `/37749971/lab_tests/${baseTest.id}`);
+        window.history.pushState({}, '', `/37749971/lab_tests/${activeTestId}`);
         window.dispatchEvent(new PopStateEvent('popstate'));
       }
     }, 500);
   };
 
   const handleCancel = () => {
-    localStorage.setItem('labsmart_active_test_id', baseTest.id);
+    localStorage.setItem('labsmart_active_test_id', activeTestId);
     if (onNavigate) {
       onNavigate('view_lab_test');
     } else {
-      window.history.pushState({}, '', `/37749971/lab_tests/${baseTest.id}`);
+      window.history.pushState({}, '', `/37749971/lab_tests/${activeTestId}`);
       window.dispatchEvent(new PopStateEvent('popstate'));
     }
   };

@@ -11,10 +11,11 @@ export const createCaseSchema = z.object({
     ageDays: z.number().int().min(0).max(31).optional(),
     ageUnit: z.string().default('Years'),
     gender: z.string().default('Male'),
-    mobile: z.string().min(10),
+    mobile: z.string().optional().or(z.literal('')),
     email: z.string().optional().or(z.literal('')),
     address: z.string().optional().or(z.literal('')),
     aadhaar: z.string().optional().or(z.literal('')),
+    medicalHistory: z.string().optional().or(z.literal('')),
     onlineReportRequested: z.boolean().optional(),
     bloodGroup: z.string().optional().or(z.literal(''))
   }),
@@ -24,16 +25,24 @@ export const createCaseSchema = z.object({
   modality: z.string().default('LAB'),
   isUrgent: z.boolean().optional().default(false),
   collectionTime: z.string().optional(),
+  sampleCollectedAt: z.string().optional(),
   investigations: z.array(z.object({
     testId: z.string(),
+    itemType: z.enum(['test', 'panel', 'package']).optional().default('test'),
+    name: z.string().optional(),
+    rate: z.number().min(0).optional(),
+    department: z.string().optional(),
     discount: z.number().min(0).default(0)
   })).min(1, 'At least one investigation must be selected'),
   discountType: z.enum(['percentage', 'fixed']).default('fixed'),
   discountValue: z.number().min(0).default(0),
   discountReason: z.string().optional(),
+  collectionCharge: z.number().min(0).optional().default(0),
   paidAmount: z.number().min(0).default(0),
   paymentMode: z.string().default('Cash'),
   allowDue: z.boolean().optional().default(false),
+  sendSms: z.boolean().optional().default(false),
+  sendWhatsapp: z.boolean().optional().default(false),
   notes: z.string().optional()
 });
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card } from '../../components/atoms/Card';
 import { Modal } from '../../components/atoms/Modal';
 import { ConfirmationModal } from '../../components/organisms/modals/ConfirmationModal';
@@ -9,6 +9,7 @@ import {
   FolderTree,
   ExternalLink,
 } from 'lucide-react';
+import { mastersApi } from '../../services/api';
 
 interface CategoryItem {
   id: string;
@@ -23,7 +24,8 @@ interface TestCategoriesPageProps {
 export const TestCategoriesPage: React.FC<TestCategoriesPageProps> = ({
   onNavigateTestDatabaseWithCategory,
 }) => {
-  const [categories, setCategories] = useState<CategoryItem[]>([
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  /* Legacy placeholder records retained only as development reference; categories load from the API.
     { id: '355219', order: 1, name: 'Haematology' },
     { id: '355220', order: 2, name: 'Biochemistry' },
     { id: '355221', order: 3, name: 'Serology & Immunology' },
@@ -34,7 +36,7 @@ export const TestCategoriesPage: React.FC<TestCategoriesPageProps> = ({
     { id: '355226', order: 8, name: 'Histopathology' },
     { id: '355227', order: 9, name: 'Others' },
     { id: '355228', order: 10, name: 'Miscellaneous' },
-  ]);
+  ]; */
 
   const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null);
   const [selectedCat, setSelectedCat] = useState<CategoryItem | null>(null);
@@ -49,6 +51,14 @@ export const TestCategoriesPage: React.FC<TestCategoriesPageProps> = ({
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  useEffect(() => {
+    mastersApi.listCategories().then((response) => {
+      if (response.success && Array.isArray(response.data)) {
+        setCategories(response.data.map((category: any, index: number) => ({ id: category.id, name: category.name, order: Number(category.displayOrder || index + 1) })));
+      }
+    }).catch(() => showToast('Unable to load categories from the server.'));
+  }, []);
+
   const handleOpenCreate = () => {
     setFormName('');
     setFormOrder(categories.length + 1);
@@ -62,19 +72,23 @@ export const TestCategoriesPage: React.FC<TestCategoriesPageProps> = ({
     setModalMode('edit');
   };
 
-  const handleSaveForm = (e: React.FormEvent) => {
+  const handleSaveForm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) return;
 
     if (modalMode === 'create') {
+      const response = await mastersApi.createCategory({ name: formName.trim(), code: formName.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_'), department: formName.trim(), displayOrder: Number(formOrder) || categories.length + 1 });
+      if (!response.success) { showToast(response.message || 'Unable to create category.'); return; }
       const newCat: CategoryItem = {
-        id: String(Date.now()),
+        id: response.data.id,
         order: Number(formOrder) || categories.length + 1,
         name: formName,
       };
       setCategories([...categories, newCat]);
       showToast(`Category "${newCat.name}" added successfully.`);
     } else if (modalMode === 'edit' && selectedCat) {
+      const response = await mastersApi.updateCategory(selectedCat.id, { name: formName.trim(), displayOrder: Number(formOrder) });
+      if (!response.success) { showToast(response.message || 'Unable to update category.'); return; }
       setCategories((prev) =>
         prev.map((c) =>
           c.id === selectedCat.id
