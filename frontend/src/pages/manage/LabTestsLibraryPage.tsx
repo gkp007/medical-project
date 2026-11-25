@@ -198,23 +198,73 @@ export const LabTestsLibraryPage: React.FC<LabTestsLibraryPageProps> = ({
         <div style={{ padding: '12px 14px', border: '1px solid #e2e8f0', background: '#ffffff', borderRadius: '8px' }}><div style={{ color: '#64748b', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>Available to import</div><div style={{ color: '#2563eb', fontSize: '20px', fontWeight: 700, marginTop: '2px' }}>{isLoading ? '—' : LIBRARY_LAB_TESTS.length - presentCount}</div></div>
       </div>
 
-      {/* Search in page */}
-      <div className="mb-4 flex flex-wrap gap-2 items-center">
-      <div className="max-w-xs relative flex-1" style={{ minWidth: '240px' }}>
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-4 w-4 text-gray-400" />
+      {/* Search & Category Filter Toolbar */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: '12px',
+          marginBottom: '16px',
+        }}
+      >
+        <div style={{ position: 'relative', width: '300px', maxWidth: '100%' }}>
+          <div
+            style={{
+              position: 'absolute',
+              left: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              pointerEvents: 'none',
+              color: '#94a3b8',
+            }}
+          >
+            <Search size={15} />
+          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search in page..."
+            style={{
+              width: '100%',
+              height: '38px',
+              padding: '0 12px 0 36px',
+              borderRadius: '6px',
+              border: '1px solid #cbd5e1',
+              fontSize: '13px',
+              color: '#0f172a',
+              backgroundColor: '#ffffff',
+              boxSizing: 'border-box',
+              outline: 'none',
+            }}
+          />
         </div>
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search in page"
-          className="border border-gray-300 h-9 block text-sm w-full shadow-sm pl-9 pr-3 text-slate-700 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white"
-        />
-      </div>
-      <select aria-label="Filter library tests by category" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="select-control" style={{ minWidth: '190px', height: '36px' }}>
-        {categories.map((category) => <option key={category} value={category}>{category}</option>)}
-      </select>
+        <select
+          aria-label="Filter library tests by category"
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          style={{
+            width: '220px',
+            height: '38px',
+            padding: '0 12px',
+            borderRadius: '6px',
+            border: '1px solid #cbd5e1',
+            fontSize: '13px',
+            color: '#0f172a',
+            backgroundColor: '#ffffff',
+            outline: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          {categories.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Table matching Labsmart's exact layout */}
