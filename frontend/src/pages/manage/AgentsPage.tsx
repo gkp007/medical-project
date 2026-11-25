@@ -36,27 +36,29 @@ export const AgentsPage: React.FC = () => {
   const [formArea, setFormArea] = useState('');
 
   const [agents, setAgents] = useState<AgentItem[]>([]);
+  const [showHelp, setShowHelp] = useState(false);
+
+  const fetchLiveAgents = async () => {
+    try {
+      const res = await mastersApi.listAgents(true);
+      if (res.success && Array.isArray(res.data)) {
+        const mapped: AgentItem[] = res.data.map((ag: any, idx: number) => ({
+          id: ag.id,
+          agentId: ag.id.slice(0, 8).toUpperCase() || `AG-0${idx + 1}`,
+          name: ag.name,
+          phone: ag.phone || ag.mobile || 'N/A',
+          area: ag.zone || ag.area || 'City Area',
+          registeredOn: ag.createdAt ? new Date(ag.createdAt).toLocaleDateString('en-GB') : 'Active',
+          isArchived: !ag.isActive,
+        }));
+        setAgents(mapped);
+      }
+    } catch (err) {
+      console.error('Failed to load agents:', err);
+    }
+  };
 
   useEffect(() => {
-    const fetchLiveAgents = async () => {
-      try {
-        const res = await mastersApi.listAgents();
-        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-          const mapped: AgentItem[] = res.data.map((ag: any, idx: number) => ({
-            id: ag.id,
-            agentId: ag.code || `AG-0${idx + 1}`,
-            name: ag.name,
-            phone: ag.phone || 'N/A',
-            area: ag.area || 'City Area',
-            registeredOn: ag.createdAt ? new Date(ag.createdAt).toLocaleDateString() : 'Active',
-            isArchived: !ag.isActive
-          }));
-          setAgents(mapped);
-        }
-      } catch (err) {
-        console.error('Failed to load agents:', err);
-      }
-    };
     fetchLiveAgents();
   }, []);
 
@@ -65,41 +67,48 @@ export const AgentsPage: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleSaveAgent = (e: React.FormEvent) => {
+  const handleSaveAgent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) return;
 
-    if (editingAgent) {
-      setAgents(prev =>
-        prev.map(a =>
-          a.id === editingAgent.id
-            ? { ...a, name: formName, phone: formPhone, area: formArea }
-            : a
-        )
-      );
-      showToast(`Updated agent ${formName}`);
-      setEditingAgent(null);
-    } else {
-      const newAg: AgentItem = {
-        id: String(Date.now()),
-        agentId: `AG-0${agents.length + 1}`,
-        name: formName,
-        phone: formPhone,
-        area: formArea || 'City Area',
-        registeredOn: '19/10/2026',
-        isArchived: false
-      };
-      setAgents([newAg, ...agents]);
-      showToast(`Added sample collection agent ${newAg.name}`);
-      setIsAddModalOpen(false);
+    try {
+      if (editingAgent) {
+        const res = await mastersApi.updateAgent(editingAgent.id, {
+          name: formName.trim(),
+          phone: formPhone.trim() || 'N/A',
+          zone: formArea.trim() || 'City Area',
+        });
+        if (!res.success) throw new Error(res.message || 'Unable to update agent');
+        showToast(`Updated agent ${formName}`);
+        setEditingAgent(null);
+      } else {
+        const res = await mastersApi.createAgent({
+          name: formName.trim(),
+          phone: formPhone.trim() || 'N/A',
+          zone: formArea.trim() || 'City Area',
+        });
+        if (!res.success) throw new Error(res.message || 'Unable to create agent');
+        showToast(`Added sample collection agent ${formName}`);
+        setIsAddModalOpen(false);
+      }
+      await fetchLiveAgents();
+    } catch (err: any) {
+      showToast(err?.message || 'Unable to save agent');
     }
   };
 
-  const handleToggleArchive = (id: string, archive: boolean) => {
-    setAgents(prev =>
-      prev.map(a => (a.id === id ? { ...a, isArchived: archive } : a))
-    );
-    showToast(archive ? 'Agent moved to archive.' : 'Agent restored to active list.');
+  const handleToggleArchive = async (id: string, archive: boolean) => {
+    try {
+      if (archive) {
+        await mastersApi.deleteAgent(id);
+      } else {
+        await mastersApi.updateAgent(id, { isActive: true });
+      }
+      await fetchLiveAgents();
+      showToast(archive ? 'Agent moved to archive.' : 'Agent restored to active list.');
+    } catch (err: any) {
+      showToast(err?.message || 'Unable to update agent status.');
+    }
   };
 
   const activeAgents = agents.filter(a => !a.isArchived);

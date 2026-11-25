@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/atoms/Card';
 import { Button } from '../../components/atoms/Button';
-import { paymentsApi } from '../../services/api';
+import { paymentsApi, doctorApi } from '../../services/api';
 import {
   Calendar,
   Search,
@@ -41,14 +41,22 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({ onNavigatePr
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
+  const [doctorsList, setDoctorsList] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
   const loadTransactions = async () => {
     setIsLoading(true);
     try {
-      const res = await paymentsApi.listTransactions();
-      const txList = Array.isArray(res.data) 
-        ? res.data 
+      const [res, docsRes] = await Promise.all([
+        paymentsApi.listTransactions(),
+        doctorApi.listDoctors().catch(() => ({ success: false, data: [] })),
+      ]);
+      if (docsRes?.success && Array.isArray(docsRes.data)) {
+        setDoctorsList(docsRes.data.map((d: any) => d.name).filter(Boolean));
+      }
+      const txList = Array.isArray(res.data)
+        ? res.data
         : (Array.isArray(res.data?.transactions) ? res.data.transactions : []);
 
       if (txList.length > 0) {
@@ -59,13 +67,13 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({ onNavigatePr
             regNo: t.case?.billNumber || t.case?.uhid || '#1001',
             patientName: t.case?.patient?.fullName || 'Walk-in Patient',
             doctor: t.case?.doctor?.name || 'Self Refer',
-            date: createdAt.toLocaleDateString(),
+            date: createdAt.toLocaleDateString('en-GB'),
             time: createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             dcn: t.case?.dailyCode || 'L1',
-            cc: 'Main Counter',
+            cc: t.case?.branchId === 'main' ? 'Main' : (t.case?.branchId || 'Main'),
             amount: Number(t.amount || 0),
-            method: (t.mode?.toLowerCase() === 'upi' ? 'upi' : t.mode?.toLowerCase() === 'card' ? 'card' : 'cash') as any,
-            receivedBy: t.receivedBy || 'Staff'
+            method: (t.mode?.toLowerCase() === 'upi' ? 'upi' : t.mode?.toLowerCase() === 'card' ? 'card' : t.mode?.toLowerCase() === 'insurance' ? 'insurance' : 'cash') as any,
+            receivedBy: t.receivedBy || 'Staff',
           };
         });
         setTransactions(mapped);
@@ -233,8 +241,9 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({ onNavigatePr
                 style={{ width: '100%', padding: '7px 10px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px', backgroundColor: '#ffffff' }}
               >
                 <option value="All">All Doctors</option>
-                <option value="Dr. Anil Verma">Dr. Anil Verma</option>
-                <option value="Dr. S. K. Verma">Dr. S. K. Verma</option>
+                {doctorsList.map((docName) => (
+                  <option key={docName} value={docName}>{docName}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -283,7 +292,13 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({ onNavigatePr
               </tr>
             </thead>
             <tbody>
-              {filteredTransactions.map(t => (
+              {filteredTransactions.length === 0 ? (
+                <tr>
+                  <td colSpan={12} style={{ padding: '28px', textAlign: 'center', color: '#64748b' }}>
+                    {isLoading ? 'Loading transactions...' : 'No transactions found.'}
+                  </td>
+                </tr>
+              ) : filteredTransactions.slice((page - 1) * 20, page * 20).map(t => (
                 <tr key={t.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '12px 14px', fontFamily: 'monospace', color: '#2563eb', fontWeight: 600 }}>{t.id}</td>
                   <td style={{ padding: '12px 14px', fontWeight: 700, color: '#1e293b' }}>{t.regNo}</td>
@@ -317,6 +332,13 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({ onNavigatePr
               ))}
             </tbody>
           </table>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: '1px solid #e2e8f0', backgroundColor: '#f8fafc', fontSize: '12px', color: '#64748b' }}>
+          <span>Page {page} of {Math.max(1, Math.ceil(filteredTransactions.length / 20))}</span>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Prev</Button>
+            <Button variant="secondary" size="sm" disabled={page * 20 >= filteredTransactions.length} onClick={() => setPage((p) => p + 1)}>Next</Button>
+          </div>
         </div>
       </Card>
     </div>

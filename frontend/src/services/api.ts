@@ -208,6 +208,10 @@ export const casesApi = {
     }),
   updatePrintedStatus: (caseId: string, isPrinted: boolean) =>
     request<any>(`/cases/${caseId}/printed`, { method: 'PATCH', body: JSON.stringify({ isPrinted }) }),
+  updateSampleStatus: (caseId: string, status: string) =>
+    request<any>(`/cases/${caseId}/sample-status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  updateCase: (caseId: string, data: any) =>
+    request<any>(`/cases/${caseId}`, { method: 'PUT', body: JSON.stringify(data) }),
 };
 
 // -------------------------------------------------------------
@@ -299,7 +303,19 @@ export const radiologyApi = {
   getTemplates: (modality?: string) =>
     request<any>(`/radiology/templates${modality ? `?modality=${modality}` : ''}`),
 
+  createTemplate: (data: any) =>
+    request<any>('/radiology/templates', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
   getSignatures: () => request<any>('/radiology/signatures'),
+
+  createSignature: (data: any) =>
+    request<any>('/radiology/signatures', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 };
 
 // -------------------------------------------------------------
@@ -307,6 +323,11 @@ export const radiologyApi = {
 // -------------------------------------------------------------
 export const businessApi = {
   getDashboardMetrics: () => request<any>('/business/dashboard-metrics'),
+
+  listActivities: (query: any = {}) => {
+    const params = new URLSearchParams(query).toString();
+    return request<any>(`/business/activities${params ? `?${params}` : ''}`);
+  },
 
   getDailySummary: (date?: string) =>
     request<any>(`/business/daily-summary${date ? `?date=${date}` : ''}`),
@@ -466,7 +487,21 @@ export const mastersApi = {
   createCategory: (data: any) => request<any>('/masters/categories', { method: 'POST', body: JSON.stringify(data) }),
   updateCategory: (id: string, data: any) => request<any>(`/masters/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteCategory: (id: string) => request<any>(`/masters/categories/${id}`, { method: 'DELETE' }),
-  listAgents: () => request<any>('/masters/agents'),
+  listAgents: (all = false) => request<any>(`/masters/agents${all ? '?all=true' : ''}`),
+  createAgent: (data: any) =>
+    request<any>('/masters/agents', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  updateAgent: (id: string, data: any) =>
+    request<any>(`/masters/agents/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  deleteAgent: (id: string) =>
+    request<any>(`/masters/agents/${id}`, {
+      method: 'DELETE',
+    }),
 };
 
 // -------------------------------------------------------------

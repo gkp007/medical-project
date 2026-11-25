@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card } from '../../components/atoms/Card';
 import { Button } from '../../components/atoms/Button';
+import { casesApi } from '../../services/api';
 import {
   Printer,
   Download,
@@ -68,20 +69,56 @@ export const CaseWiseReportPage: React.FC = () => {
     { id: 'MammographyCase', label: 'MammographyCase' },
   ];
 
-  const sampleCases: CaseRow[] = [
-    {
-      regNo: '261019-001',
-      patient: 'Rahul Sharma (32Y/M)',
-      referredBy: 'Dr. Anil Verma, MBBS MD',
-      caseType: 'LabCase',
-      investigations: 'Complete Blood Count (CBC)',
-      totalFee: 400,
-      discount: 0,
-      amountPaid: 400,
-      due: 0,
-      status: 'Completed'
+  const [reportCases, setReportCases] = useState<CaseRow[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const modalityToCaseType = (mod: string) => {
+    const u = (mod || 'LAB').toUpperCase();
+    if (u.includes('OUTSOURCE')) return 'OutsourceLabCase';
+    if (u.includes('USG')) return 'UsgCase';
+    if (u.includes('DIGITAL')) return 'DigitalXrayCase';
+    if (u.includes('XRAY') || u.includes('X-RAY')) return 'XrayCase';
+    if (u.includes('ECG')) return 'EcgCase';
+    if (u.includes('CT')) return 'CtScanCase';
+    if (u.includes('MRI')) return 'MriCase';
+    if (u.includes('EPS')) return 'EpsCase';
+    if (u.includes('OPG')) return 'OpgCase';
+    if (u.includes('CARDIOLOGY')) return 'CardiologyCase';
+    if (u.includes('EEG')) return 'EegCase';
+    if (u.includes('MAMMO')) return 'MammographyCase';
+    return 'LabCase';
+  };
+
+  const handleGenerateReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const res = await casesApi.listCases({ startDate: selectedDate, endDate: selectedDate, limit: 200 });
+      const rows = Array.isArray(res?.data?.cases) ? res.data.cases : [];
+      const mapped: CaseRow[] = rows
+        .filter((c: any) => !excludeCancelled || c.reportStatus !== 'Cancelled')
+        .filter((c: any) => collectionCentre === 'Main' ? (!c.branchId || c.branchId === 'main' || c.branchId === 'Main') : c.branchId === collectionCentre)
+        .map((c: any) => ({
+          regNo: c.billNumber || c.dailyCode || c.id.slice(0, 8),
+          patient: `${c.patient?.fullName || 'Patient'} (${c.patient?.age || '-'}${c.patient?.ageUnit?.[0] || 'Y'}/${c.patient?.gender?.[0] || 'M'})`,
+          referredBy: c.doctor?.name || 'Self Referral',
+          caseType: modalityToCaseType(c.modality),
+          investigations: (c.items || []).map((i: any) => i.testName).join(', ') || '-',
+          totalFee: Number(c.grossAmount || 0),
+          discount: Number(c.discountAmount || 0),
+          amountPaid: Number(c.paidAmount || 0),
+          due: Number(c.balanceDue || 0),
+          status: c.reportStatus || 'Registered',
+        }));
+      setReportCases(mapped);
+      setViewState('report');
+      showToast(`Generated Case Wise Business Report (${mapped.length} cases)`);
+    } catch (err: any) {
+      showToast(err?.message || 'Unable to generate case wise report.');
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -108,7 +145,7 @@ export const CaseWiseReportPage: React.FC = () => {
     .map(c => c.label)
     .join(', ');
 
-  const filteredCases = sampleCases.filter(c => caseTypes[c.caseType as keyof typeof caseTypes]);
+  const filteredCases = reportCases.filter(c => caseTypes[c.caseType as keyof typeof caseTypes]);
 
   return (
     <div style={{ maxWidth: '1440px', margin: '0 auto', position: 'relative' }}>
@@ -146,11 +183,7 @@ export const CaseWiseReportPage: React.FC = () => {
 
           <Card style={{ padding: '24px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0' }}>
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setViewState('report');
-                showToast(`Generated Case Wise Business Report for ${collectionCentre}`);
-              }}
+              onSubmit={handleGenerateReport}
               style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
             >
               {/* Exclude Cancelled Cases Checkbox */}
@@ -226,8 +259,8 @@ export const CaseWiseReportPage: React.FC = () => {
 
               {/* Submit Button */}
               <div style={{ marginTop: '10px' }}>
-                <Button variant="primary" size="lg" type="submit" style={{ width: '100%' }}>
-                  Generate
+                <Button variant="primary" size="lg" type="submit" disabled={isLoading} style={{ width: '100%' }}>
+                  {isLoading ? 'Generating...' : 'Generate'}
                 </Button>
               </div>
             </form>

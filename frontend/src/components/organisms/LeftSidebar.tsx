@@ -269,7 +269,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ activeScreen, onNaviga
               { id: 'patients', label: 'Patients', icon: <Users size={16} /> },
               { id: 'transactions', label: 'Transactions', icon: <CreditCard size={16} /> },
               { id: 'doctors', label: 'Referral Doctors', icon: <UserCheck size={16} /> },
-              { id: 'agents', label: 'Sample collection agents', icon: <UserPlus size={16} /> },
+              { id: 'agents', label: 'Agents', icon: <UserPlus size={16} /> },
             ].map((sub) => {
               const isActive = activeScreen === sub.id;
               return (

@@ -31,6 +31,7 @@ export interface DashboardPageProps {
   onNavigateBrowserSecurity?: () => void;
   onNavigateDoctorPortal?: () => void;
   onNavigatePrintableBill?: () => void;
+  onNavigateActivities?: () => void;
 }
 
 interface DuePatient {
@@ -63,6 +64,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   onNavigateBrowserSecurity,
   onNavigateDoctorPortal,
   onNavigatePrintableBill,
+  onNavigateActivities,
 }) => {
   // Modal states
   const [selectedDueCase, setSelectedDueCase] = useState<DuePatient | null>(null);
@@ -74,26 +76,38 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   // Payments Due State
   const [paymentsDue, setPaymentsDue] = useState<DuePatient[]>([]);
 
-  // Recent Transactions
+  // Recent Transactions & Activities
   const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([]);
+  const [recentActivities, setRecentActivities] = useState<Array<{ id: string; summary: string; time: string; owner: string }>>([]);
 
   const loadDashboardData = async () => {
     try {
-      const [dueRes, txRes] = await Promise.all([
+      const [dueRes, txRes, actRes] = await Promise.all([
         businessApi.getDuesAging().catch(() => null),
-        paymentsApi.listTransactions().catch(() => null)
+        paymentsApi.listTransactions().catch(() => null),
+        businessApi.listActivities({ limit: 5 }).catch(() => null)
       ]);
 
-      if (dueRes?.status === 'success' && dueRes.data?.debtors) {
+      if ((dueRes?.success || dueRes?.status === 'success') && Array.isArray(dueRes?.data?.debtors)) {
         const mappedDues: DuePatient[] = dueRes.data.debtors.map((d: any) => ({
           id: d.id,
           patientName: d.patientName || 'Patient',
           regNo: d.billNumber || d.dailyCode || 'REG',
-          date: d.registeredAt ? new Date(d.registeredAt).toLocaleDateString() : 'Today',
+          date: d.registeredAt ? new Date(d.registeredAt).toLocaleDateString('en-GB') : 'Today',
           dueAmount: Number(d.balanceDue || 0)
         }));
         setPaymentsDue(mappedDues);
       }
+
+      const actList = Array.isArray(actRes?.data) ? actRes.data : (Array.isArray(actRes?.data?.logs) ? actRes.data.logs : []);
+      setRecentActivities(
+        actList.slice(0, 5).map((a: any) => ({
+          id: a.id,
+          summary: a.details || a.summary || `${a.action || 'Action'} on ${a.entityType || 'Record'}`,
+          owner: a.user?.fullName || a.userName || 'System',
+          time: a.createdAt ? new Date(a.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+        }))
+      );
 
       const txList = Array.isArray(txRes?.data)
         ? txRes.data
@@ -488,6 +502,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                 <div
                                   onClick={() => {
                                     setActiveMenuId(null);
+                                    localStorage.setItem('labsmart_active_case_id', item.id);
+                                    localStorage.setItem('labsmart_active_bill_number', item.regNo);
                                     if (onNavigatePrintableBill) onNavigatePrintableBill();
                                   }}
                                   style={{ padding: '6px 12px', fontSize: '12px', color: '#334155', cursor: 'pointer' }}
@@ -517,6 +533,34 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Recent Activities Section (below Payments due) */}
+          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #f1f5f9' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <h4 style={{ fontSize: '15px', fontWeight: 700, color: '#1e293b', margin: 0 }}>Recent activities</h4>
+              <button
+                type="button"
+                onClick={onNavigateActivities}
+                style={{ background: 'none', border: 'none', fontSize: '12px', fontWeight: 600, color: '#2563eb', cursor: 'pointer', padding: 0 }}
+              >
+                View all
+              </button>
+            </div>
+            {recentActivities.length === 0 ? (
+              <div style={{ fontSize: '12px', color: '#64748b', padding: '10px 12px', backgroundColor: '#f8fafc', borderRadius: '6px' }}>
+                No recent activities logged.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {recentActivities.map((act) => (
+                  <div key={act.id} style={{ fontSize: '12px', padding: '8px 10px', backgroundColor: '#f8fafc', borderRadius: '6px', border: '1px solid #f1f5f9' }}>
+                    <div style={{ color: '#1e293b', fontWeight: 500 }}>{act.summary}</div>
+                    <div style={{ color: '#64748b', fontSize: '11px', marginTop: '2px' }}>{act.owner}{act.time ? ` • ${act.time}` : ''}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -616,6 +660,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 )}
               </tbody>
             </table>
+          </div>
+          <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #f1f5f9', textAlign: 'right' }}>
+            <button
+              type="button"
+              onClick={onNavigateTransactions}
+              style={{ background: 'none', border: 'none', fontSize: '12px', fontWeight: 600, color: '#2563eb', cursor: 'pointer', padding: 0 }}
+            >
+              View all
+            </button>
           </div>
         </div>
 

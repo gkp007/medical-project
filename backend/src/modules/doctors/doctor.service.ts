@@ -2,9 +2,9 @@ import { prisma } from '../../core/database/prisma.client.js';
 import { NotFoundError } from '../../core/errors/AppError.js';
 
 export class DoctorService {
-  static async listDoctors(query: { search?: string; activeOnly?: boolean }) {
+  static async listDoctors(query: { search?: string; activeOnly?: boolean | string }) {
     const where: any = {};
-    if (query.activeOnly !== false) {
+    if (query.activeOnly !== false && String(query.activeOnly) !== 'false') {
       where.isActive = true;
     }
     if (query.search) {
@@ -53,6 +53,7 @@ export class DoctorService {
         commissionPct: doc.commissionPct,
         isActive: doc.isActive,
         hasPortalAccess: doc.hasPortalAccess,
+        createdAt: doc.createdAt,
         totalCases,
         totalBusiness,
         totalCommissionEarned,

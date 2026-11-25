@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/atoms/Card';
 import { Button } from '../../components/atoms/Button';
+import { radiologyApi } from '../../services/api';
 import { Input } from '../../components/atoms/Input';
 import { Badge } from '../../components/atoms/Badge';
 import { Modal } from '../../components/atoms/Modal';
@@ -90,6 +91,27 @@ export const USGSignaturesPage: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  useEffect(() => {
+    radiologyApi.getSignatures().then((res) => {
+      if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
+        const mapped: USGSignatory[] = res.data
+          .filter((s: any) => !s.modality || s.modality === 'USG' || s.modality === 'RADIOLOGY')
+          .map((s: any) => ({
+            id: s.id,
+            name: s.doctorName,
+            qualification: s.degree || '',
+            regNo: s.registrationNo || '',
+            council: 'Medical Council',
+            stampTitle: s.designation || 'Consultant Radiologist',
+            isDefault: Boolean(s.isDefault),
+            signatureText: s.doctorName,
+            sealType: 'circular' as const,
+          }));
+        if (mapped.length > 0) setSignatories(mapped);
+      }
+    }).catch(() => {});
+  }, []);
+
   const handleOpenUpload = () => {
     setFormName('');
     setFormQual('MBBS, MD Radiodiagnosis');
@@ -113,12 +135,27 @@ export const USGSignaturesPage: React.FC = () => {
     setActiveModal('edit');
   };
 
-  const handleSaveUpload = (e: React.FormEvent) => {
+  const handleSaveUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) return;
 
+    let savedId = String(Date.now());
+    try {
+      const res = await radiologyApi.createSignature({
+        doctorName: formName.trim(),
+        designation: formStampTitle || 'Consulting Radiologist',
+        degree: formQual || 'MBBS, MD Radiodiagnosis',
+        registrationNo: formRegNo || 'MCI-00000',
+        isDefault: formIsDefault,
+        modality: 'USG',
+      });
+      if (res?.success && res?.data?.id) savedId = res.data.id;
+    } catch {
+      // keep local fallback
+    }
+
     const newSignatory: USGSignatory = {
-      id: String(Date.now()),
+      id: savedId,
       name: formName,
       qualification: formQual,
       regNo: formRegNo || 'MCI-00000',

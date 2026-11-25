@@ -609,9 +609,9 @@ export class MasterService {
   }
 
   // --- Collection Agents ---
-  static async listAgents() {
+  static async listAgents(includeAll = false) {
     return prisma.collectionAgent.findMany({
-      where: { isActive: true },
+      where: includeAll ? {} : { isActive: true },
       orderBy: { name: 'asc' }
     });
   }
@@ -620,8 +620,8 @@ export class MasterService {
     return prisma.collectionAgent.create({
       data: {
         name: data.name,
-        phone: data.phone,
-        zone: data.zone || 'Default Zone',
+        phone: data.phone || data.mobile || 'N/A',
+        zone: data.zone || data.area || 'Default Zone',
         vehicleNo: data.vehicleNo || null,
         feePerCollection: data.feePerCollection !== undefined ? Number(data.feePerCollection) : 100.0,
         isActive: data.isActive !== undefined ? Boolean(data.isActive) : true

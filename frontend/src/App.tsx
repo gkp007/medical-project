@@ -410,6 +410,7 @@ export function App() {
             onNavigateBrowserSecurity={() => setActiveScreen('browser_security')}
             onNavigateDoctorPortal={() => setActiveScreen('doctor_access')}
             onNavigatePrintableBill={() => setActiveScreen('printable_bill')}
+            onNavigateActivities={() => setActiveScreen('activities')}
           />
         );
 

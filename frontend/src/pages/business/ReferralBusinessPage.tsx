@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/atoms/Card';
 import { Button } from '../../components/atoms/Button';
 import { MultiSelectCombobox, MultiSelectOption } from '../../components/atoms/MultiSelectCombobox';
+import { businessApi, doctorApi } from '../../services/api';
 import {
   Printer,
   Download,
@@ -76,64 +77,42 @@ export const ReferralBusinessPage: React.FC = () => {
   const [selectedCaseTypes, setSelectedCaseTypes] = useState<string[]>(['LAB', 'USG']);
   const [selectedDoctors, setSelectedDoctors] = useState<string[]>([]);
 
-  const [referrers, setReferrers] = useState<ReferrerSummaryRecord[]>([
-    {
-      sNo: 1,
-      refId: 'REF-001',
-      name: 'Dr. Anil Verma, MBBS MD',
-      contact: '+91 98987 11223',
-      totalCases: 14,
-      casesInFilter: 1
-    },
-    {
-      sNo: 2,
-      refId: 'REF-002',
-      name: 'Dr. Priya Sharma, MS (Ortho)',
-      contact: '+91 98112 33445',
-      totalCases: 8,
-      casesInFilter: 0
-    },
-    {
-      sNo: 3,
-      refId: 'REF-003',
-      name: 'Dr. S. K. Gupta, MD (Medicine)',
-      contact: '+91 99887 55667',
-      totalCases: 22,
-      casesInFilter: 0
-    },
-    {
-      sNo: 4,
-      refId: 'REF-004',
-      name: 'Dr. Sunil Bansal, MS (Ortho)',
-      contact: '+91 97123 44556',
-      totalCases: 19,
-      casesInFilter: 2
-    },
-    {
-      sNo: 5,
-      refId: 'REF-005',
-      name: 'Dr. Rajesh Khanna, DM (Cardiology)',
-      contact: '+91 98223 55667',
-      totalCases: 31,
-      casesInFilter: 1
-    },
-    {
-      sNo: 6,
-      refId: 'REF-006',
-      name: 'Dr. Sunita Patil, DGO (Gynae)',
-      contact: '+91 98334 66778',
-      totalCases: 17,
-      casesInFilter: 0
-    },
-    {
-      sNo: 7,
-      refId: 'REF-007',
-      name: 'Dr. Vikram Malhotra, DM (Neuro)',
-      contact: '+91 98445 77889',
-      totalCases: 12,
-      casesInFilter: 1
-    }
-  ]);
+  const [referrers, setReferrers] = useState<ReferrerSummaryRecord[]>([]);
+  const [doctorOptions, setDoctorOptions] = useState<MultiSelectOption[]>(REFERRING_DOCTORS_LIST);
+
+  useEffect(() => {
+    const loadStatements = async () => {
+      try {
+        const [stmtRes, docsRes] = await Promise.all([
+          businessApi.getReferralStatements(),
+          doctorApi.listDoctors({ activeOnly: false }).catch(() => ({ success: false, data: [] })),
+        ]);
+        const list = Array.isArray(stmtRes?.data) ? stmtRes.data : (Array.isArray(stmtRes?.data?.statements) ? stmtRes.data.statements : []);
+        setReferrers(
+          list.map((s: any, idx: number) => ({
+            sNo: idx + 1,
+            refId: s.doctorId ? String(s.doctorId).slice(0, 8).toUpperCase() : `REF-${idx + 1}`,
+            name: s.doctorName || s.name || 'Doctor',
+            contact: s.mobile || s.phone || 'N/A',
+            totalCases: Number(s.totalCases || s.casesCount || 0),
+            casesInFilter: Number(s.totalCases || s.casesCount || 0),
+          }))
+        );
+        if (docsRes?.success && Array.isArray(docsRes.data) && docsRes.data.length > 0) {
+          setDoctorOptions(
+            docsRes.data.map((d: any) => ({
+              label: `${d.name}${d.degree ? `, ${d.degree}` : ''}`,
+              value: d.id,
+              category: d.specialty || 'Doctor',
+            }))
+          );
+        }
+      } catch {
+        setReferrers([]);
+      }
+    };
+    loadStatements();
+  }, [activePeriod]);
 
   const periods = ['Today', 'Yesterday', 'Last Week', 'October', 'September', 'August', 'Custom'];
 
@@ -200,7 +179,16 @@ export const ReferralBusinessPage: React.FC = () => {
             variant="secondary"
             size="sm"
             icon={<Download size={14} />}
-            onClick={() => showToast('Downloading referral cases dataset (.xlsx)...')}
+            onClick={() => {
+              const csv = [
+                'S.No,Ref ID,Name,Contact,Total Cases,Cases in Filter',
+                ...filteredReferrers.map((r) => [r.sNo, r.refId, r.name, r.contact, r.totalCases, r.casesInFilter].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')),
+              ].join('\n');
+              const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+              const link = document.createElement('a');
+              link.href = url; link.download = 'referral-business.csv'; link.click(); URL.revokeObjectURL(url);
+              showToast('Downloaded referral business CSV.');
+            }}
           >
             Download cases data
           </Button>
@@ -403,7 +391,7 @@ export const ReferralBusinessPage: React.FC = () => {
                 </div>
                 <MultiSelectCombobox
                   placeholder="Select referring doctors..."
-                  options={REFERRING_DOCTORS_LIST}
+                  options={doctorOptions}
                   selectedValues={selectedDoctors}
                   onChange={setSelectedDoctors}
                   helpText="Leave empty to include all doctors, or choose specific doctors to filter."

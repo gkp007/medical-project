@@ -56,7 +56,9 @@ export const CasesLedgerPage: React.FC<CasesLedgerPageProps> = ({
   onNavigatePrintBill,
 }) => {
   // Filter States
-  const [duration, setDuration] = useState('Past 30 days');
+  const [duration, setDuration] = useState('Past 7 days');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [regNoQuery, setRegNoQuery] = useState('');
   const [firstNameQuery, setFirstNameQuery] = useState('');
   const [doctorQuery, setDoctorQuery] = useState('All');
@@ -88,20 +90,43 @@ export const CasesLedgerPage: React.FC<CasesLedgerPageProps> = ({
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const fetchCases = async (customSearch?: string) => {
+  const getDurationDates = (preset: string) => {
+    const end = new Date();
+    const start = new Date(end);
+    if (preset === 'Today') {
+      // same day
+    } else if (preset === 'Past 7 days') {
+      start.setDate(end.getDate() - 7);
+    } else if (preset === 'Past 30 days') {
+      start.setDate(end.getDate() - 30);
+    } else {
+      return {};
+    }
+    return {
+      startDate: start.toISOString().slice(0, 10),
+      endDate: end.toISOString().slice(0, 10),
+    };
+  };
+
+  const fetchCases = async (customSearch?: string, targetPage = page) => {
     setIsLoading(true);
     try {
       const searchTerm = customSearch !== undefined ? customSearch : (regNoQuery.trim() || firstNameQuery.trim() || undefined);
-      const query: any = { limit: 100 };
+      const { startDate, endDate } = getDurationDates(duration);
+      const query: any = { page: targetPage, limit: 20 };
       if (searchTerm) query.search = searchTerm;
       if (hasDueOnly) query.paymentStatus = 'Partial';
+      if (cancelledOnly) query.reportStatus = 'Cancelled';
+      if (startDate) query.startDate = startDate;
+      if (endDate) query.endDate = endDate;
 
       const res = await casesApi.listCases(query);
       if (res.success && res.data?.cases) {
+        setTotalPages(Math.max(1, Number(res.data.totalPages || 1)));
         const mapped: CaseItem[] = res.data.cases.map((c: any) => ({
           id: c.id,
           regNo: c.billNumber,
-          date: new Date(c.createdAt).toLocaleDateString(),
+          date: new Date(c.createdAt).toLocaleDateString('en-GB'),
           time: new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           patientName: c.patient?.fullName || 'Walk-in Patient',
           phone: c.patient?.mobile || 'N/A',
@@ -111,7 +136,7 @@ export const CasesLedgerPage: React.FC<CasesLedgerPageProps> = ({
           paid: c.paidAmount,
           discount: c.discountAmount,
           status: c.reportStatus === 'Cancelled' ? 'Cancelled' : c.balanceDue > 0 ? 'Due' : 'No due',
-          centre: 'Main',
+          centre: c.branchId === 'main' ? 'Main' : (c.branchId || 'Main'),
           agent: c.agentId ? 'Agent' : 'Direct Walk-in',
           tests: (c.items || []).map((item: any) => ({
             code: item.testCode || c.dailyCode || 'L1',
@@ -130,8 +155,8 @@ export const CasesLedgerPage: React.FC<CasesLedgerPageProps> = ({
   };
 
   useEffect(() => {
-    fetchCases();
-  }, [hasDueOnly]);
+    fetchCases(undefined, page);
+  }, [hasDueOnly, cancelledOnly, duration, page]);
 
   const toggleRowExpand = (id: string) => {
     setExpandedRowIds(prev =>
@@ -633,6 +658,13 @@ export const CasesLedgerPage: React.FC<CasesLedgerPageProps> = ({
               }))}
             </tbody>
           </table>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: '1px solid #e2e8f0', backgroundColor: '#f8fafc', fontSize: '12px', color: '#64748b' }}>
+          <span>Page {page} of {totalPages}</span>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Prev</Button>
+            <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Next</Button>
+          </div>
         </div>
       </Card>
 

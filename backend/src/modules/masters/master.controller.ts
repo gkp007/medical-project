@@ -204,9 +204,10 @@ export class MasterController {
   }
 
   // Agents
-  static async listAgents(_req: Request, res: Response, next: NextFunction) {
+  static async listAgents(req: Request, res: Response, next: NextFunction) {
     try {
-      const agents = await MasterService.listAgents();
+      const includeAll = req.query.all === 'true';
+      const agents = await MasterService.listAgents(includeAll);
       res.status(200).json({ success: true, data: agents });
     } catch (err) {
       next(err);

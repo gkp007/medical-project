@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/atoms/Card';
 import { Button } from '../../components/atoms/Button';
+import { businessApi } from '../../services/api';
 import {
   ChevronLeft,
   ChevronRight,
@@ -30,32 +31,34 @@ export const ActivitiesPage: React.FC = () => {
   const [selectedActivityFilter, setSelectedActivityFilter] = useState<string>('All Activities');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const [activitiesList, setActivitiesList] = useState<ActivityRecord[]>([
-    {
-      id: '1',
-      time: '12:15 PM',
-      owner: 'Admin Demo (Cashier)',
-      activityType: 'Patient name change',
-      summary: "Changed Patient first name from 'Rahul' to 'Rahul Kumar' on Case #261019-001.",
-      caseRef: '261019-001'
-    },
-    {
-      id: '2',
-      time: '11:40 AM',
-      owner: 'Admin Demo (Lab Tech)',
-      activityType: 'Investigations changed',
-      summary: "Added test 'Lipid Profile' to Case #261019-001 upon doctor request.",
-      caseRef: '261019-001'
-    },
-    {
-      id: '3',
-      time: '10:30 AM',
-      owner: 'Admin Demo (Cashier)',
-      activityType: 'Case referrer change',
-      summary: "Updated referrer from 'Self' to 'Dr. Anil Verma, MBBS MD' on Case #261019-001.",
-      caseRef: '261019-001'
+  const [activitiesList, setActivitiesList] = useState<ActivityRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const loadActivities = async (dateVal = selectedDate) => {
+    setIsLoading(true);
+    try {
+      const res = await businessApi.listActivities({ date: dateVal, limit: 100 });
+      const rows = Array.isArray(res?.data) ? res.data : (Array.isArray(res?.data?.logs) ? res.data.logs : []);
+      setActivitiesList(
+        rows.map((log: any) => ({
+          id: log.id,
+          time: log.createdAt ? new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+          owner: log.user?.fullName || log.userName || 'System',
+          activityType: (log.action || log.entityType || 'Activity') as any,
+          summary: log.details || log.summary || `${log.action || 'Action'} on ${log.entityType || 'Record'}`,
+          caseRef: log.entityId ? String(log.entityId).slice(0, 8) : '-',
+        }))
+      );
+    } catch {
+      setActivitiesList([]);
+    } finally {
+      setIsLoading(false);
     }
-  ]);
+  };
+
+  useEffect(() => {
+    loadActivities(selectedDate);
+  }, [selectedDate]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);

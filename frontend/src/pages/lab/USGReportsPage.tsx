@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/atoms/Card';
 import { Button } from '../../components/atoms/Button';
+import { casesApi } from '../../services/api';
 import { Input } from '../../components/atoms/Input';
 import { Select } from '../../components/atoms/Select';
 import { Badge } from '../../components/atoms/Badge';
@@ -42,108 +43,34 @@ export interface USGArchiveItem {
 }
 
 export const USGReportsPage: React.FC = () => {
-  const [reports, setReports] = useState<USGArchiveItem[]>([
-    {
-      id: '1',
-      caseNo: 'USG-2026-098',
-      regNo: '#1098',
-      token: 'U-01',
-      date: '15/10/2026',
-      patientName: 'Priya Nair',
-      ageGender: '28Y / Female',
-      mobile: '9845129381',
-      uhid: 'UHID-89190',
-      examination: 'Obstetric USG (Growth & Doppler)',
-      category: 'Obstetric',
-      doctor: 'Dr. Ananya Roy, DGO',
-      radiologist: 'Dr. Neha Agarwal, DMRD',
-      status: 'Completed',
-      findings:
-        'Single live intrauterine fetus in cephalic presentation. BPD: 62 mm, FL: 44 mm, AC: 198 mm, HC: 226 mm. Amniotic fluid index (AFI) is 14.5 cm (adequate). Placenta fundal anterior Grade-II. Umbilical artery PI 0.98, RI 0.62 with normal diastolic flow.',
-      impression:
-        'SINGLE LIVE INTRAUTERINE GESTATION OF 24 WEEKS 4 DAYS WITH NORMAL FETAL ANATOMY, GROWTH VELOCITY & DOPPLER VELOCIMETRY.',
-    },
-    {
-      id: '2',
-      caseNo: 'USG-2026-095',
-      regNo: '#1095',
-      token: 'U-03',
-      date: '14/10/2026',
-      patientName: 'Harish Chandra',
-      ageGender: '61Y / Male',
-      mobile: '9811234900',
-      uhid: 'UHID-89182',
-      examination: 'USG KUB & Prostate with PVR',
-      category: 'KUB & Prostate',
-      doctor: 'Dr. Sunil Bansal, MS MCh',
-      radiologist: 'Dr. S. K. Verma, MD Radiodiagnosis',
-      status: 'Completed',
-      findings:
-        'Right kidney measures 9.8 x 4.4 cm, Left kidney 10.1 x 4.6 cm with intact corticomedullary differentiation. No renal calculus or hydronephrosis. Urinary bladder well distended with mild wall thickening (4.2 mm). Prostate enlarged (approx 38 cc) with intravesical median lobe protrusion. Post-void residue is 65 ml.',
-      impression:
-        'GRADE-II BENIGN PROSTATIC HYPERPLASIA (BPH) WITH SIGNIFICANT POST-VOID RESIDUAL URINE (~65 ML). NORMAL BILATERAL KIDNEYS.',
-    },
-    {
-      id: '3',
-      caseNo: 'USG-2026-091',
-      regNo: '#1091',
-      token: 'U-02',
-      date: '12/10/2026',
-      patientName: 'Sunita Sharma',
-      ageGender: '46Y / Female',
-      mobile: '9718290123',
-      uhid: 'UHID-89174',
-      examination: 'USG Whole Abdomen (Gallbladder focus)',
-      category: 'Whole Abdomen',
-      doctor: 'Dr. Rajesh Gupta, MD (Med)',
-      radiologist: 'Dr. S. K. Verma, MD Radiodiagnosis',
-      status: 'Completed',
-      findings:
-        'Liver shows diffusely increased parenchymal echogenicity with posterior acoustic attenuation, suggestive of Grade-I Fatty Liver. Gallbladder distended with multiple small mobile calculi, largest measuring ~8 mm casting posterior acoustic shadows. Wall thickness 2.5 mm. CBD is 5.0 mm.',
-      impression:
-        '1. CHOLELITHIASIS — MULTIPLE GALLBLADDER CALCULI WITHOUT CHOLECYSTITIS. 2. GRADE-I HEPATIC STEATOSIS (FATTY LIVER).',
-    },
-    {
-      id: '4',
-      caseNo: 'USG-2026-088',
-      regNo: '#1088',
-      token: 'U-05',
-      date: '10/10/2026',
-      patientName: 'Vikas Malhotra',
-      ageGender: '34Y / Male',
-      mobile: '9820194821',
-      uhid: 'UHID-89165',
-      examination: 'USG KUB (Right flank colic)',
-      category: 'KUB & Prostate',
-      doctor: 'Dr. R. C. Mathur, MBBS',
-      radiologist: 'Dr. S. K. Verma, MD Radiodiagnosis',
-      status: 'Completed',
-      findings:
-        'Right kidney measures 10.5 cm. A distinct echogenic focus measuring ~5.8 mm is noted in the right upper pole renal calyx with posterior acoustic shadowing. Mild fullness of the right renal pelvis. Left kidney is normal without calculus or hydronephrosis. Urinary bladder is normal.',
-      impression:
-        'RIGHT RENAL CALCULUS (5.8 MM) IN UPPER POLE CALYX WITH MILD CALYCEAL FULLNESS. NO OBSTRUCTIVE URETEROCALCULUS.',
-    },
-    {
-      id: '5',
-      caseNo: 'USG-2026-084',
-      regNo: '#1084',
-      token: 'U-04',
-      date: '08/10/2026',
-      patientName: 'Ritu Aggarwal',
-      ageGender: '39Y / Female',
-      mobile: '9873192801',
-      uhid: 'UHID-89150',
-      examination: 'Thyroid & Neck Ultrasound',
-      category: 'Small Parts',
-      doctor: 'Dr. Anil Verma, MD',
-      radiologist: 'Dr. Neha Agarwal, DMRD',
-      status: 'Completed',
-      findings:
-        'Right thyroid lobe measures 4.2 x 1.6 x 1.5 cm. Left lobe measures 4.0 x 1.5 x 1.4 cm. Isthmus is 3.1 mm. Parenchyma shows uniform echotexture without focal mass, nodule or calcification. Normal vascular flow on color Doppler. No cervical lymphadenopathy.',
-      impression:
-        'NORMAL HIGH RESOLUTION ULTRASONOGRAPHY OF THYROID GLAND AND BILATERAL CERVICAL CHAINS.',
-    },
-  ]);
+  const [reports, setReports] = useState<USGArchiveItem[]>([]);
+
+  useEffect(() => {
+    casesApi.listCases({ modality: 'USG', limit: 100 }).then((res) => {
+      if (res?.success && Array.isArray(res.data?.cases)) {
+        setReports(
+          res.data.cases.map((c: any) => ({
+            id: c.id,
+            caseNo: c.dailyCode || c.billNumber,
+            regNo: c.billNumber,
+            token: c.dailyCode || 'U1',
+            date: new Date(c.createdAt).toLocaleDateString('en-GB'),
+            patientName: c.patient?.fullName || 'Patient',
+            ageGender: `${c.patient?.age || '-'}Y / ${c.patient?.gender || 'Male'}`,
+            mobile: c.patient?.mobile || '',
+            uhid: c.uhid || '',
+            examination: (c.items || []).map((i: any) => i.testName).join(', ') || 'USG Study',
+            category: 'USG',
+            doctor: c.doctor?.name || 'Self Referral',
+            radiologist: 'Radiologist',
+            status: c.reportStatus === 'Cancelled' ? 'Cancelled' : c.reportStatus === 'Signed off' || c.reportStatus === 'Completed' ? 'Completed' : 'Drafted',
+            findings: c.radiologyResult?.findings || c.notes || '',
+            impression: c.radiologyResult?.impression || '',
+          }))
+        );
+      }
+    }).catch(() => {});
+  }, []);
 
   // Filter States (7-Field Filter Grid)
   const [durationPreset, setDurationPreset] = useState('Last 30 days');

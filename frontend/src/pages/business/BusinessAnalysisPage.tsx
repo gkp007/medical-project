@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/atoms/Card';
 import { Button } from '../../components/atoms/Button';
+import { paymentsApi } from '../../services/api';
 import {
   Calendar,
   Printer,
@@ -23,46 +24,61 @@ interface DayRow {
 }
 
 export const BusinessAnalysisPage: React.FC = () => {
-  const [selectedMonth, setSelectedMonth] = useState('October');
-  const [selectedYear, setSelectedYear] = useState('2026');
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
+  const [selectedMonth, setSelectedMonth] = useState(() => months[new Date().getMonth()]);
+  const [selectedYear, setSelectedYear] = useState(() => String(new Date().getFullYear()));
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [dataRows, setDataRows] = useState<DayRow[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const years = ['2023', '2024', '2025', '2026', '2027'];
 
-  // Generate 31 days data with realistic values for demonstration
-  const generateMonthData = (): DayRow[] => {
-    const rows: DayRow[] = [];
-    for (let i = 1; i <= 31; i++) {
-      const dayStr = `${String(i).padStart(2, '0')}-10-2026`;
-      let upi = 0;
-      let cash = 0;
-      let card = 0;
-      let insurance = 0;
-
-      if (i === 18) {
-        cash = 100;
-      } else if (i === 19) {
-        cash = 400;
-      }
-
-      rows.push({
-        day: dayStr,
-        upi,
-        cash,
-        card,
-        insurance,
-        total: upi + cash + card + insurance
+  useEffect(() => {
+    const loadMonthMatrix = async () => {
+      setIsLoading(true);
+      const monthIdx = months.indexOf(selectedMonth);
+      const yearNum = Number(selectedYear);
+      const daysInMonth = new Date(yearNum, monthIdx + 1, 0).getDate();
+      const baseRows: DayRow[] = Array.from({ length: daysInMonth }, (_, idx) => {
+        const dayNum = idx + 1;
+        return {
+          day: `${String(dayNum).padStart(2, '0')}-${String(monthIdx + 1).padStart(2, '0')}-${yearNum}`,
+          upi: 0,
+          cash: 0,
+          card: 0,
+          insurance: 0,
+          total: 0,
+        };
       });
-    }
-    return rows;
-  };
 
-  const [dataRows, setDataRows] = useState<DayRow[]>(generateMonthData());
+      try {
+        const res = await paymentsApi.listTransactions({ limit: 500 });
+        const txList = Array.isArray(res?.data) ? res.data : (Array.isArray(res?.data?.transactions) ? res.data.transactions : []);
+        txList.forEach((t: any) => {
+          const dt = t.createdAt ? new Date(t.createdAt) : null;
+          if (!dt || dt.getFullYear() !== yearNum || dt.getMonth() !== monthIdx) return;
+          const row = baseRows[dt.getDate() - 1];
+          if (!row) return;
+          const amt = Number(t.amount || 0);
+          const mode = String(t.mode || 'cash').toLowerCase();
+          if (mode === 'upi') row.upi += amt;
+          else if (mode === 'card') row.card += amt;
+          else if (mode === 'insurance') row.insurance += amt;
+          else row.cash += amt;
+          row.total = row.upi + row.cash + row.card + row.insurance;
+        });
+      } catch {
+        // leave zeroed rows if backend unavailable
+      } finally {
+        setDataRows(baseRows);
+        setIsLoading(false);
+      }
+    };
+    loadMonthMatrix();
+  }, [selectedMonth, selectedYear]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);

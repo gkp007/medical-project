@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/atoms/Card';
 import { Button } from '../../components/atoms/Button';
+import { radiologyApi } from '../../services/api';
 import { Input } from '../../components/atoms/Input';
 import { Select } from '../../components/atoms/Select';
 import { Badge } from '../../components/atoms/Badge';
@@ -208,6 +209,29 @@ export const USGTemplatesPage: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  useEffect(() => {
+    radiologyApi.getTemplates('USG').then((res) => {
+      if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
+        const mapped: USGTemplate[] = res.data.map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          category: (['Abdomen', 'Obstetric', 'Urology', 'Small Parts', 'Doppler'].includes(t.organType) ? t.organType : 'Abdomen') as any,
+          tags: t.organType || 'USG',
+          updated: t.updatedAt ? new Date(t.updatedAt).toLocaleDateString('en-GB') : 'Saved',
+          indicationDefault: 'Routine USG evaluation',
+          findings: { generalText: t.content || '' },
+          impression: t.isNormal ? 'NORMAL STUDY.' : 'SEE FINDINGS.',
+        }));
+        setTemplates((prev) => {
+          const map = new Map<string, USGTemplate>();
+          prev.forEach((p) => map.set(p.title.toLowerCase(), p));
+          mapped.forEach((m) => map.set(m.title.toLowerCase(), m));
+          return Array.from(map.values());
+        });
+      }
+    }).catch(() => {});
+  }, []);
+
   const handleOpenCreate = () => {
     setFormTitle('');
     setFormCategory('Abdomen');
@@ -248,12 +272,26 @@ export const USGTemplatesPage: React.FC = () => {
     showToast(`Duplicated template: "${clone.title}"`);
   };
 
-  const handleSaveCreate = (e: React.FormEvent) => {
+  const handleSaveCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim()) return;
 
+    let savedId = String(Date.now());
+    try {
+      const res = await radiologyApi.createTemplate({
+        title: formTitle.trim(),
+        modality: 'USG',
+        organType: formCategory,
+        content: formGeneralText || formImpression,
+        isNormal: formImpression.toUpperCase().includes('NORMAL'),
+      });
+      if (res?.success && res?.data?.id) savedId = res.data.id;
+    } catch {
+      // keep local fallback id if backend rejects
+    }
+
     const newTpl: USGTemplate = {
-      id: String(Date.now()),
+      id: savedId,
       title: formTitle,
       category: formCategory,
       tags: formTags || 'Organs evaluated',

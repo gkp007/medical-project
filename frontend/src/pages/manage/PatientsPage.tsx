@@ -59,54 +59,21 @@ export const PatientsPage: React.FC<PatientsPageProps> = ({ onNavigateNewBill })
   const [formMobile, setFormMobile] = useState('');
   const [formAddress, setFormAddress] = useState('');
 
-  const [patients, setPatients] = useState<PatientRecord[]>([
-    {
-      id: '35375569',
-      uhid: 'UHID-8801',
-      firstName: 'Rahul',
-      lastName: 'Sharma',
-      age: 32,
-      gender: 'M',
-      address: 'House 42, Sector 14, Main Road',
-      mobile: '9876543210',
-      registeredOn: '18/10/2026',
-      totalVisits: 1
-    },
-    {
-      id: '35375570',
-      uhid: 'UHID-8802',
-      firstName: 'Suresh',
-      lastName: 'Mehta',
-      age: 52,
-      gender: 'M',
-      address: 'Plot 105, Civil Lines',
-      mobile: '9811223344',
-      registeredOn: '18/10/2026',
-      totalVisits: 1
-    },
-    {
-      id: '35375571',
-      uhid: 'UHID-8803',
-      firstName: 'Kavita',
-      lastName: 'Singhal',
-      age: 34,
-      gender: 'F',
-      address: 'Flat 402, Green Park Residency',
-      mobile: '9899887766',
-      registeredOn: '17/10/2026',
-      totalVisits: 2
-    }
-  ]);
+  const [patients, setPatients] = useState<PatientRecord[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const fetchPatients = async () => {
+  const fetchPatients = async (targetPage = page) => {
     try {
-      const res = await patientApi.listPatients();
-      if (res.success && res.data?.patients && res.data.patients.length > 0) {
+      const searchTerm = (uhidQuery || firstNameQuery || lastNameQuery || mobileQuery || idQuery).trim() || undefined;
+      const res = await patientApi.listPatients({ page: targetPage, limit: 20, ...(searchTerm ? { search: searchTerm } : {}) });
+      if (res.success && Array.isArray(res.data?.patients)) {
+        setTotalPages(Math.max(1, Number(res.data.totalPages || 1)));
         const mapped: PatientRecord[] = res.data.patients.map((p: any) => ({
           id: p.id,
           uhid: p.uhid,
@@ -116,10 +83,12 @@ export const PatientsPage: React.FC<PatientsPageProps> = ({ onNavigateNewBill })
           gender: (p.gender?.[0] || 'M').toUpperCase() as any,
           address: p.address || 'Address not specified',
           mobile: p.mobile || 'Not available',
-          registeredOn: new Date(p.createdAt).toLocaleDateString(),
+          registeredOn: new Date(p.createdAt).toLocaleDateString('en-GB'),
           totalVisits: p.totalVisits || 1,
         }));
         setPatients(mapped);
+      } else {
+        setPatients([]);
       }
     } catch (err) {
       console.error('Failed to fetch patients:', err);
@@ -127,8 +96,8 @@ export const PatientsPage: React.FC<PatientsPageProps> = ({ onNavigateNewBill })
   };
 
   useEffect(() => {
-    fetchPatients();
-  }, []);
+    fetchPatients(page);
+  }, [page]);
 
   const handleClearFilters = () => {
     setUhidQuery('');
@@ -138,12 +107,13 @@ export const PatientsPage: React.FC<PatientsPageProps> = ({ onNavigateNewBill })
     setIdQuery('');
     setFromDate('');
     setToDate('');
+    setPage(1);
     showToast('Reset patient filters.');
   };
 
   const handleSavePatient = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formFirstName.trim() || !formMobile.trim()) return;
+    if (!formFirstName.trim()) return;
 
     if (selectedPatientForEdit) {
       // Update
@@ -411,7 +381,7 @@ export const PatientsPage: React.FC<PatientsPageProps> = ({ onNavigateNewBill })
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px', marginTop: '16px', paddingTop: '14px', borderTop: '1px solid #f1f5f9' }}>
-          <Button variant="primary" size="sm" onClick={() => showToast('Applying patient search filter...')}>
+          <Button variant="primary" size="sm" onClick={() => { setPage(1); fetchPatients(1); }}>
             Search
           </Button>
           <button
@@ -491,6 +461,13 @@ export const PatientsPage: React.FC<PatientsPageProps> = ({ onNavigateNewBill })
               )}
             </tbody>
           </table>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: '1px solid #e2e8f0', backgroundColor: '#f8fafc', fontSize: '12px', color: '#64748b' }}>
+          <span>Page {page} of {totalPages}</span>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Prev</Button>
+            <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Next</Button>
+          </div>
         </div>
       </Card>
 

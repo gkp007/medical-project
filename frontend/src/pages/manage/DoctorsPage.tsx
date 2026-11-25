@@ -18,24 +18,36 @@ import {
 interface DoctorItem {
   id: string;
   regOn: string;
+  createdAtIso: string;
   active: boolean;
   name: string;
   degree: string;
+  specialty: string;
   phone: string;
+  email: string;
   address: string;
   commission: number;
+  totalCases: number;
+  totalBusiness: number;
 }
 
 export const DoctorsPage: React.FC = () => {
   const [selectedLetter, setSelectedLetter] = useState<string>('All');
   const [firstNameFilter, setFirstNameFilter] = useState('');
+  const [lastNameFilter, setLastNameFilter] = useState('');
   const [contactFilter, setContactFilter] = useState('');
+  const [emailFilter, setEmailFilter] = useState('');
+  const [regFromFilter, setRegFromFilter] = useState('');
+  const [regToFilter, setRegToFilter] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [addressFilter, setAddressFilter] = useState('');
+  const [sortBy, setSortBy] = useState<'regOn' | 'name' | 'address'>('name');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   // Modals
   const [selectedDoctorForView, setSelectedDoctorForView] = useState<DoctorItem | null>(null);
+  const [viewTab, setViewTab] = useState<'profile' | 'cases'>('profile');
   const [selectedDoctorForEdit, setSelectedDoctorForEdit] = useState<DoctorItem | null>(null);
   const [isAddDoctorModalOpen, setIsAddDoctorModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -45,6 +57,7 @@ export const DoctorsPage: React.FC = () => {
   const [formName, setFormName] = useState('');
   const [formDegree, setFormDegree] = useState('');
   const [formPhone, setFormPhone] = useState('');
+  const [formEmail, setFormEmail] = useState('');
   const [formAddress, setFormAddress] = useState('');
   const [formCommission, setFormCommission] = useState<number>(15);
   const [formActive, setFormActive] = useState<boolean>(true);
@@ -56,17 +69,22 @@ export const DoctorsPage: React.FC = () => {
   const loadDoctors = async () => {
     setIsLoading(true);
     try {
-      const res = await doctorApi.listDoctors();
-      if (res.status === 'success' && Array.isArray(res.data)) {
+      const res = await doctorApi.listDoctors({ activeOnly: false });
+      if ((res.success || res.status === 'success') && Array.isArray(res.data)) {
         const mapped: DoctorItem[] = res.data.map((d: any) => ({
           id: d.id,
-          regOn: d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Active',
+          regOn: d.createdAt ? new Date(d.createdAt).toLocaleDateString('en-GB') : 'Active',
+          createdAtIso: d.createdAt ? new Date(d.createdAt).toISOString().slice(0, 10) : '',
           active: d.isActive !== undefined ? Boolean(d.isActive) : true,
           name: d.name || 'Unnamed Doctor',
-          degree: d.specialization || d.degree || '',
-          phone: d.phone || '',
+          degree: d.degree || '',
+          specialty: d.specialty || d.specialization || '',
+          phone: d.mobile || d.phone || '',
+          email: d.email || '',
           address: d.address || 'Clinic / Hospital',
-          commission: Number(d.commissionPercent || d.commission || 0)
+          commission: Number(d.commissionPct ?? d.commissionPercent ?? d.commission ?? 0),
+          totalCases: Number(d.totalCases || 0),
+          totalBusiness: Number(d.totalBusiness || 0),
         }));
         setDoctors(mapped);
       }
@@ -89,7 +107,11 @@ export const DoctorsPage: React.FC = () => {
   const handleClearFilters = () => {
     setSelectedLetter('All');
     setFirstNameFilter('');
+    setLastNameFilter('');
     setContactFilter('');
+    setEmailFilter('');
+    setRegFromFilter('');
+    setRegToFilter('');
     setActiveFilter('All');
     setAddressFilter('');
     showToast('Reset doctor filters.');
@@ -112,22 +134,24 @@ export const DoctorsPage: React.FC = () => {
     try {
       if (selectedDoctorForEdit) {
         await doctorApi.updateDoctor(selectedDoctorForEdit.id, {
-          name: formName,
-          specialization: formDegree,
-          phone: formPhone,
-          address: formAddress,
-          commissionPercent: Number(formCommission),
-          isActive: formActive
+          name: formName.trim(),
+          degree: formDegree.trim() || null,
+          specialty: selectedDoctorForEdit.specialty || formDegree.trim() || 'General Medicine',
+          mobile: formPhone.trim() || '9999999999',
+          email: formEmail.trim() || null,
+          commissionPct: Number(formCommission),
+          isActive: formActive,
         });
         showToast(`Updated profile for ${formName}`);
         setSelectedDoctorForEdit(null);
       } else {
         await doctorApi.createDoctor({
-          name: formName,
-          specialization: formDegree,
-          phone: formPhone,
-          address: formAddress || 'City Clinic Area',
-          commissionPercent: Number(formCommission)
+          name: formName.trim(),
+          degree: formDegree.trim() || 'MBBS',
+          specialty: formDegree.trim() || 'General Medicine',
+          mobile: formPhone.trim() || `9${Math.floor(100000000 + Math.random() * 900000000)}`,
+          email: formEmail.trim() || null,
+          commissionPct: Number(formCommission),
         });
         showToast(`Added consulting doctor ${formName}`);
         setIsAddDoctorModalOpen(false);
@@ -141,24 +165,60 @@ export const DoctorsPage: React.FC = () => {
   const handleOpenEdit = (doc: DoctorItem) => {
     setSelectedDoctorForEdit(doc);
     setFormName(doc.name);
-    setFormDegree(doc.degree);
+    setFormDegree(doc.degree || doc.specialty);
     setFormPhone(doc.phone);
+    setFormEmail(doc.email || '');
     setFormAddress(doc.address);
     setFormCommission(doc.commission);
     setFormActive(doc.active);
   };
 
-  const filteredDoctors = doctors.filter(doc => {
-    if (selectedLetter !== 'All' && !doc.name.replace(/^Dr\.\s*/i, '').toUpperCase().startsWith(selectedLetter)) {
-      return false;
-    }
-    if (firstNameFilter && !doc.name.toLowerCase().includes(firstNameFilter.toLowerCase())) return false;
-    if (contactFilter && !doc.phone.includes(contactFilter)) return false;
-    if (activeFilter === 'Active' && !doc.active) return false;
-    if (activeFilter === 'Inactive' && doc.active) return false;
-    if (addressFilter && !doc.address.toLowerCase().includes(addressFilter.toLowerCase())) return false;
-    return true;
-  });
+  const handleDownloadActiveReferrers = () => {
+    const active = doctors.filter((d) => d.active);
+    const csv = [
+      'ID,Name,Degree,Specialty,Mobile,Email,CommissionPct,TotalCases,TotalBusiness',
+      ...active.map((d) =>
+        [d.id, d.name, d.degree, d.specialty, d.phone, d.email, d.commission, d.totalCases, d.totalBusiness]
+          .map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`)
+          .join(',')
+      ),
+    ].join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'active-referrers.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+    showToast(`Downloaded ${active.length} active referrers.`);
+  };
+
+  const handleSort = (col: 'regOn' | 'name' | 'address') => {
+    if (sortBy === col) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSortBy(col); setSortDir('asc'); }
+  };
+
+  const filteredDoctors = doctors
+    .filter((doc) => {
+      if (selectedLetter !== 'All' && !doc.name.replace(/^Dr\.\s*/i, '').toUpperCase().startsWith(selectedLetter)) {
+        return false;
+      }
+      if (firstNameFilter && !doc.name.toLowerCase().includes(firstNameFilter.toLowerCase())) return false;
+      if (lastNameFilter && !doc.name.toLowerCase().includes(lastNameFilter.toLowerCase())) return false;
+      if (contactFilter && !doc.phone.includes(contactFilter)) return false;
+      if (emailFilter && !doc.email.toLowerCase().includes(emailFilter.toLowerCase())) return false;
+      if (regFromFilter && doc.createdAtIso && doc.createdAtIso < regFromFilter) return false;
+      if (regToFilter && doc.createdAtIso && doc.createdAtIso > regToFilter) return false;
+      if (activeFilter === 'Active' && !doc.active) return false;
+      if (activeFilter === 'Inactive' && doc.active) return false;
+      if (addressFilter && !doc.address.toLowerCase().includes(addressFilter.toLowerCase())) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const valA = sortBy === 'regOn' ? a.createdAtIso : sortBy === 'address' ? a.address : a.name;
+      const valB = sortBy === 'regOn' ? b.createdAtIso : sortBy === 'address' ? b.address : b.name;
+      const cmp = valA.localeCompare(valB);
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
 
   return (
     <div style={{ maxWidth: '1440px', margin: '0 auto', position: 'relative' }}>
@@ -288,16 +348,26 @@ export const DoctorsPage: React.FC = () => {
 
         {/* Show More Filters */}
         {showMoreFilters && (
-          <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px dashed #e2e8f0' }}>
-            <div style={{ maxWidth: '320px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '4px' }}>Address</label>
-              <input
-                type="text"
-                placeholder="Clinic address..."
-                value={addressFilter}
-                onChange={(e) => setAddressFilter(e.target.value)}
-                style={{ width: '100%', padding: '7px 10px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px' }}
-              />
+          <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px dashed #e2e8f0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '4px' }}>Last name contains</label>
+              <input type="text" placeholder="Last name..." value={lastNameFilter} onChange={(e) => setLastNameFilter(e.target.value)} style={{ width: '100%', padding: '7px 10px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px' }} />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '4px' }}>Email</label>
+              <input type="text" placeholder="Email..." value={emailFilter} onChange={(e) => setEmailFilter(e.target.value)} style={{ width: '100%', padding: '7px 10px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px' }} />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '4px' }}>Reg. on from</label>
+              <input type="date" value={regFromFilter} onChange={(e) => setRegFromFilter(e.target.value)} style={{ width: '100%', padding: '7px 10px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px' }} />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '4px' }}>Reg. on to</label>
+              <input type="date" value={regToFilter} onChange={(e) => setRegToFilter(e.target.value)} style={{ width: '100%', padding: '7px 10px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px' }} />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '4px' }}>Address contains</label>
+              <input type="text" placeholder="Clinic address..." value={addressFilter} onChange={(e) => setAddressFilter(e.target.value)} style={{ width: '100%', padding: '7px 10px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px' }} />
             </div>
           </div>
         )}
@@ -330,7 +400,7 @@ export const DoctorsPage: React.FC = () => {
           Inactive referrers will not appear in patient registration page.
         </span>
         <button
-          onClick={() => showToast('Downloading active referrers directory (.xlsx)...')}
+          onClick={handleDownloadActiveReferrers}
           style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
         >
           <Download size={14} />
@@ -344,19 +414,25 @@ export const DoctorsPage: React.FC = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
             <thead>
               <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569', fontWeight: 600 }}>
-                <th style={{ padding: '12px 16px', width: '70px' }}>ID</th>
-                <th style={{ padding: '12px 16px', width: '120px' }}>REG. ON</th>
-                <th style={{ padding: '12px 16px', width: '90px', textAlign: 'center' }}>ACTIVE</th>
-                <th style={{ padding: '12px 16px' }}>REFERRER</th>
-                <th style={{ padding: '12px 16px' }}>ADDRESS</th>
+                <th style={{ padding: '12px 16px', width: '90px' }}>ID</th>
+                <th onClick={() => handleSort('regOn')} style={{ padding: '12px 16px', width: '120px', cursor: 'pointer' }}>REG. ON ↕</th>
+                <th style={{ padding: '12px 16px', width: '100px', textAlign: 'center' }}>ACTIVE</th>
+                <th onClick={() => handleSort('name')} style={{ padding: '12px 16px', cursor: 'pointer' }}>REFERRER ↕</th>
+                <th onClick={() => handleSort('address')} style={{ padding: '12px 16px', cursor: 'pointer' }}>ADDRESS ↕</th>
                 <th style={{ padding: '12px 16px', textAlign: 'center', width: '140px' }}>PRINT BUSINESS</th>
                 <th style={{ padding: '12px 16px', textAlign: 'right', width: '130px' }}>ACTIONS</th>
               </tr>
             </thead>
             <tbody>
-              {filteredDoctors.map(doc => (
+              {filteredDoctors.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ padding: '28px', textAlign: 'center', color: '#64748b' }}>
+                    {isLoading ? 'Loading referral doctors...' : 'No referral doctors found.'}
+                  </td>
+                </tr>
+              ) : filteredDoctors.map(doc => (
                 <tr key={doc.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '12px 16px', color: '#64748b' }}>{doc.id}</td>
+                  <td style={{ padding: '12px 16px', color: '#64748b' }}>{doc.id.slice(0, 8)}</td>
                   <td style={{ padding: '12px 16px', color: '#64748b' }}>{doc.regOn}</td>
                   <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                     <button
@@ -390,7 +466,10 @@ export const DoctorsPage: React.FC = () => {
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => showToast(`Selected ${doc.name} for business statement print`)}
+                      onClick={() => {
+                        setViewTab('cases');
+                        setSelectedDoctorForView(doc);
+                      }}
                     >
                       Select
                     </Button>
@@ -398,7 +477,10 @@ export const DoctorsPage: React.FC = () => {
                   <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
                       <button
-                        onClick={() => setSelectedDoctorForView(doc)}
+                        onClick={() => {
+                          setViewTab('profile');
+                          setSelectedDoctorForView(doc);
+                        }}
                         style={{ background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}
                       >
                         View
@@ -422,39 +504,68 @@ export const DoctorsPage: React.FC = () => {
       {selectedDoctorForView && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(15, 23, 42, 0.5)' }}>
           <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', width: '100%', maxWidth: '460px', padding: '24px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
               <h3 style={{ fontSize: '18px', fontWeight: 700, margin: 0, color: '#1e293b' }}>
-                Consulting Physician Profile
+                {selectedDoctorForView.name}
               </h3>
               <button onClick={() => setSelectedDoctorForView(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
                 <X size={20} />
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#f8fafc', borderRadius: '4px' }}>
-                <span style={{ color: '#64748b' }}>Doctor Name:</span>
-                <span style={{ fontWeight: 600 }}>{selectedDoctorForView.name}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#f8fafc', borderRadius: '4px' }}>
-                <span style={{ color: '#64748b' }}>Qualifications:</span>
-                <span style={{ fontWeight: 600 }}>{selectedDoctorForView.degree || 'General Practitioner'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#f8fafc', borderRadius: '4px' }}>
-                <span style={{ color: '#64748b' }}>Contact Phone:</span>
-                <span style={{ fontWeight: 600 }}>{selectedDoctorForView.phone || 'Direct Patient'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#f8fafc', borderRadius: '4px' }}>
-                <span style={{ color: '#64748b' }}>Clinic Address:</span>
-                <span style={{ fontWeight: 600, textAlign: 'right', maxWidth: '240px' }}>{selectedDoctorForView.address}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#f8fafc', borderRadius: '4px' }}>
-                <span style={{ color: '#64748b' }}>Incentive Rate:</span>
-                <span style={{ fontWeight: 700, color: '#16a34a' }}>{selectedDoctorForView.commission}% Commission</span>
-              </div>
+            <div style={{ display: 'flex', gap: '16px', borderBottom: '1px solid #e2e8f0', marginBottom: '14px' }}>
+              <button type="button" onClick={() => setViewTab('profile')} style={{ padding: '6px 4px', background: 'none', border: 'none', borderBottom: viewTab === 'profile' ? '2px solid #2563eb' : '2px solid transparent', color: viewTab === 'profile' ? '#2563eb' : '#64748b', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>Profile</button>
+              <button type="button" onClick={() => setViewTab('cases')} style={{ padding: '6px 4px', background: 'none', border: 'none', borderBottom: viewTab === 'cases' ? '2px solid #2563eb' : '2px solid transparent', color: viewTab === 'cases' ? '#2563eb' : '#64748b', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>Cases & Business ({selectedDoctorForView.totalCases})</button>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+            {viewTab === 'profile' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#f8fafc', borderRadius: '4px' }}>
+                  <span style={{ color: '#64748b' }}>Doctor Name:</span>
+                  <span style={{ fontWeight: 600 }}>{selectedDoctorForView.name}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#f8fafc', borderRadius: '4px' }}>
+                  <span style={{ color: '#64748b' }}>Qualifications:</span>
+                  <span style={{ fontWeight: 600 }}>{selectedDoctorForView.degree || selectedDoctorForView.specialty || 'General Practitioner'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#f8fafc', borderRadius: '4px' }}>
+                  <span style={{ color: '#64748b' }}>Contact Phone:</span>
+                  <span style={{ fontWeight: 600 }}>{selectedDoctorForView.phone || 'Not provided'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#f8fafc', borderRadius: '4px' }}>
+                  <span style={{ color: '#64748b' }}>Email:</span>
+                  <span style={{ fontWeight: 600 }}>{selectedDoctorForView.email || 'Not provided'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#f8fafc', borderRadius: '4px' }}>
+                  <span style={{ color: '#64748b' }}>Clinic Address:</span>
+                  <span style={{ fontWeight: 600, textAlign: 'right', maxWidth: '240px' }}>{selectedDoctorForView.address}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#f8fafc', borderRadius: '4px' }}>
+                  <span style={{ color: '#64748b' }}>Incentive Rate:</span>
+                  <span style={{ fontWeight: 700, color: '#16a34a' }}>{selectedDoctorForView.commission}% Commission</span>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', backgroundColor: '#f8fafc', borderRadius: '6px' }}>
+                  <span style={{ color: '#64748b' }}>Total Referred Cases:</span>
+                  <span style={{ fontWeight: 700 }}>{selectedDoctorForView.totalCases}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', backgroundColor: '#f8fafc', borderRadius: '6px' }}>
+                  <span style={{ color: '#64748b' }}>Total Referral Business:</span>
+                  <span style={{ fontWeight: 700, color: '#0284c7' }}>₹{selectedDoctorForView.totalBusiness.toLocaleString()}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', backgroundColor: '#f0fdf4', borderRadius: '6px' }}>
+                  <span style={{ color: '#166534' }}>Estimated Commission ({selectedDoctorForView.commission}%):</span>
+                  <span style={{ fontWeight: 700, color: '#16a34a' }}>₹{Math.round((selectedDoctorForView.totalBusiness * selectedDoctorForView.commission) / 100).toLocaleString()}</span>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
+              <Button variant="secondary" size="sm" icon={<Printer size={14} />} onClick={() => window.print()}>
+                Print Statement
+              </Button>
               <Button variant="primary" size="sm" onClick={() => setSelectedDoctorForView(null)}>
                 Done
               </Button>
