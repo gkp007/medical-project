@@ -37,7 +37,7 @@ import {
 import { ViewPatientModal } from '../../components/organisms/modals/ViewPatientModal';
 import { PrintSettingsGuideModal } from '../../components/organisms/modals/PrintSettingsGuideModal';
 import { PatientProfilePage } from '../manage/PatientProfilePage';
-import { casesApi } from '../../services/api';
+import { casesApi, settingsApi } from '../../services/api';
 
 const WhatsAppIcon: React.FC<{ size?: number }> = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -88,13 +88,13 @@ export const PrintableBillPage: React.FC<PrintableBillPageProps> = ({
   const [isEditingHistory, setIsEditingHistory] = useState(false);
   const [historyDraft, setHistoryDraft] = useState('28/10/2026 - ');
 
-  // Patient Data (matches Screenshot 1 & 2)
+  // Patient Data (populated from backend case)
   const [patient, setPatient] = useState<PatientDetailsData>({
     title: 'Mr.',
-    firstName: 'Nikash ranjan',
-    lastName: 'Bishi',
+    firstName: 'Loading...',
+    lastName: '',
     sex: 'MALE',
-    ageYears: 33,
+    ageYears: 0,
     ageMonths: 0,
     ageDays: 0,
     mobile: 'Not Available',
@@ -102,114 +102,146 @@ export const PrintableBillPage: React.FC<PrintableBillPageProps> = ({
     email: '',
     address: '',
     aadhaar: '',
-    patientHistory: '28/10/2026 - Initial checkup.',
+    patientHistory: '',
   });
 
-  // Doctor Data (matches Screenshot 1 & 3)
+  // Doctor Data (populated from backend case)
   const [doctor, setDoctor] = useState<ReferrerData>({
     title: 'Dr.',
-    firstName: 'Drx. Pramod Ku.Pradhani',
+    firstName: 'Self Referral',
     lastName: '',
-    degree: 'Pharmacist',
+    degree: '',
     mobile: 'Not Available',
     email: '',
-    address: 'Majhipali clinic chowk',
+    address: '',
     active: true,
   });
 
-  // Transaction Data (matches Screenshot 1)
+  // Transaction Data (populated from backend case)
   const [transaction, setTransaction] = useState<TransactionData>({
-    date: '28/10/2026',
-    time: '11:54 AM',
-    amount: 200,
-    receivedBy: 'Bimal Meher',
+    date: new Date().toLocaleDateString('en-GB'),
+    time: '',
+    amount: 0,
+    receivedBy: 'Front Desk',
     mode: 'Cash',
   });
 
-  const [billNumber, setBillNumber] = useState('3391');
+  const [clinicInfo, setClinicInfo] = useState({
+    name: 'Aastha Multispeciality Polyclinic',
+    address: 'Main Laboratory Branch',
+    phone: '',
+  });
+  const [billNumber, setBillNumber] = useState('');
   const [caseModality, setCaseModality] = useState('LAB');
-  const [billDate, setBillDate] = useState('28/10/2026');
-  const [billItems, setBillItems] = useState<{ id: string; name: string; rate: number }[]>([
-    { id: '1', name: 'Complete Blood Count (CBC)', rate: 200 }
-  ]);
+  const [billDate, setBillDate] = useState(() => new Date().toLocaleDateString('en-GB'));
+  const [billItems, setBillItems] = useState<{ id: string; name: string; rate: number }[]>([]);
   const [billFinancials, setBillFinancials] = useState({
-    gross: 200,
+    gross: 0,
     discount: 0,
-    net: 200,
-    paid: 200,
+    net: 0,
+    paid: 0,
     due: 0
   });
 
   const [activeCaseId, setActiveCaseId] = useState<string>(() => caseId || localStorage.getItem('labsmart_active_case_id') || '');
 
   useEffect(() => {
-    const targetCaseId = activeCaseId || caseId || localStorage.getItem('labsmart_active_case_id');
-    if (!targetCaseId) return;
-
-    const loadCase = async () => {
+    const loadCaseAndClinic = async () => {
       try {
-        const res = await casesApi.getCaseById(targetCaseId);
-        if (res.success && res.data) {
+        const settingsRes = await settingsApi.getSettings().catch(() => null);
+        if (settingsRes?.success && settingsRes?.data) {
+          setClinicInfo({
+            name: settingsRes.data.clinicName || 'Aastha Multispeciality Polyclinic',
+            address: settingsRes.data.address || 'Main Laboratory Branch',
+            phone: settingsRes.data.phone || '',
+          });
+        }
+
+        let targetCaseId = caseId || activeCaseId || localStorage.getItem('labsmart_active_case_id') || '';
+        let res = targetCaseId ? await casesApi.getCaseById(targetCaseId).catch(() => null) : null;
+
+        if (!res?.success || !res?.data) {
+          const billNo = localStorage.getItem('labsmart_active_bill_number');
+          const listRes = await casesApi.listCases({ ...(billNo ? { search: billNo } : {}), limit: 1 }).catch(() => null);
+          const firstCase = listRes?.data?.cases?.[0];
+          if (firstCase?.id) {
+            targetCaseId = firstCase.id;
+            setActiveCaseId(firstCase.id);
+            localStorage.setItem('labsmart_active_case_id', firstCase.id);
+            res = await casesApi.getCaseById(firstCase.id).catch(() => null);
+          }
+        }
+
+        if (res?.success && res.data) {
           const c = res.data;
-          setBillNumber(c.billNumber || c.dailyCode || '1001');
+          setBillNumber(c.billNumber || c.dailyCode || '');
           setCaseModality((c.modality || 'LAB').toUpperCase());
-          setBillDate(new Date(c.createdAt).toLocaleDateString());
-          
+          setBillDate(new Date(c.createdAt).toLocaleDateString('en-GB'));
+
           if (c.patient) {
             setPatient({
               title: c.patient.prefix || 'Mr.',
               firstName: c.patient.firstName || c.patient.fullName?.split(' ')[0] || 'Patient',
               lastName: c.patient.lastName || c.patient.fullName?.split(' ').slice(1).join(' ') || '',
               sex: (c.patient.gender || 'MALE').toUpperCase() as any,
-              ageYears: c.patient.age || 30,
-              ageMonths: 0,
-              ageDays: 0,
+              ageYears: c.patient.ageYears || c.patient.age || 0,
+              ageMonths: c.patient.ageMonths || 0,
+              ageDays: c.patient.ageDays || 0,
               mobile: c.patient.mobile || 'Not Available',
-              onlineReportRequested: false,
+              onlineReportRequested: Boolean(c.patient.onlineReportRequested),
               email: c.patient.email || '',
               address: c.patient.address || '',
-              aadhaar: '',
-              patientHistory: `${new Date(c.createdAt).toLocaleDateString()} - Registered case ${c.billNumber}`,
+              aadhaar: c.patient.aadhaar || '',
+              patientHistory: c.patient.medicalHistory || `${new Date(c.createdAt).toLocaleDateString('en-GB')} - Registered case ${c.billNumber}`,
             });
           }
 
           if (c.doctor) {
             setDoctor({
               title: 'Dr.',
-              firstName: c.doctor.name || 'Referring Physician',
+              firstName: c.doctor.name || 'Self Referral',
               lastName: '',
-              degree: c.doctor.degree || 'MBBS',
+              degree: c.doctor.degree || c.doctor.specialty || '',
               mobile: c.doctor.mobile || 'Not Available',
               email: c.doctor.email || '',
               address: c.doctor.address || '',
-              active: true,
+              active: c.doctor.isActive !== false,
             });
           }
 
-          if (c.items && c.items.length > 0) {
+          if (Array.isArray(c.items)) {
             setBillItems(c.items.map((it: any) => ({
               id: it.id,
               name: it.testName || it.testCode,
-              rate: it.rate
+              rate: Number(it.rate || 0),
             })));
           }
 
           setBillFinancials({
-            gross: c.grossAmount || 0,
-            discount: c.discountAmount || 0,
-            net: c.netAmount || 0,
-            paid: c.paidAmount || 0,
-            due: c.balanceDue || 0
+            gross: Number(c.grossAmount || 0),
+            discount: Number(c.discountAmount || 0),
+            net: Number(c.netPayable ?? c.netAmount ?? 0),
+            paid: Number(c.paidAmount || 0),
+            due: Number(c.balanceDue || 0),
           });
 
-          if (c.transactions && c.transactions.length > 0) {
-            const tx = c.transactions[0];
+          const paymentsList = Array.isArray(c.payments) ? c.payments : (Array.isArray(c.transactions) ? c.transactions : []);
+          if (paymentsList.length > 0) {
+            const tx = paymentsList[0];
             setTransaction({
-              date: new Date(tx.createdAt).toLocaleDateString(),
+              date: new Date(tx.createdAt).toLocaleDateString('en-GB'),
               time: new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              amount: tx.amount,
+              amount: Number(tx.amount || 0),
               receivedBy: tx.receivedBy || 'Front Desk',
               mode: tx.mode || 'Cash',
+            });
+          } else {
+            setTransaction({
+              date: new Date(c.createdAt).toLocaleDateString('en-GB'),
+              time: new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              amount: Number(c.paidAmount || 0),
+              receivedBy: 'Front Desk',
+              mode: c.paymentMode || 'Cash',
             });
           }
         }
@@ -217,7 +249,7 @@ export const PrintableBillPage: React.FC<PrintableBillPageProps> = ({
         console.error('Failed to load active case for bill print:', err);
       }
     };
-    loadCase();
+    loadCaseAndClinic();
   }, [caseId]);
 
   const showToast = (msg: string) => {
@@ -520,14 +552,16 @@ export const PrintableBillPage: React.FC<PrintableBillPageProps> = ({
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '16px' }}>
                 <div>
                   <h1 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: '0 0 4px 0' }}>
-                    Binapani Patho Clinic
+                    {clinicInfo.name}
                   </h1>
                   <p style={{ fontSize: '12px', color: '#475569', margin: '0 0 2px 0' }}>
-                    Majhipali (bhuliabandh chowk)
+                    {clinicInfo.address}
                   </p>
-                  <p style={{ fontSize: '12px', color: '#475569', margin: 0 }}>
-                    Phone no.: 8018723449
-                  </p>
+                  {clinicInfo.phone && (
+                    <p style={{ fontSize: '12px', color: '#475569', margin: 0 }}>
+                      Phone no.: {clinicInfo.phone}
+                    </p>
+                  )}
                 </div>
 
                 {/* Logo Box */}
@@ -1050,8 +1084,10 @@ export const PrintableBillPage: React.FC<PrintableBillPageProps> = ({
                       type="button"
                       onClick={() => {
                         setIsWhatsappOpen(false);
-                        const text = encodeURIComponent(`Hello ${patientFullName}, your invoice #3391 for Complete Blood Count (CBC) at Binapani Patho Clinic has been generated. Amount: Rs.200.`);
-                        window.open(`https://api.whatsapp.com/send?phone=91${patient.mobile === 'Not available' ? '8018723449' : patient.mobile}&text=${text}`, '_blank');
+                        const itemNames = billItems.map((i) => i.name).join(', ') || 'Diagnostic Tests';
+                        const text = encodeURIComponent(`Hello ${patientFullName}, your invoice #${billNumber} for ${itemNames} at ${clinicInfo.name} has been generated. Amount: Rs.${billFinancials.net}.`);
+                        const phone = patient.mobile && patient.mobile !== 'Not Available' ? patient.mobile.replace(/\D/g, '') : '';
+                        window.open(`https://api.whatsapp.com/send?${phone ? `phone=91${phone}&` : ''}text=${text}`, '_blank');
                         showToast('Opening WhatsApp to send bill to patient...');
                       }}
                       style={{

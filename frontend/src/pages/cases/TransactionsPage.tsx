@@ -13,6 +13,7 @@ import {
 
 interface TransactionItem {
   id: string;
+  caseId?: string;
   regNo: string;
   patientName: string;
   doctor: string;
@@ -64,6 +65,7 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({ onNavigatePr
           const createdAt = t.createdAt ? new Date(t.createdAt) : new Date();
           return {
             id: t.receiptNumber || t.id.substring(0, 8),
+            caseId: t.caseId || t.case?.id,
             regNo: t.case?.billNumber || t.case?.uhid || '#1001',
             patientName: t.case?.patient?.fullName || 'Walk-in Patient',
             doctor: t.case?.doctor?.name || 'Self Refer',
@@ -320,6 +322,7 @@ export const TransactionsPage: React.FC<TransactionsPageProps> = ({ onNavigatePr
                   <td style={{ padding: '12px 14px', textAlign: 'right' }}>
                     <button
                       onClick={() => {
+                        if (t.caseId) localStorage.setItem('labsmart_active_case_id', t.caseId);
                         localStorage.setItem('labsmart_active_bill_number', t.regNo.replace('#', ''));
                         if (onNavigatePrintBill) onNavigatePrintBill();
                       }}
