@@ -860,7 +860,33 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 100
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228752_p1",
+        "order": 1,
+        "name": "Plasmodium falciparum \"Pf\"",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228752_p2",
+        "order": 2,
+        "name": "Plasmodium vivax \"Pv\"",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228753",
@@ -1106,7 +1132,57 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 100
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228761_p1",
+        "order": 0,
+        "name": "Patient Value",
+        "unit": "seconds",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228761_p2",
+        "order": 1,
+        "name": "Control Value",
+        "unit": "seconds",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228761_p3",
+        "order": 2,
+        "name": "ISI (International sensitivity index)",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228761_p4",
+        "order": 3,
+        "name": "INR Value",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228762",
@@ -1131,7 +1207,33 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 100
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228762_p1",
+        "order": 0,
+        "name": "Patient Value",
+        "unit": "seconds",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228762_p2",
+        "order": 1,
+        "name": "Control Value",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228763",
@@ -1278,7 +1380,57 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 100
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228769_p1",
+        "order": 1,
+        "name": "Patient Value",
+        "unit": "seconds",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228769_p2",
+        "order": 2,
+        "name": "Control Value",
+        "unit": "seconds",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228769_p3",
+        "order": 3,
+        "name": "Screen Ratio",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228769_p4",
+        "order": 4,
+        "name": "DRVVT Screening",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228971",
@@ -1320,7 +1472,129 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 100
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228930_p1",
+        "order": 0,
+        "name": "Hb F",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228930_p2",
+        "order": 1,
+        "name": "Peak 2",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228930_p3",
+        "order": 2,
+        "name": "Hb Adult",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228930_p4",
+        "order": 3,
+        "name": "Hb A2",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228930_p5",
+        "order": 4,
+        "name": "Hemoglobin",
+        "unit": "g/dl",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228930_p6",
+        "order": 5,
+        "name": "RBC Count",
+        "unit": "Mill/cml.",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228930_p7",
+        "order": 6,
+        "name": "Packed Cell Volume (PCV)",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228930_p8",
+        "order": 7,
+        "name": "MCV",
+        "unit": "fL",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228930_p9",
+        "order": 8,
+        "name": "MCH",
+        "unit": "Pg",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228930_p10",
+        "order": 9,
+        "name": "RDW",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228800",
@@ -1341,7 +1615,69 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 100
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228800_p1",
+        "order": 0,
+        "name": "Metamyelocytes",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228800_p2",
+        "order": 1,
+        "name": "Myelocytes",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228800_p3",
+        "order": 2,
+        "name": "Promyelocytes",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228800_p4",
+        "order": 3,
+        "name": "Blast Cells",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228800_p5",
+        "order": 4,
+        "name": "BAND Cells",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228839",
@@ -1362,7 +1698,93 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 100
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228839_p1",
+        "order": 0,
+        "name": "Hemoglobin",
+        "unit": "g/dl",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228839_p2",
+        "order": 1,
+        "name": "RBC",
+        "unit": "million/cumm",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228839_p3",
+        "order": 2,
+        "name": "HCT/PCV",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228839_p4",
+        "order": 3,
+        "name": "MCV",
+        "unit": "fL",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228839_p5",
+        "order": 4,
+        "name": "MCH",
+        "unit": "Pg",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228839_p6",
+        "order": 5,
+        "name": "MCHC",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228839_p7",
+        "order": 6,
+        "name": "RDW-CV",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228866",
@@ -1383,7 +1805,33 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 100
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228866_p1",
+        "order": 1,
+        "name": "Platelet Count",
+        "unit": "lakhs/cumm",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228866_p2",
+        "order": 2,
+        "name": "MPV",
+        "unit": "fL",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228874",
@@ -1404,7 +1852,45 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 100
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228874_p1",
+        "order": 1,
+        "name": "RBC Morphology",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "text",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228874_p2",
+        "order": 2,
+        "name": "WBC Morphology",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "text",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228874_p3",
+        "order": 3,
+        "name": "Platelet Morphology",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "text",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228899",
@@ -1425,7 +1911,81 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 100
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228899_p1",
+        "order": 0,
+        "name": "Gran #",
+        "unit": "x10^3/μL",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228899_p2",
+        "order": 1,
+        "name": "Lym #",
+        "unit": "x10^3/μL",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228899_p3",
+        "order": 2,
+        "name": "Mid #",
+        "unit": "x10^3/μL",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228899_p4",
+        "order": 3,
+        "name": "Gran %",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228899_p5",
+        "order": 4,
+        "name": "Lym %",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228899_p6",
+        "order": 5,
+        "name": "Mid %",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228932",
@@ -1446,7 +2006,69 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 100
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228932_p1",
+        "order": 0,
+        "name": "Immature",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228932_p2",
+        "order": 1,
+        "name": "Promyelocytes",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228932_p3",
+        "order": 2,
+        "name": "Myelocyelocytes",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228932_p4",
+        "order": 3,
+        "name": "Blast Cells",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228932_p5",
+        "order": 4,
+        "name": "Meta Myelocytes",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6234691",
@@ -2379,7 +3001,57 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 150
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228804_p1",
+        "order": 0,
+        "name": "Fasting",
+        "unit": "mg/dl",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228804_p2",
+        "order": 1,
+        "name": "1 Hour",
+        "unit": "mg/dl",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228804_p3",
+        "order": 2,
+        "name": "2 Hour",
+        "unit": "mg/dl",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228804_p4",
+        "order": 3,
+        "name": "3 Hour",
+        "unit": "mg/dl",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228805",
@@ -2471,7 +3143,33 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 300
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228808_p1",
+        "order": 0,
+        "name": "HbA1c",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228808_p2",
+        "order": 1,
+        "name": "Estimated average glucose",
+        "unit": "mg/dL",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228809",
@@ -2584,7 +3282,45 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 150
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228813_p1",
+        "order": 0,
+        "name": "Microalbuminuria",
+        "unit": "mg/L",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228813_p2",
+        "order": 1,
+        "name": "Urinary creatinine",
+        "unit": "mg/dL",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228813_p3",
+        "order": 2,
+        "name": "Urinary Albumin Creatinine Ratio (UACR)",
+        "unit": "mg/g",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228814",
@@ -3439,7 +4175,129 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 150
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228853_p1",
+        "order": 0,
+        "name": "pH",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228853_p2",
+        "order": 1,
+        "name": "PCO2",
+        "unit": "mmHg",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228853_p3",
+        "order": 2,
+        "name": "Bicarbonate (HCO3",
+        "unit": "mEq/L",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228853_p4",
+        "order": 3,
+        "name": "Total CO2 Contents (TCO2)",
+        "unit": "mmol/L",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228853_p5",
+        "order": 4,
+        "name": "Standard Bicarbonate (SBC)",
+        "unit": "mEq/L",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228853_p6",
+        "order": 5,
+        "name": "Base Excess",
+        "unit": "mEq/L",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228853_p7",
+        "order": 6,
+        "name": "PO2",
+        "unit": "mmHg",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228853_p8",
+        "order": 7,
+        "name": "Oxygen saturation capacity",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228853_p9",
+        "order": 8,
+        "name": "Base Excess - Extracellular fluid",
+        "unit": "mEq/L",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228853_p10",
+        "order": 9,
+        "name": "Hemoglobin",
+        "unit": "g/dl",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228854",
@@ -3720,7 +4578,57 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 150
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228867_p1",
+        "order": 1,
+        "name": "Fasting",
+        "unit": "mg/dL",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228867_p2",
+        "order": 2,
+        "name": "1 hour",
+        "unit": "mg/dL",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228867_p3",
+        "order": 3,
+        "name": "2 hour",
+        "unit": "mg/dL",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228867_p4",
+        "order": 4,
+        "name": "3 hour",
+        "unit": "mg/dL",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228868",
@@ -3909,7 +4817,33 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 150
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228981_p1",
+        "order": 0,
+        "name": "Sample Type",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228981_p2",
+        "order": 1,
+        "name": "Result",
+        "unit": "µmol/L",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228984",
@@ -4024,7 +4958,33 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
           "displayRange": "70 - 100"
         }
       ]
-    }
+    },
+    "parameters": [
+      {
+        "id": "6228774_p1",
+        "order": 0,
+        "name": "PAPPA Level",
+        "unit": "ng/mL",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228774_p2",
+        "order": 1,
+        "name": "HCG Level",
+        "unit": "mIU/mL",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228931",
@@ -4045,7 +5005,33 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 150
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228931_p1",
+        "order": 0,
+        "name": "Sample Type",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228931_p2",
+        "order": 1,
+        "name": "Result",
+        "unit": "U/L",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228960",
@@ -4066,7 +5052,45 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 150
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228960_p1",
+        "order": 0,
+        "name": "Creatinine",
+        "unit": "mg/dL",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228960_p2",
+        "order": 1,
+        "name": "eGFR",
+        "unit": "ml/min/1.73m^2",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228960_p3",
+        "order": 2,
+        "name": "eGFR Category",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228869",
@@ -4129,7 +5153,69 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 250
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228964_p1",
+        "order": 1,
+        "name": "Salmonella Typhi 'O'",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228964_p2",
+        "order": 2,
+        "name": "Salmonella Typhi 'H'",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228964_p3",
+        "order": 3,
+        "name": "Salmonella Typhi 'AH'",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228964_p4",
+        "order": 4,
+        "name": "Salmonella Typhi 'BH'",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228964_p5",
+        "order": 5,
+        "name": "Result",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228871",
@@ -4150,7 +5236,33 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 250
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228871_p1",
+        "order": 1,
+        "name": "IgG",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228871_p2",
+        "order": 2,
+        "name": "IgM",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228872",
@@ -4171,7 +5283,33 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 250
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228872_p1",
+        "order": 0,
+        "name": "HIV - 1",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228872_p2",
+        "order": 1,
+        "name": "HIV - 2",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228873",
@@ -4276,7 +5414,33 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 250
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228878_p1",
+        "order": 0,
+        "name": "IgG",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228878_p2",
+        "order": 1,
+        "name": "IgM",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228880",
@@ -4299,7 +5463,33 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 250
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228880_p1",
+        "order": 0,
+        "name": "IgG",
+        "unit": "U/mL",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228880_p2",
+        "order": 1,
+        "name": "IgM",
+        "unit": "U/mL",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228881",
@@ -4469,7 +5659,45 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 400
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228887_p1",
+        "order": 0,
+        "name": "NS1 Antigen",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228887_p2",
+        "order": 1,
+        "name": "IgM",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228887_p3",
+        "order": 2,
+        "name": "IgG",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228888",
@@ -4966,7 +6194,45 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 250
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228911_p1",
+        "order": 0,
+        "name": "Proteus Antigen OX 19",
+        "unit": "Titre",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228911_p2",
+        "order": 1,
+        "name": "Proteus Antigen OX 2",
+        "unit": "Titre",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228911_p3",
+        "order": 2,
+        "name": "Proteus Antigen OX K",
+        "unit": "Titre",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228912",
@@ -5029,7 +6295,33 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 250
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228914_p1",
+        "order": 1,
+        "name": "IgG",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228914_p2",
+        "order": 2,
+        "name": "IgM",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228969",
@@ -5071,7 +6363,33 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 250
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228970_p1",
+        "order": 0,
+        "name": "IgG",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228970_p2",
+        "order": 1,
+        "name": "IgM",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228972",
@@ -5092,7 +6410,45 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 250
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228972_p1",
+        "order": 0,
+        "name": "Gamma Interferon, Antigen tube",
+        "unit": "IU/mL",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228972_p2",
+        "order": 1,
+        "name": "Gamma Interferon, Nil tube",
+        "unit": "IU/mL",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228972_p3",
+        "order": 2,
+        "name": "Final Result",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228965",
@@ -5155,7 +6511,33 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 250
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228963_p1",
+        "order": 0,
+        "name": "Anti-HAV IgM",
+        "unit": "",
+        "isOptional": true,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228963_p2",
+        "order": 1,
+        "name": "Anti-HAV IgG",
+        "unit": "",
+        "isOptional": true,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228975",
@@ -5302,7 +6684,33 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 250
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228745_p1",
+        "order": 0,
+        "name": "Sample Type",
+        "unit": "Units",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228745_p2",
+        "order": 1,
+        "name": "HCV RNA",
+        "unit": "IU/mL",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228780",
@@ -5696,7 +7104,223 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 100
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228924_p1",
+        "order": 0,
+        "name": "Colour",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "defaultResult": "Whitish",
+        "groupBy": "Physical and Chemical Characteristics",
+        "normalValues": {
+          "selectType": "text",
+          "textualNormal": "Whitish",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228924_p2",
+        "order": 1,
+        "name": "Quantity",
+        "unit": "ml",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Physical and Chemical Characteristics",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228924_p3",
+        "order": 2,
+        "name": "Ph",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "defaultResult": "Alkaline",
+        "groupBy": "Physical and Chemical Characteristics",
+        "normalValues": {
+          "selectType": "text",
+          "textualNormal": "Alkaline",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228924_p4",
+        "order": 3,
+        "name": "Collection At",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Physical and Chemical Characteristics",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228924_p5",
+        "order": 4,
+        "name": "Liquefaction Time",
+        "unit": "min",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Physical and Chemical Characteristics",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228924_p6",
+        "order": 5,
+        "name": "Semen Fructose",
+        "unit": "",
+        "isOptional": true,
+        "inputType": "string",
+        "isRemoved": true,
+        "groupBy": "Physical and Chemical Characteristics",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228924_p7",
+        "order": 6,
+        "name": "Viscosity",
+        "unit": "Normal/Abnormal",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Physical and Chemical Characteristics",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228924_p8",
+        "order": 7,
+        "name": "Rapid Progressive",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228924_p9",
+        "order": 8,
+        "name": "Sluggish Progressive",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228924_p10",
+        "order": 9,
+        "name": "Non Progressive",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228924_p11",
+        "order": 10,
+        "name": "Pus cell",
+        "unit": "/HPF",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228924_p12",
+        "order": 11,
+        "name": "Epithelial Cells",
+        "unit": "/HPF",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228924_p13",
+        "order": 12,
+        "name": "R.B.C.",
+        "unit": "/HPF",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228924_p14",
+        "order": 13,
+        "name": "Total Sperm Count",
+        "unit": "million/cumm",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228924_p15",
+        "order": 14,
+        "name": "Immotile",
+        "unit": "%",
+        "isOptional": true,
+        "inputType": "string",
+        "isRemoved": true,
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228924_p16",
+        "order": 15,
+        "name": "Abnormal Forms",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228925",
@@ -5738,7 +7362,177 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 80
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228926_p1",
+        "order": 0,
+        "name": "Colour",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Macroscopic",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228926_p2",
+        "order": 1,
+        "name": "Consistency",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Macroscopic",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228926_p3",
+        "order": 2,
+        "name": "Mucus",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "defaultResult": "NIL",
+        "groupBy": "Macroscopic",
+        "normalValues": {
+          "selectType": "text",
+          "textualNormal": "NIL",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228926_p4",
+        "order": 3,
+        "name": "Blood",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "defaultResult": "NIL",
+        "groupBy": "Macroscopic",
+        "normalValues": {
+          "selectType": "text",
+          "textualNormal": "NIL",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228926_p5",
+        "order": 4,
+        "name": "Occult Blood",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Macroscopic",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228926_p6",
+        "order": 5,
+        "name": "Parasites",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Macroscopic",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228926_p7",
+        "order": 6,
+        "name": "Undigested Food Particles",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Macroscopic",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228926_p8",
+        "order": 7,
+        "name": "OVA",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "defaultResult": "NIL",
+        "groupBy": "Microscopic",
+        "normalValues": {
+          "selectType": "text",
+          "textualNormal": "NIL",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228926_p9",
+        "order": 8,
+        "name": "Cysts",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "defaultResult": "NIL",
+        "groupBy": "Microscopic",
+        "normalValues": {
+          "selectType": "text",
+          "textualNormal": "NIL",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228926_p10",
+        "order": 9,
+        "name": "Pus Cells",
+        "unit": "/HPF",
+        "isOptional": false,
+        "inputType": "string",
+        "defaultResult": "NIL",
+        "groupBy": "Microscopic",
+        "normalValues": {
+          "selectType": "text",
+          "textualNormal": "NIL",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228926_p11",
+        "order": 10,
+        "name": "Red Blood Cells",
+        "unit": "/HPF",
+        "isOptional": false,
+        "inputType": "string",
+        "defaultResult": "NIL",
+        "groupBy": "Microscopic",
+        "normalValues": {
+          "selectType": "text",
+          "textualNormal": "NIL",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228926_p12",
+        "order": 11,
+        "name": "Macrophages",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Microscopic",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228927",
@@ -5811,25 +7605,42 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
     ],
     "parameters": [
       {
-        "id": "u_color",
-        "order": 1,
-        "name": "Color",
-        "unit": "",
-        "groupBy": "Physical Examination",
+        "id": "6228933_p1",
+        "order": 0,
+        "name": "Quantity",
+        "unit": "ml",
         "isOptional": false,
+        "inputType": "decimal",
+        "groupBy": "Physical Examination",
         "normalValues": {
-          "selectType": "text",
-          "textualNormal": "Pale Yellow / Straw",
+          "selectType": "numeric_range",
           "ranges": []
         }
       },
       {
-        "id": "u_app",
-        "order": 2,
-        "name": "Appearance",
+        "id": "6228933_p2",
+        "order": 1,
+        "name": "Colour",
         "unit": "",
-        "groupBy": "Physical Examination",
         "isOptional": false,
+        "inputType": "string",
+        "defaultResult": "Pale Yellow",
+        "groupBy": "Physical Examination",
+        "normalValues": {
+          "selectType": "text",
+          "textualNormal": "Pale Yellow",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228933_p3",
+        "order": 2,
+        "name": "Transparency",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "defaultResult": "Clear",
+        "groupBy": "Physical Examination",
         "normalValues": {
           "selectType": "text",
           "textualNormal": "Clear",
@@ -5837,126 +7648,228 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         }
       },
       {
-        "id": "u_sg",
+        "id": "6228933_p4",
         "order": 3,
         "name": "Specific Gravity",
         "unit": "",
+        "isOptional": false,
+        "inputType": "string",
         "groupBy": "Physical Examination",
-        "isOptional": false,
-        "normalValues": {
-          "selectType": "numeric_range",
-          "ranges": [
-            {
-              "id": "sg_1",
-              "gender": "Any",
-              "minAge": 0,
-              "minAgeUnit": "Years",
-              "maxAge": 120,
-              "maxAgeUnit": "Years",
-              "lowerValue": 1.005,
-              "upperValue": 1.03,
-              "displayRange": "1.005 - 1.030"
-            }
-          ]
-        }
-      },
-      {
-        "id": "u_ph",
-        "order": 4,
-        "name": "Reaction (pH)",
-        "unit": "",
-        "groupBy": "Chemical Examination",
-        "isOptional": false,
-        "normalValues": {
-          "selectType": "numeric_range",
-          "ranges": [
-            {
-              "id": "ph_1",
-              "gender": "Any",
-              "minAge": 0,
-              "minAgeUnit": "Years",
-              "maxAge": 120,
-              "maxAgeUnit": "Years",
-              "lowerValue": 4.5,
-              "upperValue": 8,
-              "displayRange": "4.5 - 8.0"
-            }
-          ]
-        }
-      },
-      {
-        "id": "u_alb",
-        "order": 5,
-        "name": "Albumin / Protein",
-        "unit": "",
-        "groupBy": "Chemical Examination",
-        "isOptional": false,
         "normalValues": {
           "selectType": "text",
-          "textualNormal": "Nil",
           "ranges": []
         }
       },
       {
-        "id": "u_sug",
+        "id": "6228933_p5",
+        "order": 4,
+        "name": "pH",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Physical Examination",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228933_p6",
+        "order": 5,
+        "name": "Protein / Albumin",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "defaultResult": "Absent",
+        "groupBy": "Chemical Examination",
+        "normalValues": {
+          "selectType": "text",
+          "textualNormal": "Absent",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228933_p7",
         "order": 6,
         "name": "Sugar / Glucose",
         "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "defaultResult": "Absent",
         "groupBy": "Chemical Examination",
-        "isOptional": false,
         "normalValues": {
           "selectType": "text",
-          "textualNormal": "Nil",
+          "textualNormal": "Absent",
           "ranges": []
         }
       },
       {
-        "id": "u_pus",
+        "id": "6228933_p8",
         "order": 7,
-        "name": "Pus Cells (WBCs)",
-        "unit": "/HPF",
-        "groupBy": "Microscopic Examination",
-        "isOptional": false,
-        "normalValues": {
-          "selectType": "numeric_range",
-          "ranges": [
-            {
-              "id": "pus_1",
-              "gender": "Any",
-              "minAge": 0,
-              "minAgeUnit": "Years",
-              "maxAge": 120,
-              "maxAgeUnit": "Years",
-              "lowerValue": 0,
-              "upperValue": 5,
-              "displayRange": "0 - 5"
-            }
-          ]
-        }
-      },
-      {
-        "id": "u_rbc",
-        "order": 8,
-        "name": "RBCs",
-        "unit": "/HPF",
-        "groupBy": "Microscopic Examination",
-        "isOptional": false,
+        "name": "Ketone Bodies",
+        "unit": "",
+        "isOptional": true,
+        "inputType": "string",
+        "groupBy": "Chemical Examination",
         "normalValues": {
           "selectType": "text",
-          "textualNormal": "Nil / HPF",
           "ranges": []
         }
       },
       {
-        "id": "u_epi",
-        "order": 9,
-        "name": "Epithelial Cells",
-        "unit": "/HPF",
-        "groupBy": "Microscopic Examination",
-        "isOptional": false,
+        "id": "6228933_p9",
+        "order": 8,
+        "name": "Bilirubin",
+        "unit": "",
+        "isOptional": true,
+        "inputType": "string",
+        "groupBy": "Chemical Examination",
         "normalValues": {
           "selectType": "text",
-          "textualNormal": "1 - 3 / HPF",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228933_p10",
+        "order": 9,
+        "name": "R.B.C.",
+        "unit": "/HPF",
+        "isOptional": false,
+        "inputType": "string",
+        "defaultResult": "Absent",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "text",
+          "textualNormal": "Absent",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228933_p11",
+        "order": 10,
+        "name": "Pus Cells",
+        "unit": "/HPF",
+        "isOptional": false,
+        "inputType": "string",
+        "defaultResult": "Absent",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "text",
+          "textualNormal": "Absent",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228933_p12",
+        "order": 11,
+        "name": "Epithilial Cells",
+        "unit": "/HPF",
+        "isOptional": false,
+        "inputType": "string",
+        "defaultResult": "Absent",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "text",
+          "textualNormal": "Absent",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228933_p13",
+        "order": 12,
+        "name": "Casts",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "defaultResult": "Absent",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "text",
+          "textualNormal": "Absent",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228933_p14",
+        "order": 13,
+        "name": "Crystals",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "text",
+        "defaultResult": "Absent",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "text",
+          "textualNormal": "Absent",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228933_p15",
+        "order": 14,
+        "name": "Bacteria",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "defaultResult": "Absent",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "text",
+          "textualNormal": "Absent",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228933_p16",
+        "order": 15,
+        "name": "Others",
+        "unit": "",
+        "isOptional": true,
+        "inputType": "text",
+        "defaultResult": "Absent",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "text",
+          "textualNormal": "Absent",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228933_p17",
+        "order": 16,
+        "name": "Nitrite",
+        "unit": "",
+        "isOptional": true,
+        "inputType": "string",
+        "groupBy": "Chemical Examination",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228933_p18",
+        "order": 17,
+        "name": "Leukocytes",
+        "unit": "",
+        "isOptional": true,
+        "inputType": "string",
+        "groupBy": "Physical Examination",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228933_p19",
+        "order": 18,
+        "name": "Blood",
+        "unit": "",
+        "isOptional": true,
+        "inputType": "string",
+        "groupBy": "Physical Examination",
+        "normalValues": {
+          "selectType": "text",
           "ranges": []
         }
       }
@@ -5981,7 +7894,177 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 100
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228934_p1",
+        "order": 0,
+        "name": "Sample Type",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228934_p2",
+        "order": 1,
+        "name": "Coagulum",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Physical Examination",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228934_p3",
+        "order": 2,
+        "name": "Volume",
+        "unit": "ml",
+        "isOptional": false,
+        "inputType": "decimal",
+        "groupBy": "Physical Examination",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228934_p4",
+        "order": 3,
+        "name": "Appearance",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Physical Examination",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228934_p5",
+        "order": 4,
+        "name": "Colour",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Physical Examination",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228934_p6",
+        "order": 5,
+        "name": "pH (Reaction)",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Physical Examination",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228934_p7",
+        "order": 6,
+        "name": "Protein",
+        "unit": "mg%",
+        "isOptional": false,
+        "inputType": "decimal",
+        "groupBy": "Chemical Examination",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228934_p8",
+        "order": 7,
+        "name": "Glucose",
+        "unit": "mg%",
+        "isOptional": false,
+        "inputType": "decimal",
+        "groupBy": "Chemical Examination",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228934_p9",
+        "order": 8,
+        "name": "Total Leukocyte Count",
+        "unit": "cumm",
+        "isOptional": false,
+        "inputType": "decimal",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228934_p10",
+        "order": 9,
+        "name": "Neutrophils",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "decimal",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228934_p11",
+        "order": 10,
+        "name": "Lymphocyte",
+        "unit": "%",
+        "isOptional": false,
+        "inputType": "decimal",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228934_p12",
+        "order": 11,
+        "name": "RBCs",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228934_p13",
+        "order": 12,
+        "name": "Others",
+        "unit": "",
+        "isOptional": true,
+        "inputType": "string",
+        "groupBy": "Microscopic Examination",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228935",
@@ -6047,7 +8130,45 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 100
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228937_p1",
+        "order": 0,
+        "name": "24 Hour Urine Volume",
+        "unit": "ml",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228937_p2",
+        "order": 1,
+        "name": "Microalbumin",
+        "unit": "mg/L",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228937_p3",
+        "order": 2,
+        "name": "24 Hours Urinary Albumin",
+        "unit": "mg/24hrs",
+        "isOptional": false,
+        "inputType": "decimal",
+        "normalValues": {
+          "selectType": "numeric_range",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228982",
@@ -6194,7 +8315,33 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 250
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228941_p1",
+        "order": 0,
+        "name": "Sample Type",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228941_p2",
+        "order": 1,
+        "name": "Result",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "text",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228942",
@@ -6215,7 +8362,35 @@ export const ALL_LABSMART_TESTS: LabTestDetail[] = [
         "fee": 250
       }
     ],
-    "panelsIncluded": []
+    "panelsIncluded": [],
+    "parameters": [
+      {
+        "id": "6228942_p1",
+        "order": 0,
+        "name": "Sample Type",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "normalValues": {
+          "selectType": "text",
+          "ranges": []
+        }
+      },
+      {
+        "id": "6228942_p2",
+        "order": 1,
+        "name": "Result",
+        "unit": "",
+        "isOptional": false,
+        "inputType": "string",
+        "defaultResult": "Negative",
+        "normalValues": {
+          "selectType": "text",
+          "textualNormal": "Negative",
+          "ranges": []
+        }
+      }
+    ]
   },
   {
     "id": "6228943",
