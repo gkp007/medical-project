@@ -8,7 +8,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { mastersApi } from '../../services/api';
-import { ALL_LABSMART_TESTS, LabTestDetail } from '../manage/allLabsmartTestsData';
+import { ALL_LABSMART_TESTS, LabTestDetail, TestSubParameter } from '../manage/allLabsmartTestsData';
 import { RichInterpretationEditor } from './RichInterpretationEditor';
 
 interface LabTestEditPageProps {
@@ -75,6 +75,12 @@ export const LabTestEditPage: React.FC<LabTestEditPageProps> = ({
   const [instrument, setInstrument] = useState(baseTest.instrument || '');
   const [alwaysBold, setAlwaysBold] = useState(baseTest.isAlwaysBold || false);
   const [printLineAfter, setPrintLineAfter] = useState(baseTest.printLineAfter || false);
+  const [parameters, setParameters] = useState<TestSubParameter[]>(() => baseTest.parameters || []);
+  const isMultiParam =
+    baseTest.testType === 'Multi parameter' ||
+    baseTest.testType === 'Multi parameter nested' ||
+    baseTest.testType === 'Multiple nested parameters' ||
+    parameters.length > 0;
 
   // Unit modal & custom units
   const [isAddUnitModalOpen, setIsAddUnitModalOpen] = useState(false);
@@ -147,6 +153,7 @@ export const LabTestEditPage: React.FC<LabTestEditPageProps> = ({
     setInstrument(baseTest.instrument || '');
     setAlwaysBold(baseTest.isAlwaysBold || false);
     setPrintLineAfter(baseTest.printLineAfter || false);
+    setParameters(baseTest.parameters ? baseTest.parameters.map((p) => ({ ...p })) : []);
 
     const parts: string[] = [];
     if (baseTest.description) parts.push(`Physiological Basis:\n${baseTest.description}`);
@@ -174,6 +181,21 @@ export const LabTestEditPage: React.FC<LabTestEditPageProps> = ({
           if (res.data.shortName !== undefined) setShortName(res.data.shortName || '');
           if (res.data.department || res.data.category) setCategory(res.data.department || res.data.category);
           if (res.data.parameters?.[0]?.unit) setUnit(res.data.parameters[0].unit);
+          if (Array.isArray(res.data.parameters) && res.data.parameters.length > 0 && (!baseTest.parameters || baseTest.parameters.length === 0)) {
+            setParameters(
+              res.data.parameters.map((p: any, idx: number) => ({
+                id: p.id || `${activeTestId}_p${idx + 1}`,
+                order: p.sortOrder ?? idx,
+                name: p.name || '',
+                unit: p.unit || '',
+                isOptional: Boolean(p.isOptional),
+                inputType: p.inputType || 'string',
+                defaultResult: p.defaultResult || '',
+                groupBy: p.groupBy || undefined,
+                normalValues: { selectType: 'numeric_range', ranges: [] },
+              }))
+            );
+          }
           if (res.data.interpretation !== undefined) setInterpretationText(res.data.interpretation || '');
         }
       } catch (err) { }
@@ -224,6 +246,7 @@ export const LabTestEditPage: React.FC<LabTestEditPageProps> = ({
         interpretation: interpretationText,
         alwaysBold,
         printLineAfter,
+        ...(isMultiParam ? { parameters } : {}),
       });
       showToast('Saved test specifications successfully in database!');
     } catch (err: any) {
@@ -239,6 +262,9 @@ export const LabTestEditPage: React.FC<LabTestEditPageProps> = ({
     baseTest.method = method;
     baseTest.instrument = instrument;
     baseTest.interpretation = interpretationText;
+    if (isMultiParam) {
+      baseTest.parameters = parameters;
+    }
 
     setTimeout(() => {
       localStorage.setItem('labsmart_active_test_id', activeTestId);
@@ -357,7 +383,7 @@ export const LabTestEditPage: React.FC<LabTestEditPageProps> = ({
       </div>
 
       {/* Edit Form */}
-      <form onSubmit={handleSave} style={{ maxWidth: '820px' }}>
+      <form onSubmit={handleSave} style={{ maxWidth: isMultiParam ? '1120px' : '820px' }}>
         {/* Row 1: Name & Short name */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '16px' }}>
           <div>
@@ -433,116 +459,350 @@ export const LabTestEditPage: React.FC<LabTestEditPageProps> = ({
           </select>
         </div>
 
-        {/* Row 3: Unit with + Add new & Input type */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '16px' }}>
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <label style={{ fontSize: '13px', color: '#475569', margin: 0 }}>
-                Unit
-              </label>
+        {isMultiParam ? (
+          <div style={{ marginTop: '20px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <div style={{ fontSize: '15px', fontWeight: 600, color: '#1e293b' }}>
+                Parameters ({parameters.length})
+              </div>
               <button
                 type="button"
-                onClick={() => setIsAddUnitModalOpen(true)}
+                onClick={() =>
+                  setParameters((prev) => [
+                    ...prev,
+                    {
+                      id: `${activeTestId}_p${Date.now()}`,
+                      order: prev.length,
+                      name: '',
+                      unit: '',
+                      isOptional: false,
+                      inputType: 'string',
+                      defaultResult: '',
+                      normalValues: { selectType: 'text', ranges: [] },
+                    },
+                  ])
+                }
                 style={{
-                  background: 'none',
-                  border: 'none',
+                  background: '#eff6ff',
+                  border: '1px solid #bfdbfe',
                   color: '#2563eb',
                   fontSize: '12px',
                   fontWeight: 600,
                   cursor: 'pointer',
-                  padding: 0,
-                  display: 'flex',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '3px',
+                  gap: '4px',
                 }}
               >
-                <Plus size={13} />
-                <span>Add new</span>
+                <Plus size={14} />
+                <span>Add parameter</span>
               </button>
             </div>
-            <select
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                borderRadius: '4px',
-                border: '1px solid #cbd5e1',
-                fontSize: '13px',
-                boxSizing: 'border-box',
-                outline: 'none',
-                backgroundColor: '#ffffff',
-              }}
-            >
-              {unitOptions.map((u) => (
-                <option key={u} value={u}>
-                  {u}
-                </option>
-              ))}
-            </select>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {parameters.map((param, idx) => {
+                const uiInputType =
+                  param.inputType === 'decimal'
+                    ? 'Numeric'
+                    : param.inputType === 'text'
+                      ? 'Paragraph'
+                      : 'Single Line';
+                const updateParam = (patch: Partial<TestSubParameter>) => {
+                  setParameters((prev) =>
+                    prev.map((item, i) => (i === idx ? { ...item, ...patch } : item))
+                  );
+                };
+                return (
+                  <div
+                    key={param.id || idx}
+                    style={{
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '6px',
+                      padding: '14px 16px',
+                      backgroundColor: param.isRemoved ? '#fef2f2' : '#ffffff',
+                      display: 'grid',
+                      gridTemplateColumns: '76px 1.4fr 140px 140px 1.3fr 110px',
+                      gap: '12px',
+                      alignItems: 'start',
+                    }}
+                  >
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: '#475569', marginBottom: '4px' }}>
+                        <span style={{ color: '#ef4444' }}>* </span>Order
+                      </label>
+                      <input
+                        type="number"
+                        value={param.order}
+                        onChange={(e) => updateParam({ order: Number(e.target.value) })}
+                        style={{
+                          width: '100%',
+                          padding: '7px 10px',
+                          borderRadius: '4px',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '13px',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: '#475569', marginBottom: '4px' }}>
+                        <span style={{ color: '#ef4444' }}>* </span>Name
+                      </label>
+                      <input
+                        type="text"
+                        value={param.name}
+                        onChange={(e) => updateParam({ name: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '7px 10px',
+                          borderRadius: '4px',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '13px',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                      {param.groupBy && (
+                        <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
+                          Group: <strong>{param.groupBy}</strong>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: '#475569', marginBottom: '4px' }}>
+                        Unit
+                      </label>
+                      <select
+                        value={param.unit || ''}
+                        onChange={(e) => updateParam({ unit: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '7px 10px',
+                          borderRadius: '4px',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '13px',
+                          boxSizing: 'border-box',
+                          backgroundColor: '#ffffff',
+                        }}
+                      >
+                        <option value="">--</option>
+                        {Array.from(new Set([...unitOptions, param.unit].filter(Boolean))).map((u) => (
+                          <option key={u} value={u}>
+                            {u}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => setIsAddUnitModalOpen(true)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#2563eb',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          padding: '3px 0 0 0',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '2px',
+                        }}
+                      >
+                        <Plus size={11} />
+                        <span>Add new</span>
+                      </button>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: '#475569', marginBottom: '4px' }}>
+                        <span style={{ color: '#ef4444' }}>* </span>Input type
+                      </label>
+                      <select
+                        value={uiInputType}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          updateParam({
+                            inputType: v === 'Numeric' ? 'decimal' : v === 'Paragraph' ? 'text' : 'string',
+                          });
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '7px 10px',
+                          borderRadius: '4px',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '13px',
+                          boxSizing: 'border-box',
+                          backgroundColor: '#ffffff',
+                        }}
+                      >
+                        <option value="Numeric">Numeric</option>
+                        <option value="Single Line">Single Line</option>
+                        <option value="Paragraph">Paragraph</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: '#475569', marginBottom: '4px' }}>
+                        Default result
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={param.defaultResult || ''}
+                        onChange={(e) => updateParam({ defaultResult: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '6px 10px',
+                          borderRadius: '4px',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '12px',
+                          boxSizing: 'border-box',
+                          fontFamily: 'inherit',
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '20px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#475569', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(param.isOptional)}
+                          onChange={(e) => updateParam({ isOptional: e.target.checked })}
+                          style={{ width: '14px', height: '14px', accentColor: '#2563eb' }}
+                        />
+                        <span>Optional</span>
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#475569', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(param.isRemoved)}
+                          onChange={(e) => updateParam({ isRemoved: e.target.checked })}
+                          style={{ width: '14px', height: '14px', accentColor: '#ef4444' }}
+                        />
+                        <span>Removed</span>
+                      </label>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
+        ) : (
+          <>
+            {/* Row 3: Unit with + Add new & Input type */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '16px' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label style={{ fontSize: '13px', color: '#475569', margin: 0 }}>
+                    Unit
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddUnitModalOpen(true)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#2563eb',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      padding: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '3px',
+                    }}
+                  >
+                    <Plus size={13} />
+                    <span>Add new</span>
+                  </button>
+                </div>
+                <select
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '4px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '13px',
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                    backgroundColor: '#ffffff',
+                  }}
+                >
+                  {unitOptions.map((u) => (
+                    <option key={u} value={u}>
+                      {u}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '6px' }}>
-              Input type
-            </label>
-            <select
-              value={inputType}
-              onChange={(e) => setInputType(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                borderRadius: '4px',
-                border: '1px solid #cbd5e1',
-                fontSize: '13px',
-                boxSizing: 'border-box',
-                outline: 'none',
-                backgroundColor: '#ffffff',
-              }}
-            >
-              <option value="Numeric">Numeric</option>
-              <option value="Single Line">Single Line</option>
-              <option value="Multiline">Multiline</option>
-              <option value="Document">Document</option>
-              <option value="Formula">Formula</option>
-            </select>
-          </div>
-        </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '6px' }}>
+                  Input type
+                </label>
+                <select
+                  value={inputType}
+                  onChange={(e) => setInputType(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '4px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '13px',
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                    backgroundColor: '#ffffff',
+                  }}
+                >
+                  <option value="Numeric">Numeric</option>
+                  <option value="Single Line">Single Line</option>
+                  <option value="Multiline">Multiline</option>
+                  <option value="Document">Document</option>
+                  <option value="Formula">Formula</option>
+                </select>
+              </div>
+            </div>
 
-        {/* Row 4: Default result */}
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '6px' }}>
-            Default result
-          </label>
-          <textarea
-            rows={3}
-            value={defaultResult}
-            onChange={(e) => setDefaultResult(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              borderRadius: '4px',
-              border: '1px solid #cbd5e1',
-              fontSize: '13px',
-              boxSizing: 'border-box',
-              outline: 'none',
-              fontFamily: 'inherit',
-            }}
-          />
-        </div>
+            {/* Row 4: Default result */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '6px' }}>
+                Default result
+              </label>
+              <textarea
+                rows={3}
+                value={defaultResult}
+                onChange={(e) => setDefaultResult(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: '4px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '13px',
+                  boxSizing: 'border-box',
+                  outline: 'none',
+                  fontFamily: 'inherit',
+                }}
+              />
+            </div>
 
-        {/* Row 5: Optional Checkbox */}
-        <div style={{ marginBottom: '24px' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#475569', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={isOptional}
-              onChange={(e) => setIsOptional(e.target.checked)}
-              style={{ width: '16px', height: '16px', accentColor: '#2563eb' }}
-            />
-            <span>Optional</span>
-          </label>
-        </div>
+            {/* Row 5: Optional Checkbox */}
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#475569', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={isOptional}
+                  onChange={(e) => setIsOptional(e.target.checked)}
+                  style={{ width: '16px', height: '16px', accentColor: '#2563eb' }}
+                />
+                <span>Optional</span>
+              </label>
+            </div>
+          </>
+        )}
 
         {/* Tabs: More details | Format options */}
         <div style={{ display: 'flex', gap: '20px', borderBottom: '1px solid #e2e8f0', marginBottom: '20px' }}>

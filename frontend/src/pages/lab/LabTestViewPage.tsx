@@ -598,64 +598,164 @@ export const LabTestViewPage: React.FC<LabTestViewPageProps> = ({
             </div>
           )}
 
-          {/* Unit Table matching Image 1 */}
-          <div
-            style={{
-              border: '1px solid #e2e8f0',
-              borderRadius: '4px',
-              overflow: 'hidden',
-              backgroundColor: '#ffffff',
-              marginBottom: '16px',
-            }}
-          >
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0' }}>
-                  <th
-                    style={{
-                      padding: '10px 16px',
-                      textAlign: 'left',
-                      fontWeight: 600,
-                      color: '#64748b',
-                      fontSize: '11px',
-                      letterSpacing: '0.04em',
-                    }}
-                  >
-                    UNIT
-                  </th>
-                  <th style={{ padding: '10px 16px', textAlign: 'right' }} />
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td style={{ padding: '12px 16px', color: '#1e293b', fontWeight: 500 }}>
-                    {unit}
-                  </td>
-                  <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                    <button
-                      type="button"
-                      onClick={() => setIsNormalValuesModalOpen(true)}
+          {/* Parameters Table for Multi-Parameter Tests OR Unit Table for Single-Parameter Tests */}
+          {baseTest.parameters && baseTest.parameters.length > 0 ? (
+            <div
+              style={{
+                border: '1px solid #e2e8f0',
+                borderRadius: '4px',
+                overflow: 'hidden',
+                backgroundColor: '#ffffff',
+                marginBottom: '16px',
+              }}
+            >
+              <div
+                style={{
+                  padding: '10px 16px',
+                  borderBottom: '1px solid #e2e8f0',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  color: '#1e293b',
+                  backgroundColor: '#f8fafc',
+                }}
+              >
+                Parameters ({baseTest.parameters.length})
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0' }}>
+                    <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '11px' }}>
+                      PARAMETER
+                    </th>
+                    <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '11px' }}>
+                      OPTIONAL
+                    </th>
+                    <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '11px' }}>
+                      UNIT
+                    </th>
+                    <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '11px' }}>
+                      NORMAL VALUES
+                    </th>
+                    <th style={{ padding: '10px 14px', textAlign: 'right' }} />
+                  </tr>
+                </thead>
+                <tbody>
+                  {baseTest.parameters.map((p, idx) => {
+                    const prevGroup = idx > 0 ? baseTest.parameters?.[idx - 1]?.groupBy : undefined;
+                    const showGroupHeader = p.groupBy && p.groupBy !== prevGroup;
+                    const normalDisplay =
+                      p.normalValues?.ranges && p.normalValues.ranges.length > 0
+                        ? p.normalValues.ranges.map((r) => r.displayRange).join(', ')
+                        : p.normalValues?.textualNormal || p.defaultResult || '--';
+                    return (
+                      <React.Fragment key={p.id || idx}>
+                        {showGroupHeader && (
+                          <tr style={{ backgroundColor: '#f1f5f9', borderBottom: '1px solid #e2e8f0' }}>
+                            <td colSpan={5} style={{ padding: '8px 14px', fontWeight: 700, fontSize: '12px', color: '#334155' }}>
+                              {p.groupBy}
+                            </td>
+                          </tr>
+                        )}
+                        <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                          <td style={{ padding: '10px 14px', color: '#1e293b', fontWeight: 500 }}>
+                            {p.name}
+                          </td>
+                          <td style={{ padding: '10px 14px', color: '#64748b' }}>
+                            {p.isOptional ? 'Yes' : 'No'}
+                          </td>
+                          <td style={{ padding: '10px 14px', color: '#475569' }}>
+                            {p.unit || '--'}
+                          </td>
+                          <td style={{ padding: '10px 14px', color: '#475569', fontSize: '12px' }}>
+                            {normalDisplay}
+                          </td>
+                          <td style={{ padding: '10px 14px', textAlign: 'right' }}>
+                            <button
+                              type="button"
+                              onClick={() => setIsNormalValuesModalOpen(true)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#2563eb',
+                                fontSize: '12px',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: 0,
+                              }}
+                            >
+                              <Edit2 size={12} />
+                              <span>Edit normal values</span>
+                            </button>
+                          </td>
+                        </tr>
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div
+              style={{
+                border: '1px solid #e2e8f0',
+                borderRadius: '4px',
+                overflow: 'hidden',
+                backgroundColor: '#ffffff',
+                marginBottom: '16px',
+              }}
+            >
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0' }}>
+                    <th
                       style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#2563eb',
-                        fontSize: '13px',
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: 0,
+                        padding: '10px 16px',
+                        textAlign: 'left',
+                        fontWeight: 600,
+                        color: '#64748b',
+                        fontSize: '11px',
+                        letterSpacing: '0.04em',
                       }}
                     >
-                      <Edit2 size={13} />
-                      <span>Edit normal values</span>
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                      UNIT
+                    </th>
+                    <th style={{ padding: '10px 16px', textAlign: 'right' }} />
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={{ padding: '12px 16px', color: '#1e293b', fontWeight: 500 }}>
+                      {unit}
+                    </td>
+                    <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                      <button
+                        type="button"
+                        onClick={() => setIsNormalValuesModalOpen(true)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#2563eb',
+                          fontSize: '13px',
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: 0,
+                        }}
+                      >
+                        <Edit2 size={13} />
+                        <span>Edit normal values</span>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
 
           {/* Create similar test Link */}
           <div style={{ marginBottom: '24px' }}>
