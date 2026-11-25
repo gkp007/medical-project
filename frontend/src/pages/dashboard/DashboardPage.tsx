@@ -72,6 +72,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const [isReferModalOpen, setIsReferModalOpen] = useState(false);
   const [isSmsModalOpen, setIsSmsModalOpen] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   // Payments Due State
   const [paymentsDue, setPaymentsDue] = useState<DuePatient[]>([]);
@@ -515,7 +521,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                                 <div
                                   onClick={() => {
                                     setActiveMenuId(null);
-                                    alert(`SMS payment reminder sent to ${item.patientName}.`);
+                                    showToast(`SMS payment reminder sent to ${item.patientName}.`);
                                   }}
                                   style={{ padding: '6px 12px', fontSize: '12px', color: '#334155', cursor: 'pointer' }}
                                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
@@ -799,6 +805,30 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         onClose={() => setIsSmsModalOpen(false)}
         currentBalance={98}
       />
+
+      {toastMessage && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            backgroundColor: '#0f172a',
+            color: '#ffffff',
+            padding: '12px 20px',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+            zIndex: 9999,
+            fontSize: '14px',
+            fontWeight: 500,
+          }}
+        >
+          <CheckCircle2 size={16} color="#22c55e" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </div>
   );
 };

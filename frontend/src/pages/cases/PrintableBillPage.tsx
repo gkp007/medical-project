@@ -308,7 +308,7 @@ export const PrintableBillPage: React.FC<PrintableBillPageProps> = ({
             onClick={() => setActiveSubView('bill')}
             style={{ background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', padding: 0, fontWeight: 500 }}
           >
-            Bill - #3391
+            Bill - #{billNumber || '---'}
           </button>
           <span>&gt;</span>
           <span style={{ color: '#0f172a', fontWeight: 600 }}>Update patient details</span>
@@ -341,7 +341,7 @@ export const PrintableBillPage: React.FC<PrintableBillPageProps> = ({
       <div style={{ maxWidth: '1440px', margin: '0 auto', paddingBottom: '40px' }}>
         <PatientProfilePage
           patient={patient}
-          regNo="3391"
+          regNo={billNumber}
           onBack={() => setActiveSubView('bill')}
           onEditProfile={() => setActiveSubView('update_patient')}
           onAddCase={() => onNavigateModifyBill ? onNavigateModifyBill() : setActiveSubView('bill')}
@@ -1764,7 +1764,7 @@ export const PrintableBillPage: React.FC<PrintableBillPageProps> = ({
         isOpen={isViewPatientOpen}
         onClose={() => setIsViewPatientOpen(false)}
         patient={patient}
-        regNo="3391"
+        regNo={billNumber}
         onEditClick={() => setActiveSubView('update_patient')}
       />
 

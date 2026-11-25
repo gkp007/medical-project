@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/atoms/Card';
 import { Button } from '../../components/atoms/Button';
+import { casesApi } from '../../services/api';
 import { Input } from '../../components/atoms/Input';
 import { Select } from '../../components/atoms/Select';
 import { Badge } from '../../components/atoms/Badge';
@@ -44,113 +45,40 @@ export interface XRayArchiveItem {
 }
 
 export const XRayReportsPage: React.FC = () => {
-  const [reports, setReports] = useState<XRayArchiveItem[]>([
-    {
-      id: '1',
-      caseNo: 'XR-2026-401',
-      regNo: '#1003',
-      token: 'X-01',
-      date: '17/10/2026',
-      patientName: 'Anand Verma',
-      ageGender: '42Y / Male',
-      mobile: '9812034912',
-      uhid: 'UHID-78190',
-      study: 'Lumbosacral Spine AP & Lateral',
-      region: 'Spine',
-      doctor: 'Dr. Sunil Bansal, MS (Ortho)',
-      radiologist: 'Dr. S. K. Verma, MD Radiodiagnosis',
-      status: 'Reported',
-      exposureDetails: '2 Films (10x12 Carestream) • 82 kVp, 32 mAs',
-      findings:
-        'Vertebral alignment preserved. Mild anterior marginal osteophytosis noted at L4 and L5 vertebral bodies. Intervertebral disc space is mildly narrowed at L4-L5 level. Pedicles and spinous processes appear intact. No spondylolisthesis or acute bony injury.',
-      impression:
-        'MILD L4-L5 DEGENERATIVE DISC DISEASE / LUMBAR SPONDYLOSIS. NO EVIDENCE OF LISTHESIS OR ACUTE FRACTURE.',
-    },
-    {
-      id: '2',
-      caseNo: 'XR-2026-398',
-      regNo: '#1006',
-      token: 'X-02',
-      date: '16/10/2026',
-      patientName: 'Sunil Mathur',
-      ageGender: '25Y / Male',
-      mobile: '9845129384',
-      uhid: 'UHID-78195',
-      study: 'Right Knee Joint AP & Lateral',
-      region: 'Extremities',
-      doctor: 'Dr. Sunil Bansal, MS (Ortho)',
-      radiologist: 'Dr. Neha Agarwal, DMRD',
-      status: 'Reported',
-      exposureDetails: '1 Film (10x12 Fuji DR) • 62 kVp, 10 mAs',
-      findings:
-        'Tibiofemoral and patellofemoral joint spaces are maintained bilaterally. No bony injury, cortical disruption or joint effusion noted. Soft tissue planes appear unremarkable.',
-      impression:
-        'NORMAL RADIOGRAPH OF RIGHT KNEE JOINT. NO FRACTURE OR DISLOCATION DETECTED.',
-    },
-    {
-      id: '3',
-      caseNo: 'XR-2026-395',
-      regNo: '#1009',
-      token: 'X-03',
-      date: '15/10/2026',
-      patientName: 'Kavita Singhal',
-      ageGender: '34Y / Female',
-      mobile: '9820194821',
-      uhid: 'UHID-78201',
-      study: 'Chest PA View (Digital DR)',
-      region: 'Chest',
-      doctor: 'Dr. Rajesh Gupta, MD (Med)',
-      radiologist: 'Dr. S. K. Verma, MD Radiodiagnosis',
-      status: 'Reported',
-      exposureDetails: '1 Film (14x17 Fuji DR) • 75 kVp, 16 mAs',
-      findings:
-        'Adequate inspiratory effort. Both lung fields are clear without parenchymal consolidation, nodule or cavitation. Both CP angles and diaphragmatic domes are sharp. CTR is < 0.50. Trachea is central.',
-      impression:
-        'NORMAL CHEST RADIOGRAPH (PA VIEW). NO EVIDENCE OF ACTIVE CARDIO-PULMONARY INFILTRATE.',
-    },
-    {
-      id: '4',
-      caseNo: 'XR-2026-390',
-      regNo: '#1014',
-      token: 'X-04',
-      date: '14/10/2026',
-      patientName: 'Sunita Devi',
-      ageGender: '38Y / Female',
-      mobile: '9718290199',
-      uhid: 'UHID-78208',
-      study: 'Paranasal Sinuses (Water\'s View)',
-      region: 'Skull / PNS',
-      doctor: 'Dr. Anil Verma, MS (ENT)',
-      radiologist: 'Dr. Neha Agarwal, DMRD',
-      status: 'Reported',
-      exposureDetails: '1 Film (8x10 Fuji) • 68 kVp, 12 mAs',
-      findings:
-        'Right maxillary antrum shows prominent mucosal thickening with haziness and an air-fluid level. Left maxillary sinus, frontal, and ethmoidal sinuses appear normally aerated.',
-      impression:
-        'RIGHT MAXILLARY SINUSITIS WITH AIR-FLUID LEVEL. MILD DEVIATED NASAL SEPTUM.',
-    },
-    {
-      id: '5',
-      caseNo: 'XR-2026-384',
-      regNo: '#1018',
-      token: 'X-05',
-      date: '12/10/2026',
-      patientName: 'Tarun Malhotra',
-      ageGender: '22Y / Male',
-      mobile: '9899120485',
-      uhid: 'UHID-78215',
-      study: 'Right Wrist AP & Lateral',
-      region: 'Extremities',
-      doctor: 'Dr. Sunil Bansal, MS (Ortho)',
-      radiologist: 'Dr. S. K. Verma, MD Radiodiagnosis',
-      status: 'Reported',
-      exposureDetails: '1 Film (8x10 Fuji) • 58 kVp, 8 mAs',
-      findings:
-        'Linear cortical discontinuity seen at the distal radial metaphysis ~1.5 cm proximal to the radiocarpal joint. Dorsal angulation of ~5 degrees. Carpal bones and distal radioulnar joint are congruent.',
-      impression:
-        'UNDISPLACED FRACTURE OF DISTAL RADIUS METAPHYSIS (COLLES\' TYPE FRACTURE).',
-    },
-  ]);
+  const [reports, setReports] = useState<XRayArchiveItem[]>([]);
+
+  useEffect(() => {
+    casesApi.listCases({ modality: 'XRAY', limit: 100 }).then((res) => {
+      if (res?.success && Array.isArray(res.data?.cases)) {
+        setReports(
+          res.data.cases.map((c: any) => ({
+            id: c.id,
+            caseNo: c.dailyCode || c.billNumber,
+            regNo: c.billNumber,
+            token: c.dailyCode || 'X-01',
+            date: new Date(c.createdAt).toLocaleDateString('en-GB'),
+            patientName: c.patient?.fullName || 'Patient',
+            ageGender: `${c.patient?.age || '-'}Y / ${c.patient?.gender || 'Male'}`,
+            mobile: c.patient?.mobile || '',
+            uhid: c.uhid || '',
+            study: (c.items || []).map((i: any) => i.testName).join(', ') || 'X-Ray Study',
+            region: 'X-Ray',
+            doctor: c.doctor?.name || 'Self Referral',
+            radiologist: 'Radiologist',
+            status:
+              c.reportStatus === 'Cancelled'
+                ? 'Cancelled'
+                : c.reportStatus === 'Signed off' || c.reportStatus === 'Completed'
+                ? 'Reported'
+                : 'Captured',
+            exposureDetails: c.radiologyResult?.exposureDetails || 'Digital X-Ray',
+            findings: c.radiologyResult?.findings || c.notes || '',
+            impression: c.radiologyResult?.impression || '',
+          }))
+        );
+      }
+    }).catch(() => {});
+  }, []);
 
   // Filter States (7-Field Filter Grid)
   const [durationPreset, setDurationPreset] = useState('Last 30 days');

@@ -498,7 +498,19 @@ export function App() {
         return <CTScanCasesPage />;
 
       case 'patients':
-        return <PatientsPage onNavigateNewBill={() => setActiveScreen('new_bill')} />;
+        return (
+          <PatientsPage
+            onNavigateNewBill={() => setActiveScreen('new_bill')}
+            onNavigateViewBill={(cId) => {
+              if (cId) setActiveCaseId(cId);
+              setActiveScreen('printable_bill');
+            }}
+            onNavigateViewReport={(cId) => {
+              if (cId) setActiveCaseId(cId);
+              setActiveScreen('enter_results');
+            }}
+          />
+        );
 
       case 'transactions':
         return <TransactionsPage onNavigatePrintBill={() => setActiveScreen('printable_bill')} />;

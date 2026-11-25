@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/atoms/Card';
 import { Button } from '../../components/atoms/Button';
+import { doctorApi } from '../../services/api';
 import { Input } from '../../components/atoms/Input';
 import { Badge } from '../../components/atoms/Badge';
 import { Modal } from '../../components/atoms/Modal';
@@ -31,41 +32,28 @@ export interface DoctorPortalAccess {
 }
 
 export const DoctorAccessPage: React.FC = () => {
-  const [accessList, setAccessList] = useState<DoctorPortalAccess[]>([
-    {
-      id: '1',
-      docId: '2',
-      name: 'Dr. Anil Verma (MBBS, MD)',
-      speciality: 'Internal Medicine',
-      address: 'Shop 4, Civil Lines, New Delhi',
-      mobile: '+91 9811223344',
-      email: 'dr.anil@delhiclinic.com',
-      invitedOn: '18/10/2026',
-      status: 'Access Granted',
-    },
-    {
-      id: '2',
-      docId: '4',
-      name: 'Dr. Rajesh Gupta (MD Medicine)',
-      speciality: 'Chest & General Medicine',
-      address: 'Near City Hospital, Delhi Gate',
-      mobile: '+91 9820349120',
-      email: 'dr.rajesh.gupta@delhimed.org',
-      invitedOn: '19/10/2026',
-      status: 'Invited',
-    },
-    {
-      id: '3',
-      docId: '1',
-      name: 'Self (In-House Laboratory)',
-      speciality: 'Pathology & Imaging',
-      address: 'Laboratory Premises',
-      mobile: '+91 7752058263',
-      email: 'inhouse@labsmart.internal',
-      invitedOn: '17/10/2026',
-      status: 'Access Granted',
-    },
-  ]);
+  const [accessList, setAccessList] = useState<DoctorPortalAccess[]>([]);
+
+  useEffect(() => {
+    doctorApi.listDoctors().then((res) => {
+      const list = res?.data?.doctors || res?.data || [];
+      if (Array.isArray(list)) {
+        setAccessList(
+          list.map((d: any) => ({
+            id: d.id,
+            docId: d.id,
+            name: d.name || 'Doctor',
+            speciality: d.degree || d.specialization || 'General Practice',
+            address: d.address || 'Clinic',
+            mobile: d.mobile || 'Not Available',
+            email: d.email || 'Not Available',
+            invitedOn: d.createdAt ? new Date(d.createdAt).toLocaleDateString('en-GB') : 'Active',
+            status: d.hasPortalAccess ? 'Access Granted' : d.isActive === false ? 'Access Revoked' : 'Invited',
+          }))
+        );
+      }
+    }).catch(() => {});
+  }, []);
 
   const [activeTab, setActiveTab] = useState<'Invited' | 'Access Granted' | 'Access Revoked'>('Invited');
   const [selectedDocId, setSelectedDocId] = useState('3');
@@ -142,32 +130,60 @@ export const DoctorAccessPage: React.FC = () => {
     setIsInviteModalOpen(true);
   };
 
-  const handleSendInvite = (e: React.FormEvent) => {
+  const handleSendInvite = async (e: React.FormEvent) => {
     e.preventDefault();
+    let docId = selectedDocId;
+    try {
+      const existing = accessList.find((d) => d.id === selectedDocId || d.name === customDocName);
+      if (existing) {
+        await doctorApi.togglePortalAccess(existing.id);
+        docId = existing.id;
+      } else {
+        const res = await doctorApi.createDoctor({
+          name: customDocName,
+          degree: customSpeciality,
+          address: customAddress,
+          mobile: inviteMobile,
+          email: inviteEmail,
+        });
+        if (res?.data?.id) {
+          docId = res.data.id;
+          await doctorApi.togglePortalAccess(docId);
+        }
+      }
+    } catch {
+      // keep optimistic UI update
+    }
+
     const newEntry: DoctorPortalAccess = {
-      id: String(Date.now()),
-      docId: selectedDocId,
+      id: docId,
+      docId,
       name: customDocName,
       speciality: customSpeciality,
       address: customAddress,
       mobile: inviteMobile,
       email: inviteEmail,
-      invitedOn: 'Today',
-      status: 'Invited',
+      invitedOn: new Date().toLocaleDateString('en-GB'),
+      status: 'Access Granted',
     };
 
-    setAccessList([newEntry, ...accessList]);
+    setAccessList((prev) => [newEntry, ...prev.filter((d) => d.id !== docId)]);
     setIsInviteModalOpen(false);
-    setActiveTab('Invited');
-    showToast(`Invitation SMS & Email sent to ${customDocName}`);
+    setActiveTab('Access Granted');
+    showToast(`Portal access granted & invite sent to ${customDocName}`);
   };
 
   const handleResend = (doc: DoctorPortalAccess) => {
     showToast(`Invite link resent via SMS & Email to ${doc.name} (${doc.mobile})`);
   };
 
-  const handleConfirmRevoke = () => {
+  const handleConfirmRevoke = async () => {
     if (!docToRevoke) return;
+    try {
+      await doctorApi.togglePortalAccess(docToRevoke.id);
+    } catch {
+      // keep optimistic update
+    }
     setAccessList((prev) =>
       prev.map((d) => (d.id === docToRevoke.id ? { ...d, status: 'Access Revoked' } : d))
     );
@@ -175,8 +191,13 @@ export const DoctorAccessPage: React.FC = () => {
     setDocToRevoke(null);
   };
 
-  const handleConfirmRestore = () => {
+  const handleConfirmRestore = async () => {
     if (!docToRestore) return;
+    try {
+      await doctorApi.togglePortalAccess(docToRestore.id);
+    } catch {
+      // keep optimistic update
+    }
     setAccessList((prev) =>
       prev.map((d) => (d.id === docToRestore.id ? { ...d, status: 'Access Granted' } : d))
     );

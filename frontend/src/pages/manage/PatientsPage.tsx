@@ -33,9 +33,15 @@ interface PatientRecord {
 
 export interface PatientsPageProps {
   onNavigateNewBill?: () => void;
+  onNavigateViewBill?: (caseId?: string) => void;
+  onNavigateViewReport?: (caseId?: string) => void;
 }
 
-export const PatientsPage: React.FC<PatientsPageProps> = ({ onNavigateNewBill }) => {
+export const PatientsPage: React.FC<PatientsPageProps> = ({
+  onNavigateNewBill,
+  onNavigateViewBill,
+  onNavigateViewReport,
+}) => {
   // Filter States (Exact 7 fields from Labsmart)
   const [uhidQuery, setUhidQuery] = useState('');
   const [firstNameQuery, setFirstNameQuery] = useState('');
@@ -227,6 +233,7 @@ export const PatientsPage: React.FC<PatientsPageProps> = ({ onNavigateNewBill })
   if (selectedPatientForView) {
     return (
       <PatientProfilePage
+        patientId={selectedPatientForView.id}
         patient={{
           title: selectedPatientForView.gender === 'M' ? 'Mr.' : 'Ms.',
           firstName: selectedPatientForView.firstName,
@@ -239,15 +246,29 @@ export const PatientsPage: React.FC<PatientsPageProps> = ({ onNavigateNewBill })
           onlineReportRequested: false,
           address: selectedPatientForView.address,
         }}
-        regNo="3391"
+        regNo={selectedPatientForView.uhid || selectedPatientForView.id}
         onBack={() => setSelectedPatientForView(null)}
         onEditProfile={() => {
           handleOpenEdit(selectedPatientForView);
           setSelectedPatientForView(null);
         }}
         onAddCase={() => handleAddCase(selectedPatientForView)}
-        onViewBill={() => showToast('Opening bill #3391...')}
-        onViewReport={() => showToast('Opening laboratory reports...')}
+        onViewBill={(caseId) => {
+          if (caseId) localStorage.setItem('labsmart_active_case_id', caseId);
+          if (onNavigateViewBill) {
+            onNavigateViewBill(caseId);
+          } else {
+            showToast('Opening bill receipt...');
+          }
+        }}
+        onViewReport={(caseId) => {
+          if (caseId) localStorage.setItem('labsmart_active_case_id', caseId);
+          if (onNavigateViewReport) {
+            onNavigateViewReport(caseId);
+          } else {
+            showToast('Opening laboratory reports...');
+          }
+        }}
       />
     );
   }

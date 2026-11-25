@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/atoms/Card';
 import { Button } from '../../components/atoms/Button';
+import { radiologyApi } from '../../services/api';
 import { Input } from '../../components/atoms/Input';
 import { Select } from '../../components/atoms/Select';
 import { Badge } from '../../components/atoms/Badge';
@@ -212,6 +213,29 @@ export const XRayTemplatesPage: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  useEffect(() => {
+    radiologyApi.getTemplates('XRAY').then((res) => {
+      if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
+        const mapped: XRayTemplate[] = res.data.map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          category: (['Chest', 'Spine', 'Extremities', 'Skull', 'Pelvis'].includes(t.organType) ? t.organType : 'Chest') as any,
+          tags: t.organType || 'XRAY',
+          updated: t.updatedAt ? new Date(t.updatedAt).toLocaleDateString('en-GB') : 'Saved',
+          indicationDefault: 'Routine radiographic evaluation',
+          findings: { generalText: t.content || '' },
+          impression: t.isNormal ? 'NORMAL STUDY.' : 'SEE FINDINGS.',
+        }));
+        setTemplates((prev) => {
+          const map = new Map<string, XRayTemplate>();
+          prev.forEach((p) => map.set(p.title.toLowerCase(), p));
+          mapped.forEach((m) => map.set(m.title.toLowerCase(), m));
+          return Array.from(map.values());
+        });
+      }
+    }).catch(() => {});
+  }, []);
+
   const handleOpenCreate = () => {
     setFormTitle('');
     setFormCategory('Chest');
@@ -252,12 +276,26 @@ export const XRayTemplatesPage: React.FC = () => {
     showToast(`Duplicated template: "${clone.title}"`);
   };
 
-  const handleSaveCreate = (e: React.FormEvent) => {
+  const handleSaveCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim()) return;
 
+    let savedId = String(Date.now());
+    try {
+      const res = await radiologyApi.createTemplate({
+        modality: 'XRAY',
+        title: formTitle.trim(),
+        organType: formCategory,
+        content: formGeneralText || '',
+        isNormal: true,
+      });
+      if (res?.success && res?.data?.id) savedId = res.data.id;
+    } catch {
+      // keep local fallback
+    }
+
     const newTpl: XRayTemplate = {
-      id: String(Date.now()),
+      id: savedId,
       title: formTitle,
       category: formCategory,
       tags: formTags || 'Radiography template',
