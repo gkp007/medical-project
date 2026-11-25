@@ -732,7 +732,7 @@ export const LabTestEditPage: React.FC<LabTestEditPageProps> = ({
                     backgroundColor: '#ffffff',
                   }}
                 >
-                  {unitOptions.map((u) => (
+                  {Array.from(new Set([...unitOptions, unit].filter(Boolean))).map((u) => (
                     <option key={u} value={u}>
                       {u}
                     </option>

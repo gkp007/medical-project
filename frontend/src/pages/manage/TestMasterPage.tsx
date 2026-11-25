@@ -89,9 +89,19 @@ export const TestMasterPage: React.FC<TestMasterPageProps> = ({ onNavigate }) =>
       localStorage.removeItem('labsmart_selected_category');
       return preselected;
     }
-    return 'All';
+    return sessionStorage.getItem('labsmart_tests_category') || 'All';
   });
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>(
+    () => sessionStorage.getItem('labsmart_tests_search') || ''
+  );
+
+  useEffect(() => {
+    sessionStorage.setItem('labsmart_tests_category', selectedCategory);
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    sessionStorage.setItem('labsmart_tests_search', searchQuery);
+  }, [searchQuery]);
 
   // Navigation mode: 'list' (Test Database) or 'detail' (view test)
   const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
